@@ -1,0 +1,24 @@
+{% extends '3a4_base.html' %}
+
+{% block content %}
+{% for cat in dic_po_priority.keys() %}
+    <h2 align="left">{{cat}}</h2><br>
+    <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center">
+              <tbody>
+                <tr>
+                  {% for col in dic_po_priority[cat].columns.values %}
+                    <td width="80" align="center"><span style="font-size: medium">{{col}}</span></td>
+                  {% endfor %}
+                </tr>
+                {% for row in dic_po_priority[cat].values %}
+                  <tr>
+                    {% for col in row %}
+                      <td width="80" align="center"><span style="font-size: medium">{{col}}</span></td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+    </table>
+    <br>
+{% endfor %}
+{% endblock %}

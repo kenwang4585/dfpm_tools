@@ -1,0 +1,51 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title>Configuration check result</title>
+</head>
+
+<body>
+
+<br>
+<p style="color: #983d00">Note: Error configuration identified based on below rules - in case you see wrong alert pls feedback for rule update!</p>
+{% for note in config_notes %}
+    {{ note }}<br>
+{% endfor %}
+<h2>Error config orders - new errors:</h2>
+<table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
+    <tr>
+        {% for col in new_error_header %}
+            <td>{{col}}</td>
+        {% endfor %}
+    </tr>
+    {% for row in new_error_data %}
+        <tr>
+            {% for col in row %}
+                <td>{{col}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+
+<br><br>
+
+<h2>Error config orders - previously identified errors still in 3a4:</h2>
+<table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
+    <tr>
+        {% for col in old_error_header %}
+            <td>{{col}}</td>
+        {% endfor %}
+    </tr>
+    {% for row in old_error_data %}
+        <tr>
+            {% for col in row %}
+                <td>{{col}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+
+
+</body>
+</html>

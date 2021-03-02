@@ -1,0 +1,50 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
+<body>
+<main>
+<br>
+    <!--
+    <img alt='image: Addressable/ Not addressable backlog summary' src="{{ banner_addr }}" width="1000">
+    -->
+
+    <table>
+        <tbody>
+        <tr>
+            <td width="1000" bgcolor="#4682b4" style="font-size: xx-large; color: #f8f9fa;" align="center">
+                Regional Backlog Dashboard
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p><a href="http://10.123.219.115/backlog" target="_blank">Click for addressable backlog details</a></p>
+
+<table>
+    <tbody>
+        <tr> <img alt='image: addr_summary'  src="{{ apjc_add_summary }}" width="1000"></tr>
+        <tr> <img alt='image: addr_trending' src="{{ apjc_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_foc'      src="{{ foc_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: foc_trending'  src="{{ foc_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_fdo'      src="{{ fdo_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: fdo_trending'  src="{{ fdo_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_jpe'      src="{{ jpe_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: jpe_trending'  src="{{ jpe_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_shk'      src="{{ shk_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: shk_trending'  src="{{ shk_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_ncb'      src="{{ ncb_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: ncb_trending'  src="{{ ncb_add_trending }}" width="1000"></tr>
+    </tbody>
+</table>
+
+ </main>
+ <footer>
+    {% block footer %}
+        <span style="alignment: center"><small>
+            Regional backlog summary | Datasource: UOV 3A4 |
+            Contact kwang2 for reporting issues | 2020
+        </small></span>
+    {% endblock %}
+</footer>
+
+</body>
+</html>

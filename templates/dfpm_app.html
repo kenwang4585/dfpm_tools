@@ -1,0 +1,124 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+        <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="15%"></td>
+                <td width="40%">
+                    <br>
+                    <span style="font-size: large;"> <strong>Upload 3A4 file (.csv/.xlsx):</strong></span><br>
+                    {{ form.file }} {{ form.use_existing_3a4 }} <br>
+                    <span style="font-size: small"> (Note: Download 3a4 using view FOC_FDO_BL <br>limit org/bu per need if only run DFPM 3a4 for self)</span>
+                    <br><br>
+                </td>
+                <td width="30%">
+                    <span style="font-size: large;"> <strong>Select tasks and options:</strong></span><br>
+                    {{ form.dfpm_3a4 }}&nbsp;{{ form.dfpm_3a4.label }}{{ form.dfpm_3a4_option (class='form-control')}}<br>
+                    {{ form.cm_outlier }}&nbsp;{{ form.cm_outlier.label }}{{ form.cm_outlier_org (class='form-control') }}<br>
+                </td>
+
+                <td width="15%"></td>
+            </tr>
+        </table>
+        <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="90%">
+    		<tr align="center">
+            	<td width="100%">
+                	<br>
+                	{{ form.submit_3a4 (class='btn btn-default btn-lg') }}
+                	<br><br>
+            	</td>
+        	</tr>
+	        <br>
+            <tr>
+                  <td align="left" width="95%">
+                        {% if get_flashed_messages()|length>0 %}
+                          {% for message in get_flashed_messages(with_categories=True) %}
+                            <div class="alert alert-{{ message[0] }}" role="alert">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                {{ message[1] }}
+                            </div>
+                          {% endfor %}
+                        {% endif %}
+                  </td>
+            </tr>
+
+            <tr> <!-- DFPM mapping setting -->
+                    <td width="95%">
+                        <br><br>
+                        <h3>DFPM mapping setting:</h3>
+                        <table border="0" cellspacing="1px" align="center" style="border-color: #c5c5c5;">
+                            <tr>
+                                <td align="left" width="10%">
+                                    {{ form.dfpm.label }}<br>
+                                    {{ form.dfpm (class='form-control')}}
+                                </td>
+                                <td align="left" width="10%">
+                                    {{ form.dfpm_org.label }}<br>
+                                    {{ form.dfpm_org (class='form-control')}}
+                                </td>
+                                <td align="left" width="24%">
+                                    {{ form.bu_list.label }}<br>
+                                    {{ form.bu_list (class='form-control')}}
+                                </td>
+                                <td align="left" width="22%">
+                                    {{ form.exclusion_pf.label }}<br>
+                                    {{ form.exclusion_pf (class='form-control')}}
+                                </td>
+                                <td align="left" width="24%">
+                                    {{ form.extra_pf.label }}<br>
+                                    {{ form.extra_pf (class='form-control')}}
+                                </td>
+                                <td align="right" width="10%">
+                                    <br>
+                                    {{ form.submit_add_update (class='btn btn-default btn-sm')}}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+
+              <tr> <!-- For viewing the details -->
+                    <td width="95%">
+                        <br><br><br>
+                                {% if df_dfpm_mapping_data|length>0 %}
+                                    <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
+                                        <tr>
+                                            {% for col in df_dfpm_mapping_header %}
+                                                <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                            {% endfor %}
+                                        </tr>
+
+                                        {% for row in df_dfpm_mapping_data %}
+                                            <tr>
+                                                {% for col in row %}
+                                                    <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                {% endif %}
+                    </td>
+                </tr>
+        </table>
+
+
+</form>
+{% endblock %}
+
+{% block flash_message %}
+    <!-- set up falsh separately above -->
+{% endblock %}
+
+{% block empty_space %}
+    <br><br><br><br><br><br><br><br><br><br><br><br>
+{% endblock %}

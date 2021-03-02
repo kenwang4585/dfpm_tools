@@ -1,0 +1,64 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends '3a4_base.html' %}
+
+{% block title %}
+    <title>DFPM AUTOMATION:DOWNLOAD</title>
+{% endblock %}
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+
+    <!-- below for db data operate  -->
+    <table bgcolor="#E0E0E0"  border="0" style="border-color: #003D79" style="border-collapse:collapse" cellspacing="0px" align="center">
+        <tbody>
+            <tr>
+              <td width="1302" align="left" bgcolor="#336699">
+                  <span style="font-size: x-large; color: #dae0e5"  ><strong>Download tracker files</strong></span>
+              </td>
+            </tr>
+            <tr>
+              <td width="1302"  align="center">
+                <table border="0" cellspacing="0px" align="center">
+                    <br>
+                    <tr>
+                        <td width="300" align="center"> </td>
+                        <td width="350" align="center"> {{ form.fname.label }}&nbsp;&nbsp;{{ form.fname }} <br><br></td>
+                        <td width="350" align="center"> {{ form.submit_download }}<br><br> </td>
+                        <td width="302" align="center"> </td>
+
+                  </tr>
+                </table>
+              </td>
+        </tbody>
+    </table>
+
+    </form>
+
+<br><br>
+
+    <!-- below for db data details -->
+    {% if table_data|length>0 %}
+        <p align="center">
+            <span style="font-size: x-large; align-content: center">Files on the server you can download:</span>
+        </p>
+            <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center">
+              <tbody>
+                <tr>
+                  {% for col in table_header %}
+                    <td><span style="font-size: medium">{{col}}</span></td>
+                  {% endfor %}
+                </tr>
+                {% for row in table_data %}
+                  <tr>
+                    {% for col in row %}
+                      <td><span style="font-size: medium">{{col}}</span></td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+    {% endif %}
+{% endblock %}

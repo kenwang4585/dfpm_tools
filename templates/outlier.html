@@ -1,0 +1,232 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
+<body>
+
+<h1> Status tracking - changes vs {{ comparison_days }} days ago:</h1>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="90"> <strong>Outlier categories</strong></td>
+            <td width="90"> <strong>Orders closed</strong></td>
+            <td width="90"> <strong>Orders added</strong></td>
+            <td width="110"> <strong>Total open orders</strong></td>
+        </tr>
+
+        {% for row in outlier_comparison %}
+        <tr>
+            {% for col in row %}
+            <td width="90"> {{ col }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br><br>
+<h1> Aged cancellation</h1>
+<img alt='image: outlier chart' src="{{ outlier_cancel }}" width="1100">
+<br>
+<strong><big>Top {{top_x}} aging details:</big></strong>
+<br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="80">Organization</td>
+            <td width="50">BU</td>
+            <td width="90">PO_Number</td>
+            <td width="70">Staged Qty</td>
+            <td width="80">Ageing days</td>
+            <td width="100">Reason_code</td>
+            <td width="700">Comments</td>
+        </tr>
+
+        {% for row in aging_cancel %} 
+        <tr>            
+            <td width="80">{{row[0]}}</td>
+            <td width="50">{{row[1]}}</td>
+            <td width="90">{{row[2]}}</td>
+            <td width="70">{{row[3]}}</td>
+            <td width="80">{{row[4]}}</td>
+            <td width="100">{{row[5]}}</td>
+            <td width="700">{{row[6]}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<span style="color: #1a6dca">Note: the cancel aging days is cancelled based on below date in sequence (if one is null then consider the next): ASN_CREATION_DATE->LT_TARGET_FCD.</span>
+
+
+<br><br>
+<h1> Partial staged SS </h1>
+<img alt='image: outlier chart' src="{{ outlier_partial }}" width="1100">
+<br>
+<strong><big>Top {{top_x}} aging details:</big></strong>
+<br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="80">Organization</td>
+            <td width="50">BU</td>
+            <td width="90">SO_SS</td>
+            <td width="80">Aging days</td>
+            <td width="120">Order holds</td>
+            <td width="800">Unstaged PO & comments</td>
+        </tr>
+
+        {% for row in partial_staged %} 
+        <tr>            
+            <td width="80">{{row[0]}}</td>
+            <td width="50">{{row[1]}}</td>
+            <td width="90">{{row[2]}}</td>
+            {% if row[3]!=nan %}
+                <td width="80">{{row[3]}}</td>
+            {% else %}
+                <td width="80">  </td>
+            {% endif %}
+            {% if row[4]!=nan %}
+                <td width="120">{{row[4]}}</td>
+            {% else %}
+                <td width="120">  </td>
+            {% endif %}
+            <td width="800">{{row[5]}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br><br>
+<h1> Orders Booked but not Scheduled</h1>
+<img alt='image: outlier chart' src="{{ outlier_schedule }}" width="1100">
+<br>
+<strong>Top {{top_x}} aging details <span style="color: #005cbf">(excluded order with holds):</span></strong>
+<br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="80">Organization</td>
+            <td width="50">BU</td>
+            <td width="90">PO_Number</td>
+            <td width="80">Ageing days</td>
+            <td width="200">Order holds</td>
+            <td width="550">Comments</td>
+            <td width="200">Order exception</td>
+        </tr>
+
+        {% for row in not_scheduled %}
+        <tr>
+            <td width="80">{{row[0]}}</td>
+            <td width="50">{{row[1]}}</td>
+            <td width="90">{{row[2]}}</td>
+            <td width="80">{{row[3]}}</td>
+            {% if row[4] is not none %}
+                <td width="200">{{row[4]}}</td>
+            {% else %}
+                <td width="200"> </td>
+            {% endif %}
+            {% if row[5] is not none %}
+                <td width="550">{{row[5]}}</td>
+            {% else %}
+                <td width="550"> </td>
+            {% endif %}
+            <td width="200">{{row[6]}}</td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+</table>
+
+
+<br><br>
+<h1> Orders Missed OSSD</h1>
+<img alt='image: outlier chart' src="{{ outlier_pack }}" width="1100">
+<br>
+<strong><big>Top {{top_x}} aging details:</big></strong>
+<br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="80">Organization</td>
+            <td width="50">BU</td>
+            <td width="90">PO_Number</td>
+            <td width="80">Ageing days</td>
+            <td width="120">Order holds</td>
+            <td width="850">Comments</td>
+        </tr>
+
+        {% for row in not_packed %}
+        <tr>
+            <td width="80">{{row[0]}}</td>
+            <td width="50">{{row[1]}}</td>
+            <td width="90">{{row[2]}}</td>
+            <td width="80">{{row[3]}}</td>
+            {% if row[4] is not none %}
+                <td width="120">{{row[4]}}</td>
+            {% else %}
+                <td width="120"> </td>
+            {% endif %}
+            {% if row[5] is not none %}
+                <td width="850">{{row[5]}}</td>
+            {% else %}
+                <td width="850"> </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% if china_outlier %}
+<br><br>
+<h1> Orders missed recommit </h1>
+<img alt='image: outlier chart' src="{{ outlier_recommit }}" width="1100">
+<br>
+<strong>Missing recommit details:</strong>
+<br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+        <tr>
+            <td width="80">Organization</td>
+            <td width="50">BU</td>
+            <td width="90">PO_NUMBER</td>
+            <td width="80">Aging days</td>
+            <td width="120">Order holds</td>
+            <td width="800">Comments</td>
+        </tr>
+
+        {% for row in missed_recommit %}
+        <tr>
+            <td width="80">{{row[0]}}</td>
+            <td width="50">{{row[1]}}</td>
+            <td width="90">{{row[2]}}</td>
+            {% if row[3]!=nan %}
+                <td width="80">{{row[3]}}</td>
+            {% else %}
+                <td width="80">  </td>
+            {% endif %}
+            {% if row[4]!=nan %}
+                <td width="120">{{row[4]}}</td>
+            {% else %}
+                <td width="120">  </td>
+            {% endif %}
+            <td width="800">{{ row[5] }} </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+ </main>
+ <br><br>
+
+
+
+
+	
+	<footer>
+    {% block footer %}
+        <small> 2019 APJC DF | APJC Backlog Outliers | Datasource: UOV 3A4
+        </small>
+    {% endblock %}
+</footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+        <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="20%"></td>
+                <td width="45%">
+                    <span style="font-size: large;"> <strong>Select reports to subscribe (also those you wish to keep):</strong></span><br>
+                    {{ form.sub_backlog }}&nbsp;{{ form.sub_backlog.label }} &nbsp;
+                    (<span style="font-size: small;">
+                        {{ form.backlog_apjc }}&nbsp;{{ form.backlog_apjc.label}}&nbsp;&nbsp;
+                        {{ form.backlog_emea }}&nbsp;{{ form.backlog_emea.label}}&nbsp;&nbsp;
+                        {{ form.backlog_americas }}&nbsp;{{ form.backlog_americas.label}}
+                    </span>)<br>
+                    {{ form.sub_wnbu_compliance }}&nbsp;{{ form.sub_wnbu_compliance.label }}
+                    (<span style="font-size: small;">
+                        {{ form.wnbu_compliance_apjc }}&nbsp;{{ form.wnbu_compliance_apjc.label}}&nbsp;&nbsp;
+                        {{ form.wnbu_compliance_emea }}&nbsp;{{ form.wnbu_compliance_emea.label}}&nbsp;&nbsp;
+                        {{ form.wnbu_compliance_americas }}&nbsp;{{ form.wnbu_compliance_americas.label}}
+                    </span>)<br>
+                    {{ form.sub_config }}&nbsp;{{ form.sub_config.label }}
+                    (<span style="font-size: small;">
+                        {{ form.config_apjc }}&nbsp;{{ form.config_apjc.label}}&nbsp;&nbsp;
+                        {{ form.config_emea }}&nbsp;{{ form.config_emea.label}}&nbsp;&nbsp;
+                        {{ form.config_americas }}&nbsp;{{ form.config_americas.label}}
+                    </span>)<br>
+
+                    {{ form.backlog_ranking }}&nbsp;{{ form.backlog_ranking.label }}
+                    (<span style="font-size: small;">
+                        {{ form.backlog_ranking_org.label }}&nbsp;{{ form.backlog_ranking_org }}
+                    </span>)<br><br>
+
+                    <span style="font-size: large;"> {{form.email_add_other.label }}</span><br>
+                    {{ form.email_add_other(rows=3,col=20,class='form-control') }} <br>
+
+                </td>
+                <td width="5%"></td>
+                <td width="30%" valign="middle">
+                	{{ form.submit_add (class='btn btn-primary') }}
+                </td>
+            </tr>
+        </table>
+
+        {% if user== 'Ken Wang' %}
+            <br>
+            <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="90%">
+                <tr>
+                    <td width="20%"></td>
+                    <td width="45%">
+                        <span style="font-size: large;"> (Admin) Remove email - put in id to delete:</span><br>
+                        {{ form.email_remove(class='form-control') }} <br>
+                    </td>
+                    <td width="5%"></td>
+                    <td width="30%" valign="middle">
+                        {{ form.submit_remove (class='btn btn-primary') }}
+                    </td>
+                </tr>
+            </table>
+        {% endif %}
+
+        <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="80%">
+            <tr>
+                  <td align="left" width="95%">
+                        {% if get_flashed_messages()|length>0 %}
+                          {% for message in get_flashed_messages(with_categories=True) %}
+                            <div class="alert alert-{{ message[0] }}" role="alert">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                {{ message[1] }}
+                            </div>
+                          {% endfor %}
+                        {% endif %}
+                  </td>
+            </tr>
+        </table>
+
+        {% if df_subscription_data|length>0 %}
+            <br><br><br>
+            <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
+                <tr>
+                    {% for col in df_subscription_header %}
+                        <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                    {% endfor %}
+                </tr>
+
+                {% for row in df_subscription_data %}
+                    <tr>
+                        {% for col in row %}
+                            <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+        <br>
+
+</form>
+{% endblock %}
+
+{% block flash_message %}
+    <!-- set up falsh separately above -->
+{% endblock %}
+
+{% block empty_space %}
+    <br>
+{% endblock %}

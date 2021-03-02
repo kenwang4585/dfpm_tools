@@ -1,0 +1,68 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
+<body>
+<main>
+<br>
+   <!-- <span style="font-size: large;color: blue">Trial run...pls feedback if you see issues</span> -->
+    <br><br>
+    <!--
+    <img alt='image: Addressable/ Not addressable backlog summary' src="{{ banner_addr }}" width="1000">
+    -->
+    <table>
+        <tbody>
+        <tr>
+            <td width="1000" bgcolor="#4682b4" style="font-size: xx-large; color: #f8f9fa;" align="center">
+                Regional Backlog Dashboard
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p><a href="http://10.123.219.115/backlog" target="_blank">Click for addressable backlog details</a></p>
+
+<table>
+    <tbody>
+
+        <tr> <img alt='image: addr_summary'  src="{{ emea_add_summary }}" width="1000"></tr>
+        <tr> <img alt='image: addr_trending' src="{{ emea_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_fcz'      src="{{ fcz_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: fcz_trending'  src="{{ fcz_add_trending }}" width="1000"></tr>
+        <tr> <img alt='image: addr_fve'      src="{{ fve_add_summary }}" width="1000"> </tr>
+        <tr> <img alt='image: fve_trending'  src="{{ fve_add_trending }}" width="1000"></tr>
+
+    </tbody>
+</table>
+
+<!--
+<img alt='image: Backlog summary by CRD, Target FCD and Current FCD' src="{{ banner_by_label }}" width="1000">
+
+<table>
+    <tbody>
+        <tr>
+            <td ><img alt='image: rev_apjc' src="{{ apjc2 }}" width="333"></td>
+            <td ><img alt='image: rev_foc' src="{{ foc2 }}" width="333"></td>
+            <td ><img alt='image: rev_fdo' src="{{ fdo2 }}" width="333"></td>
+        </tr>
+        <tr>
+            <td ><img alt='image: rev_jpe' src="{{ jpe2 }}" width="333"></td>
+            <td ><img alt='image: rev_cth' src="{{ cth2 }}" width="333"></td>
+            <td ><img alt='image: rev_shk' src="{{ shk2 }}" width="333"></td>
+        </tr>
+
+    </tbody>
+</table>
+-->
+
+
+ </main>
+ <footer>
+    {% block footer %}
+        <span style="alignment: center"><small>
+            Regional backlog summary | Datasource: UOV 3A4 |
+            Contact kwang2 for reporting issues | 2020
+        </small></span>
+    {% endblock %}
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+.env
+.idea
+.ipynb_checkpoints
+.DS_Store
+__pycache__/
+output_file/*
+output_file/*
+upload_file/*
+supply_file/*
+which/*
+chart/*
+logs/*
+!.keep

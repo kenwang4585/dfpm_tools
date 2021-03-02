@@ -1,0 +1,95 @@
+
+<!-- Ken wang, Jan, 2020 -->
+<html>
+    <head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+        {% block title %}
+            <title>DFPM tools</title>
+        {% endblock %}
+
+        {% block style %}
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/%s.min.css' % request.cookies.get('theme', 'perfect_blue')) }}"
+                  type="text/css">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">
+        {% endblock %}
+
+        <table width="100%">
+            <tr>
+                <td width="10%"bgcolor="#1B4F72" align="center">
+                    <a href="{{ url_for('admin') }}" target=''><img src="{{ url_for('static', filename='logo1.png')}}" width="60"></a>
+                </td>
+                <td width="60%" bgcolor="#1B4F72" align="left">
+                    <br>
+                    <span style="color: #f5f5f5; font-size: x-large"><strong>&nbsp;DFPM automation tools</strong> &nbsp;&nbsp;{{ subtitle }}</span>
+
+                    <br><br>
+                </td>
+                <td width="25%" bgcolor="#1B4F72" align="right" valign="middle">
+                        <span style="color: #f5f5f5; font-size: medium">
+                            Welcome, {{ user }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            <a href="{{ url_for('subscribe') }}" target=''>Subscribe</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            <a href="{{ url_for('global_app') }}" target=''>Home</a>
+                        </span>
+                </td>
+                <td width="5%" bgcolor="#1B4F72" align="right" valign="middle"></td>
+            </tr>
+        </table>
+    </head>
+
+    <body>
+        {% block content %}
+        {% endblock %}
+
+        {% block flash_message %}
+            <!-- below for flashed messages -->
+            <table style="border-collapse:collapse" border="0" cellspacing="0px" align="center">
+                <tbody>
+                    <tr>
+                      <td width="1255" align="left">
+                          <main class="container">
+                            {% if get_flashed_messages()|length>0 %}
+                              {% for message in get_flashed_messages(with_categories=True) %}
+                                <div class="alert alert-{{ message[0] }}" role="alert">
+                                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                    {{ message[1] }}
+                                </div>
+                              {% endfor %}
+                            {% endif %}
+                          </main>
+                      </td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endblock %}
+
+        {% block content_below_msg %}
+        {% endblock %}
+
+        {% block empty_space %}
+        {% endblock %}
+
+
+        {% block scripts %}
+            <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.1.slim.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+        {% endblock %}
+
+        {% block footer %}
+            <footer>
+                <p align="center" style="font-size: small">
+                    <a href="{{ url_for('backlog_ranking')}}" target="">BACKLOG_RANKING</a> |
+                    <a href="{{ url_for('dfpm_app')}}" target="">DFPM_3A4</a> |
+                    <a href="{{ url_for('file_download')}}" target="">DOWNLOADS</a> |
+                    <a href="{{ url_for('backlog')}}" target="">ADDRESSABLE_BACKLOG</a> |
+                    <a href="https://app.smartsheet.com/sheets/35WQQCXQCpG4WRgm95q5p6C4V8vwFWCRGFXcgCq1?view=grid" target="_blank">FOC/FDO Exception priority SS</a> |
+                    <a href="https://app.smartsheet.com/sheets/GFg4rwgFjHRQ5VFm6fGMW95QFWCff4rRfR698fC1?view=grid" target="_blank">CM CTB</a> |
+                    <a href="https://app.smartsheet.com/sheets/4xmjGwfp86gvV9V4x7HG2rQ79qvHg9qHJX8FGP61?view=grid" target="_blank">WNBU COMPLIANCE TABLE</a>
+                </p>
+            </footer>
+        {% endblock %}
+
+    </body>
+
+</html>

@@ -1,0 +1,103 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
+<body>
+	<br>
+	<strong>WNBU compliance hold PO release readiness</strong><br>
+	- based on compliance smartsheet table maintained by Tae Woo.</h1>
+<br><br>
+
+<h2> PO can be released: </h2>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tr>
+        {% for col in ok_release_header %}
+            <td>{{ col }}</td>
+        {% endfor %}
+    </tr>
+    {% for row in ok_release_data %}
+        <tr>
+            {% for col in row %}
+                <td>{{ col }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+
+<br>
+<br>
+<h2> PO have to keep on hold: </h2>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tr>
+        {% for col in keep_on_hold_header %}
+            <td>{{ col }}</td>
+        {% endfor %}
+    </tr>
+    {% for row in keep_on_hold_data %}
+        <tr>
+            {% for col in row %}
+                <td>{{ col }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+
+{% if country_missing|length>0 %}
+	<br><br>
+	<h2> PO with country missing: </h2>
+	<table style="border-collapse:collapse" border="1" cellspacing="0px">
+        <tr>
+        {% for col in ok_release_header %}
+            <td>{{ col }}</td>
+        {% endfor %}
+        </tr>
+        {% for row in country_missing_data %}
+            <tr>
+                {% for col in row %}
+                    <td>{{ col }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+
+<br>
+<br>
+<h2> Compliance readiness - Smartsheet table maintained by Tae Woo: </h2>
+    <li>EVERY: all countries are ready</li>
+    <li>DONT SHIP: all countries are NOT ready</li>
+    <li>Country code: Not ready countries</li>
+    <br>
+<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tr>
+        {% for col in compliance_table_header %}
+            <td>{{col}}</td>
+        {% endfor %}
+    </tr>
+    {% for row in compliance_table_data %}
+        <tr>
+            {% for col in row %}
+                {% if col==None %}  
+                    <td><font color='red'>{{col}}</font></td>
+                {% else %}
+                    <td>{{col}}</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+
+
+
+
+ </main>
+ <br><br>
+
+
+	<footer>
+    {% block footer %}
+        <small>&copy; 2019 | Compliance readiness | <a href="https://app.smartsheet.com/b/home?lx=EAr8rM_ZxGkIaypQC5VrzKbwhejDKE-WshN23LmrpyE&mt=16" title="compliace">Compliance smartsheet table</a> | kwang2
+        </small>
+    {% endblock %}
+    </footer>
+</body>
+</html>

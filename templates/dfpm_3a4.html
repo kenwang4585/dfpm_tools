@@ -1,0 +1,36 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
+<body>
+	    <span style="color: #007bff;font-size: large">
+            <strong>Note:</strong><br>
+            <li>Your 3a4 file ({{ file_3a4 }}) has been created and can be downloaded from <a href="http://10.123.219.115/file_download" target="_blank">HERE</a></li>
+            <li>Addressable backlog details pls find from <a href="http://10.123.219.115/backlog" target="_blank">HERE</a></li>
+        </span>
+        <br><br>
+<!--
+    {% for df in addr_df_list %}
+
+	<table style="border-collapse:collapse" border="1" cellspacing="0px">
+    <tbody>
+    	<tr><h3>Addressable backlog: {{df.columns[1]}}</h3></tr>
+    	<tr> 
+    		{%for col in df.columns %} <td width="65"> <strong>{{col}}</strong> </td> {% endfor %}
+    	</tr>
+        
+        {% for row in df[:12].values %}
+        <tr> 
+        	{% for col in row %}     	
+            	<td  width="65">{{col}}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+
+    </tbody>
+    </table>
+    <br>
+    {% endfor %}
+-->
+
+
+</body>
+</html>

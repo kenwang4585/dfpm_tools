@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html >
+<head> 
+ <meta charset="UTF-8"> 
+ <title>APJC DFPM</title> 
+</head>
+
+<body>
+ <div>
+ 	<h1>Backlog Summaries</h1> 
+ 	<!-- Main Input For Receiving Query to our ML --> 
+ 	<form action="{{ url_for('predict')}}"method="post">
+ 		<p>Please put in your username: <input type="text" name="CEC username" placeholder="CEC username" required="required" /> 
+ 		</p>
+ 		<p>Please select the 3a4 file you will use:
+ 		<input type="file" name="sales in first month" placeholder="3a4 file" required="required" />
+ 		</p>
+ 		<br>
+ 		<button type="submit" class="btn btn-primary btn-block btn-large"><h3>Predict sales in third month</h3></button> 
+ 	</form> 
+
+<br><br>
+ <form method="post" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+    {{ form.file }}
+    <br><br>
+	{% get_session_messages() %}
+	<br>
+
+	{{ form.submit }}
+
+</form>
+
+ <br> 
+ <br> 
+ {{ prediction_text }} 
+ </div>
+ </body>
+ </html>
