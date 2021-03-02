@@ -99,7 +99,7 @@ def global_app():
         sender = region + ' DF'
         if running_option=='formal':
             # read email from the subscription DB
-            backlog_dashboard_emails_global,wnbu_compliance_check_emails_global,config_check_emails_global = read_subscription_data()
+            backlog_dashboard_emails_global,wnbu_compliance_check_emails_global,config_check_emails_global= read_subscription_by_region()
             backlog_dashboard_emails=backlog_dashboard_emails_global[region]
             wnbu_compliance_emails=wnbu_compliance_check_emails_global[region]
             config_check_emails = config_check_emails_global[region]
@@ -367,6 +367,7 @@ def backlog_ranking():
 
     if login_user == None:
         login_user = 'unknown'
+        login_name = 'unknown'
 
     if form.validate_on_submit():
         start_time_=pd.Timestamp.now()
@@ -434,7 +435,14 @@ def backlog_ranking():
                                        order_col='SO_SS',with_dollar=False)
 
             # save the file and send the email
-            create_and_send_3a4_backlog_ranking(df_3a4, cm_emails, org, email_option, login_user, login_name)
+            # send email
+            if email_option == 'to_me':
+                to_address = [login_user + '@cisco.com']
+            else:
+                to_address = read_subscription_by_site(org)
+                if len(to_address)==0:
+                    to_address = [login_user + '@cisco.com']
+            create_and_send_3a4_backlog_ranking(df_3a4, to_address, org, login_user, login_name)
 
             msg='3A4 backlog ranking has been generated and sent to the defined emails!'
             flash(msg,'success')
@@ -477,6 +485,7 @@ def dfpm_app():
 
     if login_user == None:
         login_user = 'unknown'
+        login_name = 'unknown'
 
     # read DFPM mapping
     df_dfpm_mapping = read_table('dfpm_mapping')
@@ -591,9 +600,10 @@ def dfpm_app():
                     #             'FDO': ['kwang2@cisco.com']}  # testing
                     cm_emails_to = {}
                     for org in cm_outlier_org:
-                        if org in cm_emails.keys():
-                            cm_emails_to[org] = cm_emails[org]
-                        else:   # if not set, only send to self
+                        site_email=read_subscription_by_site(org)
+                        if len(site_email)>0:
+                            cm_emails_to[org]=site_email
+                        else:
                             cm_emails_to[org] = [login_user + '@cisco.com']
 
                     # remove options
@@ -683,6 +693,7 @@ def documents():
 
     if login_user == None:
         login_user = 'unknown'
+        login_name = 'unknown'
 
     fname=os.path.join(os.getcwd(),'3a4_automation_documentation.xlsx')
     df1=pd.read_excel(fname,sheet_name='3a4_col_processing')

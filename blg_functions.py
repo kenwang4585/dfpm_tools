@@ -221,9 +221,9 @@ def add_cancel_cols(df):
     return df
 
 
-def read_subscription_data():
+def read_subscription_by_region():
     """
-    Read the subscrition db for emails
+    Read the subscrition db for emails by region
     """
     df_subscription = read_table('subscription')
 
@@ -276,6 +276,29 @@ def read_subscription_data():
     config_check_emails_global['Americas']=config_americas
 
     return backlog_dashboard_emails_global,wnbu_compliance_check_emails_global,config_check_emails_global
+
+def read_subscription_by_site(org):
+    """
+    Read the subscrition db for emails by org code
+    """
+    df_subscription = read_table('subscription')
+
+    cm_emails={}
+    ranking_cm =[] # based on specific org
+
+    for row in df_subscription.itertuples():
+        email=row.Email
+        tasks=eval(row.Subscription)
+        for key,values in tasks.items():
+            if key=='Backlog ranking':
+                for value in values:
+                    if value==org:
+                        ranking_cm.append(email)
+
+    cm_emails=ranking_cm
+
+    return cm_emails
+
 
 def commonize_and_create_main_item(df, col, new_col):
     '''
@@ -2849,7 +2872,7 @@ def create_and_send_cm_3a4(df_3a4, cm_emails_to, outlier_elements,outlier_chart_
 
 
 
-def create_and_send_3a4_backlog_ranking(df_3a4, cm_emails_to, org, email_option, login_user,login_name):
+def create_and_send_3a4_backlog_ranking(df_3a4, to_address, org, login_user,login_name):
     '''
     Create 3a4 backlog ranking file and send via email
     '''
@@ -2863,17 +2886,6 @@ def create_and_send_3a4_backlog_ranking(df_3a4, cm_emails_to, org, email_option,
 
     # 添加文件到附件列表
     att_files=[(base_dir_output, fname)]  # List of tuples (path, file_name)
-
-    # send email
-    if email_option == 'to_me':
-        to_address=[login_user + '@cisco.com']
-    else:
-        if org in cm_emails_to.keys():
-            to_address =cm_emails_to[org]
-            to_address.append(login_user + '@cisco.com')
-        else:
-            to_address = [login_user + '@cisco.com']
-
     subject = org + ' 3a4 backlog ranking'
     html = 'backlog_ranking_email.html'
 

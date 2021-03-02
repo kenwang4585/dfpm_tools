@@ -302,17 +302,11 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
     df_error_tracker_old_full = pd.read_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
     df_error_tracker_old_full.loc[:, 'Report date'] = df_error_tracker_old_full['Report date'].map(lambda x: x.date())
 
-    df_error_tracker_open = df_error_tracker_old_full[df_error_tracker_old_full.PO_NUMBER.isin(df_3a4.PO_NUMBER.unique())].copy()
-
-    # pick up the orders holds from 3a4
-    df_error_tracker_open.loc[:,'ORDER_HOLDS']=df_error_tracker_open.PO_NUMBER.map(lambda x: df_3a4[(df_3a4.PO_NUMBER==x)&(df_3a4.OPTION_NUMBER==0)].ORDER_HOLDS.values[0])
-
-    # create the new order error df
+    # create the new order error df and old open error df
     df_error_new = df_3a4[
-        (df_3a4.PO_NUMBER.isin(wrong_po_dict.keys())) & (~df_3a4.PO_NUMBER.isin(df_error_tracker_open.PO_NUMBER))].copy()
-
-    print(df_error_new)
-
+        (df_3a4.PO_NUMBER.isin(wrong_po_dict.keys())) & (~df_3a4.PO_NUMBER.isin(df_error_tracker_old_full.PO_NUMBER))].copy()
+    df_error_old = df_3a4[
+        (df_3a4.PO_NUMBER.isin(wrong_po_dict.keys())) & (df_3a4.PO_NUMBER.isin(df_error_tracker_old_full.PO_NUMBER)) & (df_3a4.OPTION_NUMBER==0)].copy()
 
     df_error_new.loc[:, 'Config_error'] = np.where(df_error_new.OPTION_NUMBER == 0,
                                                    df_error_new.PO_NUMBER.map(lambda x: wrong_po_dict.get(x)),
@@ -321,11 +315,18 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
                                                   pd.Timestamp.now().date(),
                                                   None)
 
+    report_date_dic={}
+    for row in df_error_tracker_old_full.itertuples():
+        report_date_dic[row.PO_NUMBER]=[row.Config_error,row._11]
+    print(report_date_dic)
+    df_error_old.loc[:, 'Report date'] = df_error_old.PO_NUMBER.map(lambda x:report_date_dic.get(x)[1])
+    df_error_old.loc[:, 'Config_error'] = df_error_old.PO_NUMBER.map(lambda x: report_date_dic.get(x)[0])
+
     df_error_new = df_error_new[col].copy()
-    df_error_tracker_open = df_error_tracker_open[col].copy()
+    df_error_old = df_error_old[col].copy()
 
     df_error_new.set_index('ORGANIZATION_CODE', inplace=True)
-    df_error_tracker_open.set_index('ORGANIZATION_CODE', inplace=True)
+    df_error_old.set_index('ORGANIZATION_CODE', inplace=True)
 
     qty_new_error = df_error_new[df_error_new.OPTION_NUMBER == 0].shape[0]
 
@@ -347,16 +348,16 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
         fname_new_error = ''
 
     df_error_new.reset_index(inplace=True)
-    df_error_tracker_open.reset_index(inplace=True)
+    df_error_old.reset_index(inplace=True)
     df_error_new = df_error_new[df_error_new.OPTION_NUMBER == 0].copy()
     col.remove('OPTION_NUMBER')
     df_error_new=df_error_new[col].copy()
     df_error_new.sort_values(['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PRODUCT_FAMILY','PRODUCT_ID'],inplace=True)
-    df_error_tracker_open=df_error_tracker_open[col].copy()
-    df_error_tracker_open.ORDER_HOLDS.fillna('', inplace=True)
+    df_error_old=df_error_old[col].copy()
+    df_error_old.ORDER_HOLDS.fillna('', inplace=True)
     df_error_new.ORDER_HOLDS.fillna('', inplace=True)
 
-    return qty_new_error, df_error_new, df_error_tracker_open, fname_new_error
+    return qty_new_error, df_error_new, df_error_old, fname_new_error
 
 def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_error,login_user,to_address,sender,notes):
     """
@@ -404,9 +405,14 @@ def identify_config_error_po(df_3a4,config_rules):
     wrong_po_dict = {}
     pf_checked = []
 
+    # pick out ATO PO
+    df_pivot=df_3a4.pivot_table(index='PO_NUMBER',values='OPTION_NUMBER',aggfunc=sum)
+    ato_po=df_pivot[df_pivot.OPTION_NUMBER>0].index
+    df_ato=df_3a4[df_3a4.PO_NUMBER.isin(ato_po)].copy()
+
     for org_pf_func in config_rules:
         start = time.time()
-        dfx = df_3a4[(~df_3a4.ORGANIZATION_CODE.isin(org_pf_func[0]))&(df_3a4.main_pf.isin(org_pf_func[1]))].copy()  # used in below config_func
+        dfx = df_ato[(~df_ato.ORGANIZATION_CODE.isin(org_pf_func[0]))&(df_ato.main_pf.isin(org_pf_func[1]))].copy()  # used in below config_func
         if dfx.shape[0] > 0:
             pf_checked += org_pf_func[1]
             print('Checking config on PF: {}'.format(org_pf_func[1]))

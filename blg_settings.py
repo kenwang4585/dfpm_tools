@@ -283,7 +283,7 @@ col_3a4_must_have_backlog_ranking=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT
                                    'PACKOUT_QUANTITY','C_UNSTAGED_QTY','REVENUE_NON_REVENUE','BUP_RANK','OTM_SHIPPING_ROUTE_CODE',
                                    'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','SECONDARY_PRIORITY','FINAL_ACTION_SUMMARY',]
 
-col_3a4_backlog_ranking_output_col=['ORGANIZATION_CODE','BUSINESS_UNIT','PRODUCT_FAMILY','PRODUCT_ID', 'PO_NUMBER','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD', 'ORDER_HOLDS',
+col_3a4_backlog_ranking_output_col=['ORGANIZATION_CODE', 'SO_SS','PO_NUMBER','BUSINESS_UNIT','PRODUCT_FAMILY','PRODUCT_ID','ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD', 'ORDER_HOLDS',
                                    'PACKOUT_QUANTITY','C_UNSTAGED_QTY','REVENUE_NON_REVENUE','BUP_RANK','OTM_SHIPPING_ROUTE_CODE',
                                    'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE']
 
