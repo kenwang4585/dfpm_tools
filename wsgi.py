@@ -103,6 +103,12 @@ def global_app():
             backlog_dashboard_emails=backlog_dashboard_emails_global[region]
             wnbu_compliance_emails=wnbu_compliance_check_emails_global[region]
             config_check_emails = config_check_emails_global[region]
+            if len(backlog_dashboard_emails)==0:
+                backlog_dashboard_emails = [login_user + '@cisco.com']
+            if len(wnbu_compliance_emails)==0:
+                wnbu_compliance_emails = [login_user + '@cisco.com']
+            if len(config_check_emails)==0:
+                config_check_emails = [login_user + '@cisco.com']
         else:
             backlog_dashboard_emails = [login_user + '@cisco.com']
             wnbu_compliance_emails = [login_user + '@cisco.com']
