@@ -318,7 +318,7 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
     report_date_dic={}
     for row in df_error_tracker_old_full.itertuples():
         report_date_dic[row.PO_NUMBER]=[row.Config_error,row._11]
-    print(report_date_dic)
+
     df_error_old.loc[:, 'Report date'] = df_error_old.PO_NUMBER.map(lambda x:report_date_dic.get(x)[1])
     df_error_old.loc[:, 'Config_error'] = df_error_old.PO_NUMBER.map(lambda x: report_date_dic.get(x)[0])
 

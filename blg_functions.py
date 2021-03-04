@@ -283,7 +283,6 @@ def read_subscription_by_site(org):
     """
     df_subscription = read_table('subscription')
 
-    cm_emails={}
     ranking_cm =[] # based on specific org
 
     for row in df_subscription.itertuples():

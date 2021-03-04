@@ -4,7 +4,6 @@ import os
 
 
 engine = create_engine(os.getenv('DB_URI'))
-print(engine)
 #print(engine.table_names())
 
 def read_table(table_name,columns='*',show_last=False,criteria_string=None,records_limit=None):
