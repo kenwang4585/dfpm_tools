@@ -483,146 +483,7 @@ def get_file_info_on_drive(base_path,keep_hours=100):
     return df_file_info
 
 
-### Below is also updated and depracated
-def ss_ranking_overall_new(df_3a4,ss_exceptional_priority,ranking_col, lowest_priority_cat,order_col='SO_SS', new_col='ss_overall_rank'):
-    """
-    根据priority_cat,OSSD,FCD, REVENUE_NON_REVENUE,C_UNSTAGED_QTY,按照ranking_col的顺序对SS进行排序。最后放MFG_HOLD订单.
-    CTB和PCBA allocation用相同的方式在开始处删除cancelled的订单；summary_3a4不删除cancelled订单，不过在结尾处清除cancelled订单的ranking#
-    :param df_3a4:
-    :param ss_exceptional_priority: the exceptional priority from smartsheet
-    :param ranking_col:e.g. ['priority_rank', 'ORIGINAL_FCD_NBD_DATE', 'CURRENT_FCD_NBD_DATE','rev_non_rev_rank',
-                        'C_UNSTAGED_QTY', 'SO_SS','PO_NUMBER']
-    :param lowest_priority_cat: {col: value} that need to put to the last when ranking
-    :param order_col:'SO_SS'
-    :param new_col:'ss_overall_rank'
-    :return: df_3a4
-    """
-     # Below create a rev_rank for reference -  currently not used in overall ranking
-    ### change non-rev orders unstaged $ to 0
-    df_3a4.loc[:,'C_UNSTAGED_DOLLARS']=np.where(df_3a4.REVENUE_NON_REVENUE == 'NO',
-                                                0,
-                                                df_3a4.C_UNSTAGED_DOLLARS)
-
-    #### 生成ss_unstg_rev并据此排序
-    # 计算ss_unstg_rev
-    ss_unstg_rev = {}
-    df_rev = df_3a4.pivot_table(index='SO_SS', values='C_UNSTAGED_DOLLARS', aggfunc=sum)
-    for ss, rev in zip(df_rev.index, df_rev.values):
-        ss_unstg_rev[ss] = rev[0]
-    df_3a4.loc[:, 'ss_unstg_rev'] = df_3a4.SO_SS.map(lambda x: ss_unstg_rev[x])
-
-    """
-    # 计算po_rev_unit - non revenue change to 0
-    df_3a4.loc[:, 'po_rev_unit'] = np.where(df_3a4.REVENUE_NON_REVENUE == 'YES',
-                                            df_3a4.SOL_REVENUE / df_3a4.ORDERED_QUANTITY,
-                                            0)
-
-    # 计算ss_rev_unit: 通过po_rev_unit汇总
-    ss_rev_unit = {}
-    dfx_rev = df_3a4.pivot_table(index='SO_SS', values='po_rev_unit', aggfunc=sum)
-    for ss, rev in zip(dfx_rev.index, dfx_rev.values):
-        ss_rev_unit[ss] = rev[0]
-    df_3a4.loc[:, 'ss_rev_unit'] = df_3a4.SO_SS.map(lambda x: int(ss_rev_unit[x]))
-    """
-
-    # create rank#
-    rank = {}
-    order_list = df_3a4.sort_values(by='ss_unstg_rev', ascending=False).SO_SS.unique()
-    for order, rk in zip(order_list, range(1, len(order_list) + 1)):
-        rank[order] = rk
-    df_3a4.loc[:, 'ss_rev_rank'] = df_3a4.SO_SS.map(lambda x: rank[x])
-
-    # below creates overall ranking col
-    ### Step1: 重新定义priority order及排序
-    df_3a4.loc[:, 'priority_cat'] = np.where(df_3a4.SECONDARY_PRIORITY.isin(['PR1', 'PR2', 'PR3']),
-                                             df_3a4.SECONDARY_PRIORITY,
-                                             np.where(df_3a4.FINAL_ACTION_SUMMARY == 'TOP 100',
-                                                      'TOP 100',
-                                                      np.where(
-                                                          df_3a4.FINAL_ACTION_SUMMARY == 'LEVEL 4 ESCALATION PRESENT',
-                                                          'L4',
-                                                          np.where(df_3a4.BUP_RANK.notnull(),
-                                                                   'BUP',
-                                                                   None)
-                                                          )
-                                                      )
-                                             )
-    #### Update below DX/DO orders to PR1/PR2 due to current PR1/2/3 not updated when order change to DPAS from others
-    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DX','TAA-DX']))&(df_3a4.priority_cat.isnull()),
-                                           'PR1',
-                                           df_3a4.priority_cat)
-    df_3a4.loc[:, 'priority_cat'] = np.where((df_3a4.DPAS_RATING.isin(['DO', 'TAA-DO'])) & (df_3a4.priority_cat.isnull()),
-                                            'PR2',
-                                            df_3a4.priority_cat)
-
-    #### Give them a rank
-    df_3a4.loc[:, 'priority_rank'] = np.where(df_3a4.priority_cat=='PR1',
-                                            1,
-                                            np.where(df_3a4.priority_cat =='PR2',
-                                                     2,
-                                                     np.where(df_3a4.priority_cat =='PR3',
-                                                              3,
-                                                              np.where(df_3a4.priority_cat == 'TOP 100',
-                                                                        4,
-                                                                        np.where(df_3a4.priority_cat == 'L4',
-                                                                                5,
-                                                                                np.where(df_3a4.priority_cat=='BUP',
-                                                                                         6,
-                                                                                         None)
-                                                                                )
-                                                                        )
-                                                                )
-                                                     )
-                                              )
-
-    ##### Step2: Give revenue/non-revenue a rank
-    df_3a4.loc[:,'rev_non_rev_rank']=np.where(df_3a4.REVENUE_NON_REVENUE=='YES', 0, 1)
-
-    #### Step3: Integrate ranking from smartsheet
-    df_3a4.loc[:, 'priority_rank'] = np.where(df_3a4.SO_SS.isin(ss_exceptional_priority.keys()),
-                                              df_3a4.SO_SS.map(lambda x: ss_exceptional_priority.get(x)),
-                                              df_3a4.priority_rank)
-
-    ##### Step4: sort the SS per ranking columns and Put MFG hold orders at the back
-    df_3a4.sort_values(by=ranking_col, ascending=True, inplace=True)
-
-
-
-
-    # Put lowest priority orders at the back -- referring lowest_priority_cat in setting
-    # !!!! different from CTB&pcba allocation
-    df_low_prority=pd.DataFrame()
-    for col_name, col_val in lowest_priority_cat.items():
-        dfx=df_3a4[df_3a4[col_name].isin(col_val)]
-        df_low_prority=pd.concat([df_low_prority,dfx],sort=False)
-        df_3a4=df_3a4[~df_3a4[col_name].isin(col_val)].copy()
-    df_3a4 = pd.concat([df_3a4, df_low_prority], sort=False)
-
-    """
-    ss_w_po_hold = df_3a4[df_3a4.ADDRESSABLE_FLAG.isin(['MFG_HOLD', 'PO_CANCELLED'])].SO_SS.unique()
-    df_hold=df_3a4[df_3a4.SO_SS.isin(ss_w_po_hold)].copy()  # full ss will be picked out even if just some PO with hold
-    df_3a4=df_3a4[~df_3a4.SO_SS.isin(ss_w_po_hold)].copy()
-    df_3a4=pd.concat([df_3a4,df_hold],sort=False)
-    """
-
-
-
-
-    ##### Step5: create rank# and put in 3a4
-    rank = {}
-    order_list = df_3a4[order_col].unique()
-    for order, rk in zip(order_list, range(1, len(order_list) + 1)):
-        rank[order] = rk
-    df_3a4.loc[:, new_col] = df_3a4[order_col].map(lambda x: rank[x])
-
-    ##### Step6: !!! unique for summary_3a4 - remove rank for cancelled orders
-    df_3a4.loc[:, new_col]=np.where(df_3a4.ADDRESSABLE_FLAG=='PO_CANCELLED',
-                                    None,
-                                    df_3a4[new_col])
-
-    return df_3a4
-
-#  changed to below Jan version which include riso_ranking
+#  Depracated ----- changed to below Jan version which include riso_ranking
 def ss_ranking_overall_new_december(df_3a4,ss_exceptional_priority,ranking_col, lowest_priority_cat,order_col='SO_SS', new_col='ss_overall_rank'):
     """
     按照ranking_col的顺序对SS进行排序。最后放MFG_HOLD订单.
@@ -675,10 +536,14 @@ def ss_ranking_overall_new_december(df_3a4,ss_exceptional_priority,ranking_col, 
                                                                         'YE',
                                                                          None))))
 
-    #### Update below DO/DX orders to PR1 due to current PR1/2/3 not updated when order change to DPAS from others
-    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DO','DX','TAA-DO','TAA-DX']))&(df_3a4.priority_cat.isnull()),
+    #### Update below DX/DO orders to PR1/PR2 due to current PR1/2/3 not updated when order change to DPAS from others
+    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DX','TAA-DX']))&(df_3a4.priority_cat.isnull()),
                                            'PR1',
                                            df_3a4.priority_cat)
+    df_3a4.loc[:, 'priority_cat'] = np.where((df_3a4.DPAS_RATING.isin(['DO', 'TAA-DO'])) & (df_3a4.priority_cat.isnull()),
+                                            'PR2',
+                                            df_3a4.priority_cat)
+
     #### Step2: Generate rank for priority orders
     df_3a4.loc[:, 'priority_rank_top'] = np.where(df_3a4.priority_cat == 'PR1',
                                               1,
@@ -781,10 +646,14 @@ def ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ranking_col_dic, l
                                                                    'BUP',
                                                                    None)))
 
-    #### Update below DO/DX orders to PR1 due to current PR1/2/3 not updated when order change to DPAS from others
-    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DO','DX','TAA-DO','TAA-DX']))&(df_3a4.priority_cat.isnull()),
+    #### Update below DX/DO orders to PR1/PR2 due to current PR1/2/3 not updated when order change to DPAS from others
+    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DX','TAA-DX']))&(df_3a4.priority_cat.isnull()),
                                            'PR1',
                                            df_3a4.priority_cat)
+    df_3a4.loc[:, 'priority_cat'] = np.where((df_3a4.DPAS_RATING.isin(['DO', 'TAA-DO'])) & (df_3a4.priority_cat.isnull()),
+                                            'PR2',
+                                            df_3a4.priority_cat)
+
     #### Step 1-2: Generate rank for priority orders
     df_3a4.loc[:, 'priority_rank_top'] = np.where(df_3a4.priority_cat == 'PR1',
                                               1,
