@@ -547,10 +547,14 @@ def ss_ranking_overall_new(df_3a4,ss_exceptional_priority,ranking_col, lowest_pr
                                                           )
                                                       )
                                              )
-    #### Update below DO/DX orders to PR1 due to current PR1/2/3 not updated when order change to DPAS from others
-    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DO','DX','TAA-DO','TAA-DX']))&(df_3a4.priority_cat.isnull()),
+    #### Update below DX/DO orders to PR1/PR2 due to current PR1/2/3 not updated when order change to DPAS from others
+    df_3a4.loc[:, 'priority_cat']=np.where((df_3a4.DPAS_RATING.isin(['DX','TAA-DX']))&(df_3a4.priority_cat.isnull()),
                                            'PR1',
                                            df_3a4.priority_cat)
+    df_3a4.loc[:, 'priority_cat'] = np.where((df_3a4.DPAS_RATING.isin(['DO', 'TAA-DO'])) & (df_3a4.priority_cat.isnull()),
+                                            'PR2',
+                                            df_3a4.priority_cat)
+
     #### Give them a rank
     df_3a4.loc[:, 'priority_rank'] = np.where(df_3a4.priority_cat=='PR1',
                                             1,
