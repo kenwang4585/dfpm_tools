@@ -546,7 +546,7 @@ def dfpm_app():
             # 预读取文件做格式和内容判断
             if ext_3a4 == '.csv':
                 df = pd.read_csv(file_path_3a4,encoding='iso-8859-1',nrows=3)
-            elif ext_3a4 == 'xlsx':
+            elif ext_3a4 == '.xlsx':
                 df = pd.read_excel(file_path_3a4,encoding='iso-8859-1',nrows=3)
 
             # 检查文件是否包含需要的列：
