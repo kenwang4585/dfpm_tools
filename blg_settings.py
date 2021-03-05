@@ -289,13 +289,13 @@ col_3a4_backlog_ranking_output_col=['ORGANIZATION_CODE', 'SO_SS','PO_NUMBER','BU
 
 # Condensed col for site level data (& without $ col): for site lead, and CM
 col_3a4_cm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PRODUCT_FAMILY','PRODUCT_ID',
-        'ADDRESSABLE_FLAG','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE','ORDER_HOLDS','priority_cat','priority_rank','ss_overall_rank','riso_ranking',
+        'ADDRESSABLE_FLAG','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE','MFG_HOLD','ORDER_HOLDS','priority_cat','priority_rank','ss_overall_rank','riso_ranking',
         'exception_highlight','missed_recommit','entered_not_booked','booked_not_scheduled','missed_ossd',
         'need_rtv','cancel_aging_days','ss_partial_staged_days','unstaged_under_ss','CURRENT_QUARTER_REVENUE_ELIGIBILITY',
             'TARGET_SSD','CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CUSTOMER_REQUEST_DATE','COMMENTS','CM_CTB','CTB_STATUS','CTB_COMMENT']
 
 col_3a4_dfpm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','OPTION_NUMBER','BUSINESS_UNIT', 'main_bu','main_pf','PRODUCT_FAMILY','PRODUCT_ID','TAN',
-        'ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','ORDER_HOLDS',
+        'ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD','ORDER_HOLDS',
               'ORDERED_QUANTITY','C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS','po_rev','ss_unstg_rev','ss_rev_rank','BUP_RANK','PROGRAM','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE',
               'FINAL_ACTION_SUMMARY','TIED_SHIP_SET','ASN_CREATION_DATE','ORDERED_DATE','BOOKED_DATE','LINE_CREATION_DATE',
               'LT_TARGET_FCD','TARGET_SSD','CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CUSTOMER_REQUEST_DATE',
