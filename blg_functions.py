@@ -2688,7 +2688,7 @@ def create_and_send_cm_3a4(df_3a4, cm_emails_to, outlier_elements,outlier_chart_
         dfx.set_index('ORGANIZATION_CODE',inplace=True)
 
         file_path = base_dir_output
-        fname = org + '_3a4_and_outlier_file.xlsx'
+        fname = org + '_3a4_and_outlier_file ' + pd.Timestamp.now().strftime('%m-%d %H:%M') + '.xlsx'
         full_path = os.path.join(file_path, fname)
 
         # select df base on org
@@ -3129,7 +3129,8 @@ def redefine_addressable_flag_new(df_3a4,mfg_holds):
             for hold in mfg_holds:
                 df_hold.loc[:, 'mfg_hold'] =np.where(df_hold.ORDER_HOLDS.str.contains(hold, case=False),
                                                     'YES',
-                                                     None)
+                                                     df_hold.mfg_hold)
+
             mfg_hold_po_other = df_hold[df_hold.mfg_hold == 'YES'].PO_NUMBER.unique()
 
             # combined po list and redefine the addressable flag

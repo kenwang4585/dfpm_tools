@@ -532,9 +532,9 @@ def dfpm_app():
             ext_3a4 = os.path.splitext(filename_3a4)[1]
 
             if ext_3a4 == '.csv':
-                file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for dfpm app - ' + login_user + '.csv')
+                file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for dfpm app (' + login_user + ')' +start_time.strftime('%Y-%m-%d %H:%M:%S') + '.csv')
             elif ext_3a4 == '.xlsx':
-                file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for dfpm app - ' + login_user + '.xlsx')
+                file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for dfpm app (' + login_user + ')' +start_time.strftime('%Y-%m-%d %H:%M:%S') + '.xlsx')
             else:
                 flash('3A4 file type error: Only csv or xlsx file accepted! File you were trying to upload: {}'.format(
                         f.filename),'warning')
