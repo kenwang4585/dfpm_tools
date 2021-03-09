@@ -918,18 +918,41 @@ def subscribe():
     if form.validate_on_submit():
         submit_add=form.submit_add.data
         submit_remove=form.submit_remove.data
+        confirm_remove=form.confirm_remove.data
+        # email addresses if for others
+        email = form.email_add_other.data.lower()
+        email = email.replace(' ', '').replace('\n', '').replace('\r', '')
+        email = email.split(';')
+        email = set(email)
+        email = list(email)
 
         if submit_remove: # for removal of email by admin
-            id_list=[form.email_remove.data.strip()]
-            try:
-                delete_record('subscription', id_list)
-                msg ='Email for this id has been removed: {}'.format(id_list)
-                flash(msg,'Success')
-                return redirect(url_for('subscribe'))
-            except Exception as e:
-                msg = 'Error: pls put in correct/existing id to delete!'
-                flash(msg,'warning')
-                return redirect(url_for('subscribe'))
+            if confirm_remove:
+                if email==['']:
+                    email=[login_user + '@cisco.com']
+
+                id_list = df_subscription[df_subscription.Email.isin(email)].id.values
+                id_list=[str(x) for x in id_list]
+                if len(id_list)>0:
+                    delete_record('subscription', id_list)
+                    emails_removed=df_subscription[df_subscription.Email.isin(email)].Email.values
+                    add_user_log(user=login_user, location='Subscribe', user_action='Un-subscribe',
+                                 summary='Email removed: {}'.format(emails_removed))
+
+                    msg ='Following emails have been removed: {}'.format(emails_removed)
+                    flash(msg,'Success')
+                    return redirect(url_for('subscribe'))
+                else:
+                    msg = 'Pls put in correct/existing email to delete!'
+                    flash(msg,'warning')
+                    return redirect(url_for('subscribe'))
+            else:
+                msg = 'Select the checkbox to proceed - Related emails will be totally removed.'
+                flash(msg, 'warning')
+                return render_template('subscription.html', form=form, user=login_name,
+                                       subtitle=' - Report Subscription',
+                                       df_subscription_header=df_subscription.columns,
+                                       df_subscription_data=df_subscription.values)
         elif submit_add: # adding or updating email tasks
             backlog=form.sub_backlog.data
             backlog_apjc=form.backlog_apjc.data
@@ -950,8 +973,6 @@ def subscribe():
             ranking_org = form.backlog_ranking_org.data.upper()
 
 
-            # email addresses if for others
-            email=form.email_add_other.data.lower()
 
             if backlog==False and wnbu_compliance==False and config==False and ranking==False:
                 msg = "Pls select at least a report to subscribe!"
@@ -1043,12 +1064,7 @@ def subscribe():
                                            df_subscription_data=df_subscription.values)
                 task_dic['Backlog ranking']=ranking_org_list
 
-            if email:
-                email = email.replace(' ', '').replace('\n','').replace('\r','')
-                email=email.split(';')
-                email=set(email)
-                email=list(email)
-
+            if email!=['']:
                 # identify eligible and wrong email list - return in case of errors
                 uneligible_email=[]
                 wrong_email=[]
@@ -1113,22 +1129,44 @@ def subscribe():
                 email_list=[login_user + '@cisco.com']
 
             #map task to each email
-            email_task_dic={}
+            new_sub_dict_dict={}
             for email in email_list:
-                email_task_dic[email]=task_dic
+                new_sub_dict_dict[email]=task_dic
+
+            # change current sub df into a dic and compare with new_sub_dict_dict to add additonal subscription
+            current_sub_dict = {}
+            for row in df_subscription.itertuples():
+                current_sub_dict[row.Email]=eval(row.Subscription)
+            # create an updated dict that require changes
+            updated_sub_dict = {}
+            for email, new_sub in new_sub_dict_dict.items():
+                if email in current_sub_dict.keys():
+                    updated_sub = current_sub_dict[email]
+                    current_sub=current_sub_dict[email] # current sub task dict
+                    for task_name,new_scope_list in new_sub.items():
+                        if task_name in current_sub.keys():
+                            current_scope_list=current_sub[task_name] # region list in current sub
+                            updated_scope_list=np.union1d(new_scope_list, current_scope_list).tolist()
+                        else:
+                            updated_scope_list=new_scope_list
+                        updated_sub[task_name]=updated_scope_list
+                else:
+                    updated_sub = new_sub
+
+                updated_sub_dict[email]=updated_sub #
 
             # update db
-            for email,task in email_task_dic.items():
+            for email,task in updated_sub_dict.items():
                 if email in df_subscription.Email.values:
                     update_subscription(email, str(task), login_user)
                 else:
                     add_subscription(email, str(task), login_user)
 
             # write program log to log file
-            msg = 'Following emails have been added: {}'.format(email_list)
+            msg = 'Subscription for following emails have been added/updated: {}'.format(email_list)
             flash(msg, 'success')
-            add_user_log(user=login_user, location='Subscribe', user_action='Run',
-                                 summary='Email list: {}'.format(email_list))
+            add_user_log(user=login_user, location='Subscribe', user_action='Subscribe',
+                                 summary='Subscription details: {}'.format(new_sub_dict_dict))
 
         # read the table again for display
         df_subscription = read_table('subscription')

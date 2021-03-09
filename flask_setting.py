@@ -64,11 +64,11 @@ class SubscriptionForm(FlaskForm):
     backlog_ranking = BooleanField('Site backlog ranking report')
     backlog_ranking_org = StringField("Org name - multi-org sep by '/':")
 
-    email_add_other=TextAreaField("(Optional - Subscribe for others) Put in email addresses separated by ';'")
-    submit_add = SubmitField('SUBSCRIBE')
+    email_add_other=TextAreaField("Optional - email for others (multiple emails separate by ';')")
+    submit_add = SubmitField('Subscribe')
 
-    email_remove = StringField('Remove email:')
-    submit_remove = SubmitField('REMOVE')
+    confirm_remove = BooleanField('Confirm removal!')
+    submit_remove = SubmitField('Un-Subscribe')
 
 
 

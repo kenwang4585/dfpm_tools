@@ -14,7 +14,7 @@
             <tr>
                 <td width="20%"></td>
                 <td width="45%">
-                    <span style="font-size: large;"> <strong>Select reports to subscribe (also those you wish to keep):</strong></span><br>
+                    <span style="font-size: large;"> <strong>Select reports to subscribe:</strong></span><br>
                     {{ form.sub_backlog }}&nbsp;{{ form.sub_backlog.label }} &nbsp;
                     (<span style="font-size: small;">
                         {{ form.backlog_apjc }}&nbsp;{{ form.backlog_apjc.label}}&nbsp;&nbsp;
@@ -44,28 +44,16 @@
 
                 </td>
                 <td width="5%"></td>
-                <td width="30%" valign="middle">
-                	{{ form.submit_add (class='btn btn-primary') }}
+                <td width="15%" valign="middle" align="center">
+                	{{ form.submit_add (class='btn btn-primary form-control') }}
+                    <br><br><br>
+                    {{ form.submit_remove (class='btn btn-primary form-control') }}<br>
+                    {{ form.confirm_remove }}&nbsp; {{ form.confirm_remove.label }}
                 </td>
+                <td width="15%"></td>
             </tr>
         </table>
 
-        {% if user== 'Ken Wang' %}
-            <br>
-            <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="90%">
-                <tr>
-                    <td width="20%"></td>
-                    <td width="45%">
-                        <span style="font-size: large;"> (Admin) Remove email - put in id to delete:</span><br>
-                        {{ form.email_remove(class='form-control') }} <br>
-                    </td>
-                    <td width="5%"></td>
-                    <td width="30%" valign="middle">
-                        {{ form.submit_remove (class='btn btn-primary') }}
-                    </td>
-                </tr>
-            </table>
-        {% endif %}
 
         <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="80%">
             <tr>
