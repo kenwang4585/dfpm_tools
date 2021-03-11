@@ -13,18 +13,197 @@ def config_rule_mapping():
     config_rules = (
                     [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
                     [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
-                    [['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'config_rule_srg_psu(dfx,wrong_po_dict)'],
+                    [['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
+                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
                     )
 
     notes = ['Config rules enabled:',
              '- UABU C9400: PSU/LC/SUP combinations (Alex Solis Gonzalez)',
              '- SRGBU 4300ISR/4400ISR/ICV (FVE excluded): SM/NIM combinations (Rachel Zhang)',
-             '- SRGBU 4xxxISR/800BB/900ISR/CAT8200/CAT8300/ENCS/ISR1K/ISR900 (FVE excluded; 3 config spares excluded): missing PSU (Rachel Zhang)',]
+             '- SRGBU 4xxxISR/800BB/900ISR/CAT8200/CAT8300/ENCS/ISR1K/ISR900 (FVE excluded; 3 config spares excluded): missing PSU (Rachel Zhang)',
+             '- PABU'
+             ]
 
     return config_rules,notes
 
 
-def config_rule_srg_psu(dfx,wrong_po_dict):
+def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
+    """
+    Check related PABU product if the cards are using right slot or if necessary PIDs are included.
+    Three types are checked:
+    1) Exclusion:
+    2) Inclusion:
+    3) No support:
+    """
+    config_rules={'ASR-903':{'EXCLUSION':{'A900-IMA8T_INTF MOD SLOT 1':['A900-IMA1X_INTF MOD SLOT 2','A900-IMA1X_INTF MOD SLOT 2','A900-IMA1X_INTF MOD SLOT 2'],
+                                          'A900-IMA8T1Z_INTF MOD SLOT 1':['A900-IMA1X_INTF MOD SLOT 2','A900-IMA1X_INTF MOD SLOT 2','A900-IMA1X_INTF MOD SLOT 2'],
+                                         },
+                             'INCLUSION':{'A900-IMA48D-C_INTF MOD SLOT 1':['A903-FAN-H'],
+                                          'A900-IMA48T-C_INTF MOD SLOT 1':['A903-FAN-H'],
+                                          },
+                             'NO_SUPPORT':['A900-IMA2F_INTF MOD SLOT 1','A900-IMA1C_INTF MOD SLOT 1','A900-IMA1Z8S-CX_INTF MOD SLOT 1',
+                                           'A900-IMA3G-IMSG_INTF MOD SLOT 1','N560-IMA2C_INTF MOD SLOT 1','A900-IMA1Z8S-CXMS_INTF MOD SLOT 1'],
+                             },
+                  }
+
+    df_rule_exclusion=pd.read_excel('PABU slot config rules.xlsx', sheet_name='EXCLUSION')
+    df_rule_exclusion.loc[:,'PID_SLOT_A']=df_rule_exclusion.PID_A + '_' + df_rule_exclusion.SLOT_A
+    df_rule_exclusion.loc[:, 'PID_SLOT_B'] = df_rule_exclusion.PID_B + '_' + df_rule_exclusion.SLOT_B
+    df_rule_exclusion.drop_duplicates(['PID_SLOT_A','PID_SLOT_B'],inplace=True) # in case duplication
+    df_rule_exclusion.sort_values(['PRODUCT_FAMILY','PRODUCT_ID_CHASIS','PID_A','SLOT_A'],inplace=True)
+
+    df_rule_inclusion=pd.read_excel('PABU slot config rules.xlsx', sheet_name='INCLUSION')
+    df_rule_inclusion.loc[:,'PID_SLOT_A']=df_rule_inclusion.PID_A + '_' + df_rule_inclusion.SLOT_A
+    df_rule_inclusion.loc[:, 'PID_SLOT_B'] = df_rule_inclusion.PID_B  # no need consider slot
+    df_rule_inclusion.drop_duplicates(['PID_SLOT_A','PID_SLOT_B'],inplace=True) # in case duplication
+    df_rule_inclusion.sort_values(['PRODUCT_FAMILY','PRODUCT_ID_CHASIS','PID_A','SLOT_A'],inplace=True)
+
+    df_rule_no_support = pd.read_excel('PABU slot config rules.xlsx', sheet_name='EXCLUSION')
+    df_rule_no_support.loc[:, 'PID_SLOT_A'] = df_rule_no_support.PID_A + '_' + df_rule_no_support.SLOT_A
+    df_rule_no_support.drop_duplicates(['PID_SLOT_A'], inplace=True)  # in case duplication
+
+    # generate the config_rules dict based on the df
+    config_rules={}
+
+    excl_rules={}
+    pid_chassis_base = df_rule_exclusion.iloc[0,:].PRODUCT_ID_CHASIS
+    pid_slot_list = []
+    pid_slot_a_base = df_rule_exclusion.iloc[0,:].PID_SLOT_A
+    pid_slot_list.append(df_rule_exclusion.iloc[0,:].PID_SLOT_B)
+    excl_rules[pid_slot_a_base]=pid_slot_list
+    config_rules[pid_chassis_base]={'EXCLUSION':excl_rules}
+    for row in df_rule_exclusion.iloc[1:,:].itertuples():
+        if row.PRODUCT_ID_CHASIS == pid_chassis_base:
+            if row.PID_SLOT_A == pid_slot_a_base:
+                pid_slot_list.append(row.PID_SLOT_B)
+                excl_rules[pid_slot_a_base] = pid_slot_list
+            else:
+                pid_slot_a_base=row.PID_SLOT_A
+                pid_slot_list = []
+                pid_slot_list.append(row.PID_SLOT_B)
+                excl_rules[pid_slot_a_base] = pid_slot_list
+            config_rules[pid_chassis_base] = {'EXCLUSION': excl_rules}
+        else:
+            pid_chassis_base = row.PRODUCT_ID_CHASIS
+            pid_slot_a_base = row.PID_SLOT_A
+            pid_slot_list=[]
+            pid_slot_list.append(row.PID_SLOT_B)
+            excl_rules[pid_slot_a_base] = pid_slot_list
+            config_rules[pid_chassis_base] = {'EXCLUSION': excl_rules}
+
+    incl_rules={}
+    pid_chassis_base = df_rule_inclusion.iloc[0,:].PRODUCT_ID_CHASIS
+    pid_slot_list = []
+    pid_slot_a_base = df_rule_inclusion.iloc[0,:].PID_SLOT_A
+    pid_slot_list.append(df_rule_inclusion.iloc[0,:].PID_SLOT_B)
+    incl_rules[pid_slot_a_base]=pid_slot_list
+    config_rules[pid_chassis_base]={'INCLUSION':incl_rules}
+    for row in df_rule_inclusion.iloc[1:,:].itertuples():
+        if row.PRODUCT_ID_CHASIS == pid_chassis_base:
+            if row.PID_SLOT_A == pid_slot_a_base:
+                pid_slot_list.append(row.PID_SLOT_B)
+                incl_rules[pid_slot_a_base] = pid_slot_list
+            else:
+                pid_slot_a_base=row.PID_SLOT_A
+                pid_slot_list = []
+                pid_slot_list.append(row.PID_SLOT_B)
+                incl_rules[pid_slot_a_base] = pid_slot_list
+            config_rules[pid_chassis_base] = {'INCLUSION': incl_rules}
+        else:
+            pid_chassis_base = row.PRODUCT_ID_CHASIS
+            pid_slot_a_base = row.PID_SLOT_A
+            pid_slot_list=[]
+            pid_slot_list.append(row.PID_SLOT_B)
+            incl_rules[pid_slot_a_base] = pid_slot_list
+            config_rules[pid_chassis_base] = {'INCLUSION': incl_rules}
+
+
+
+
+    no_support_rules={}
+
+
+    print(config_rules)
+
+
+    # Update the PRODUCT_ID to ID_SLOT when applicable
+
+    slots = df_rule_exclusion.SLOT_A.unique() + df_rule_exclusion.SLOT_B.unique() + df_rule_inclusion.SLOT_A.unique()
+    slot=''
+    dfx.loc[:, 'pf_slot'] = None
+    for row in dfx.itertuples():
+        if row.PRODUCT_ID in slots:
+            slot = row.PRODUCT_ID
+        else:
+            if slot!='':
+                dfx.loc[:,'pf_slot']=row.PRODUCT_ID + '_' + slot
+                slot=''
+
+    dfx.loc[:,'PRODUCT_ID']=np.where(dfx.pf_slot.notnull(),
+                                     dfx.pf_slot,
+                                     dfx.PRODUCT_ID)
+
+    dfx.to_excel('test.xlsx')
+    # get the ATO PO list
+    dfx_main = dfx[(dfx.OPTION_NUMBER == 0)]
+    main_po_pid = zip(dfx_main.PO_NUMBER, dfx_main.PRODUCT_ID)
+    po_pid_dict = {}
+    for po,main_pid in main_po_pid:
+        if main_pid in config_rules.keys():
+            po_pid_dict[po]=main_pid
+
+    for po,main_pid in po_pid_dict.items():
+        pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.unique()
+
+        # check no support pid_slot
+        no_support=False
+        if main_pid in pid_list:
+            for pid in pid_list:
+                if pid in config_rules[main_pid]['NO_SUPPORT']:
+                    no_support = True
+                    no_support_pid_slot = pid
+                    break
+        if no_support==True:
+            wrong_po_dict[po] = 'No support pid/slot: {}'.format(no_support_pid_slot)
+            break
+
+        pid_slot_a_in = False
+        pid_slot_b_in = False
+        missing_part = None
+        for pid in pid_list:
+            #  check exclusion
+            if pid in config_rules[main_pid]['EXCLUSION'].keys():
+                pid_slot_a_in=True
+                pid_slot_a=pid
+            elif pid_slot_a_in==True:
+                if pid in config_rules[main_pid]['EXCLUSION'][pid_slot_a]:
+                    pid_slot_b_in=True
+                    wrong_pid_slot=pid
+                    break
+
+            # check inclusion
+            if pid in config_rules[main_pid]['INCLUSION'].keys():
+                missing_part = True
+                pid_slot_a_in = True
+                pid_slot_a = pid
+            elif pid_slot_a_in == True:
+                if pid in config_rules[main_pid]['INCLUSION'][pid_slot_a]:
+                    missing_part = False
+                    break
+
+        if pid_slot_a_in==True and pid_slot_b_in==True:
+            wrong_po_dict[po] = 'Wrong slot: {}'.format(wrong_pid_slot)
+        elif missing_part==True:
+            wrong_po_dict[po] = 'Missing part: {}'.format(config_rules[main_pid]['INCLUSION'][pid_slot_a])
+
+    return wrong_po_dict
+
+
+
+
+
+
+def find_srg_psu_missing(dfx,wrong_po_dict):
     '''
     Check if any PO in SRG missing PSU
     '''
