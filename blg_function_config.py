@@ -111,8 +111,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
             incl_rules[pid_slot_a_base] = pid_slot_list
             config_rules_inclusion[pid_chassis_base] = incl_rules
 
-    print(config_rules_inclusion)
-
     # create no support rules
     config_rules_no_support = {}
     pid_chassis_base = df_rule_no_support.iloc[0, :].PRODUCT_ID_CHASIS.strip()
@@ -130,9 +128,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
             pid_slot_list.append(row.PID_SLOT_A)
             config_rules_no_support[pid_chassis_base] = pid_slot_list
 
-    print(config_rules_no_support)
-
-
     # Update the PRODUCT_ID to PID_SLOT when eligiable slot PID is found
     slots = df_rule_exclusion.SLOT_A.unique().tolist() + df_rule_exclusion.SLOT_B.unique().tolist() + df_rule_inclusion.SLOT_A.unique().tolist()
     slot=''
@@ -149,13 +144,13 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
                                      dfx.pid_slot,
                                      dfx.PRODUCT_ID)
 
-    dfx.to_excel('test.xlsx')
     # get the ATO PO list
+    target_main_pid=list(config_rules_exclusion.keys())+list(config_rules_inclusion.keys())+list(config_rules_no_support.keys())
     dfx_main = dfx[(dfx.OPTION_NUMBER == 0)]
     main_po_pid = zip(dfx_main.PO_NUMBER, dfx_main.PRODUCT_ID)
     po_pid_dict = {}
     for po,main_pid in main_po_pid:
-        if main_pid in config_rules.keys():
+        if main_pid in target_main_pid:
             po_pid_dict[po]=main_pid
 
     for po,main_pid in po_pid_dict.items():
@@ -208,9 +203,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
             wrong_po_dict[po] = 'Missing part: {}'.format(config_rules_inclusion[main_pid][pid_slot_a])
 
     return wrong_po_dict
-
-
-
 
 
 
@@ -275,7 +267,7 @@ def isr43xx_vg450_rules_sm_nim(pid_qty, extra_slot, wrong_po_dict, po, sm_criter
                 ucs_qty = ucs_qty + extra_slot[pid] * qty
             else:
                 ucs_qty = ucs_qty + qty
-        elif 'NIM-' in pid and '-PVDM' not in pid:
+        elif 'NIM-' in pid:
             if pid in extra_slot.keys():
                 nim_qty = nim_qty + extra_slot[pid] * qty
             else:
