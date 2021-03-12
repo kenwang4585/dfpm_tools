@@ -117,9 +117,11 @@ class AdminForm(FlaskForm):
     file_name=StringField(validators=[DataRequired()])
     submit_delete=SubmitField('Delete')
 
-
-
-
+class ConfigRules(FlaskForm):
+    submit_download_pabu = SubmitField('Download rule file')
+    file_pabu = FileField('Select rule file:')
+    confirm_pabu = BooleanField('Confirm to replace with new file!')
+    submit_upload_pabu = SubmitField('Upload rule file')
 
 
 # Database tables

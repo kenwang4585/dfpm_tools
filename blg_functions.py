@@ -27,18 +27,12 @@ def download_and_send_tracker_as_backup(backup_day,login_user):
     :return:
     """
     today_name = pd.Timestamp.today().day_name()
+    file_list=os.listdir(base_dir_tracker)
     if today_name == backup_day:
         # 添加文件到附件列表 # List of tuples (path, file_name)
-        att_files = [(base_dir_tracker, 'apjc_history_addressable.xlsx'),
-                     (base_dir_tracker, 'americas_history_addressable.xlsx'),
-                     (base_dir_tracker, 'emea_history_addressable.xlsx'),
-                     (base_dir_tracker, 'history_scheduled_not_packed.xlsx'),
-                     (base_dir_tracker, 'history_partial_staged.xlsx'),
-                     (base_dir_tracker, 'history_entered_not_booked.xlsx'),
-                     (base_dir_tracker, 'history_booked_not_scheduled.xlsx'),
-                     (base_dir_tracker, 'history_aging_cancel.xlsx'),
-                     (base_dir_tracker, 'historical_missed_recommit.xlsx'),
-                     (base_dir_tracker,'config_error_tracker.xlsx')]
+        att_files = []
+        for file in file_list:
+            att_files.append((base_dir_tracker,file))
 
         # Send to ken
         to_address = ['kwang2@cisco.com']

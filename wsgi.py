@@ -480,6 +480,56 @@ def backlog_ranking():
 
     return render_template('backlog_ranking.html', form=form,user=login_name,subtitle='- Backlog Ranking')
 
+@app.route('/config_rules',methods=['GET','POST'])
+def config_rules():
+    form=ConfigRules()
+
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
+
+    eligible_mapping={'unknown':'PABU'}
+
+    if form.validate_on_submit():
+        submit_pabu=form.submit_upload_pabu.data
+
+        if submit_pabu:
+            fname_pabu=form.file_pabu.data
+            confirm_pabu=form.confirm_pabu.data
+            if not fname_pabu:
+                msg = 'Select the new config rule file to upload!'
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules'))
+
+            if not 'PABU' in fname_pabu.filename:
+                msg='This is for PABU rules, select the right file to upload!'
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules'))
+
+            file_path_pabu=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
+
+            if login_user not in ['unknown','kwang2','cagong']:
+                msg='Only following user is eligible to update rule for this: {}'.format('cagong')
+                flash(msg,'warning')
+                return redirect(url_for('config_rules'))
+
+            if not confirm_pabu:
+                msg = 'Select the upload and replace checkbox to confirm proceeding!'
+                flash(msg, 'warning')
+                return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules')
+
+            # 存储文件
+            fname_pabu.save(file_path_pabu)
+            msg = 'New file has been upload and rules replaced: {}'.format(fname_pabu.filename)
+            flash(msg, 'success')
+            return redirect(url_for('config_rules'))
+
+    return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules')
+
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
 def dfpm_app():
@@ -859,8 +909,6 @@ def file_download():
                            files_uploaded=df_upload.values,
                            user=login_name,
                            subtitle=' - File download')
-
-
 
 @app.route('/o/<filename>',methods=['GET'])
 def download_file_output(filename):

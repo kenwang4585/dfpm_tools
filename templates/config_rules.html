@@ -1,0 +1,80 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+        <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="1" cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="20%">New config file</td>
+                <td width="20%">Confirm to replace</td>
+                <td width="20%">Upload and replace rule file</td>
+                <td width="20%">Download current config file</td>
+            </tr>
+            <tr>
+                <td>{{ form.file_pabu }}</td>
+                <td>{{ form.confirm_pabu }}&nbsp;&nbsp;{{ form.confirm_pabu.label }}</td>
+                <td>{{ form.submit_upload_pabu }}</td>
+                <td>
+                    <a href="{{ url_for('download_file_tracker',filename='PABU slot config rules.xlsx') }}">download</a>
+                </td>
+            </tr>
+        </table>
+
+
+        <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="90%">
+
+            <tr>
+                  <td align="left" width="95%">
+                        {% if get_flashed_messages()|length>0 %}
+                          {% for message in get_flashed_messages(with_categories=True) %}
+                            <div class="alert alert-{{ message[0] }}" role="alert">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                {{ message[1] }}
+                            </div>
+                          {% endfor %}
+                        {% endif %}
+                  </td>
+            </tr>
+
+              <tr> <!-- For viewing the details -->
+                    <td width="95%">
+                        <br><br><br>
+                                {% if df_dfpm_mapping_data|length>0 %}
+                                    <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
+                                        <tr>
+                                            {% for col in df_dfpm_mapping_header %}
+                                                <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                            {% endfor %}
+                                        </tr>
+
+                                        {% for row in df_dfpm_mapping_data %}
+                                            <tr>
+                                                {% for col in row %}
+                                                    <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                {% endif %}
+                    </td>
+                </tr>
+        </table>
+
+
+</form>
+{% endblock %}
+
+{% block flash_message %}
+    <!-- set up falsh separately above -->
+{% endblock %}
+
+{% block empty_space %}
+    <br><br><br><br><br><br><br><br><br><br><br><br>
+{% endblock %}
