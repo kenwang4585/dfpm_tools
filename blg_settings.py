@@ -147,7 +147,10 @@ mfg_holds=['Booking Validation Hold','Cancellation','CFOP Product Hold','CMFS-Cr
  'CSC-Credit Check Pending','CSC-Not Scheduled, Booked','Export','Localization Change Hold','New Product',
  'Non-FCC Compliant Hold','Order Aging Hold','Order Change','Order Transfer Changes (OTC) Hold','Order Validation Hold',
  'Pending Trade Collaborator Response','Quantity Validation','SCORE Chg Parameter','Scheduling COO','TCH Order Validation',
-           'Country Certification Hold']
+           'Country Certification Hold','CMFS-Fulfillment Hold','Awaiting EA Fulfillment','CSC-Shipment Hold','Customer Acceptance-Full Stack',
+           'ELC-WWL Resolution','HW Fulfillment','Logistics Pick Release Hold','Pending Change Transaction','Pending Source Subscription Cancellation',
+           'Pre-Launch','Smart License Registration (SLR)  Pre-Install Hold','WWL Custom Delivery Hold','Pre-Order',
+           'SLR Pre-Install Hold','SON_HCL']
 
 # Col required for each task under glo_app
 col_3a4_must_have_global_backlog_summary=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT_FAMILY',
