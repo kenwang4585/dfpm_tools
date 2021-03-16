@@ -123,6 +123,18 @@ class ConfigRules(FlaskForm):
     confirm_pabu = BooleanField('Confirm to replace with new file!')
     submit_upload_pabu = SubmitField('Upload rule file')
 
+    submit_download_srgbu = SubmitField('Download rule file')
+    file_srgbu = FileField('Select rule file:')
+    confirm_srgbu = BooleanField('Confirm to replace with new file!')
+    submit_upload_srgbu = SubmitField('Upload rule file')
+
+    pf=StringField("PF (separate by '/':")
+    pid_a=StringField('PID_A')
+    pid_b=StringField('PID_B')
+    pid_c=StringField('PID_C')
+    submit_general_rule=SubmitField('Add rule')
+
+
 
 # Database tables
 
@@ -158,5 +170,17 @@ class Subscription(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     Email=db.Column(db.String(40))
     Subscription=db.Column(db.String(200))
+    Added_by = db.Column(db.String(10))
+    Added_on = db.Column(db.Date)
+
+class GeneralConfigRule(db.Model):
+    '''
+    Email setting db table
+    '''
+    id=db.Column(db.Integer,primary_key=True)
+    PF=db.Column(db.String(40))
+    PID_A=db.Column(db.String(30))
+    PID_B = db.Column(db.String(30))
+    PID_C = db.Column(db.String(30))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)

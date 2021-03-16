@@ -53,6 +53,22 @@ def add_subscription(email,task,login_user):
     db.session.commit()
     #print('User log added')
 
+def add_general_rule_data(pf,pid_a,pid_b,pid_c,login_user):
+    '''
+    Add the general rule data to db
+    '''
+
+    log = GeneralConfigRule(PF=pf,
+                  PID_A=pid_a,
+                  PID_B=pid_b,
+                  PID_C=pid_c,
+                  Added_by=login_user,
+                  Added_on=pd.Timestamp.now().date(),)
+
+    db.session.add(log)  # can also use add_all() for multiple adding at one time
+    db.session.commit()
+    #print('User log added')
+
 
 def add_data_from_file_initial():
     '''

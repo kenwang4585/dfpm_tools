@@ -18,6 +18,7 @@ def delete_record(table_name,id_list):
 
     print('records deleted')
 
+
 if __name__=='__main__':
     delete_record()
     #pass

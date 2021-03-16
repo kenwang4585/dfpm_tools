@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -492,10 +492,11 @@ def config_rules():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    eligible_mapping={'unknown':'PABU'}
+    df_general_rule=read_table('general_config_rule')
 
     if form.validate_on_submit():
         submit_pabu=form.submit_upload_pabu.data
+        submit_general_rule=form.submit_general_rule.data
 
         if submit_pabu:
             fname_pabu=form.file_pabu.data
@@ -527,8 +528,28 @@ def config_rules():
             msg = 'New file has been upload and rules replaced: {}'.format(fname_pabu.filename)
             flash(msg, 'success')
             return redirect(url_for('config_rules'))
+        elif submit_general_rule:
+            pf=form.pf.data.strip().upper()
+            pid_a=form.pid_a.data.strip().upper()
+            pid_b=form.pid_b.data.strip().upper()
+            pid_c=form.pid_c.data.strip().upper()
 
-    return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules')
+            add_general_rule_data(pf, pid_a, pid_b, pid_c, login_user)
+
+            df_general_rule=read_table('general_config_rule')
+
+            msg = 'New general rule has been added'
+            flash(msg, 'success')
+            return render_template('config_rules.html', form=form, user=login_name, subtitle='- Config Rules',
+                                   login_user=login_user,
+                                   df_general_rule_header=df_general_rule.columns,
+                                   df_general_rule_data=df_general_rule.values, )
+
+
+    return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules',
+                           login_user=login_user,
+                           df_general_rule_header=df_general_rule.columns,
+                           df_general_rule_data=df_general_rule.values,)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
@@ -1405,6 +1426,24 @@ def operate_table():
 
     return render_template('3a4_operate_table.html', form=form)
 
+
+@app.route('/r/<login_user>/<added_by>/<record_id>',methods=['GET'])
+def delete_general_config_rule_record(login_user,added_by,record_id):
+    if login_user == 'unknown':
+        http_scheme = 'http'
+    else:
+        http_scheme = 'https'
+
+    if login_user==added_by or login_user==super_user:
+        id_list=[str(record_id)]
+        delete_record('general_config_rule', id_list)
+        msg = 'General rule deleted: {}'.format(record_id)
+        flash(msg, 'success')
+    else:
+        msg = 'You can only delete record created by you!'
+        flash(msg,'warning')
+
+    return redirect(url_for("config_rules", _external=True, _scheme=http_scheme, viewarg1=1))
 
 
 
