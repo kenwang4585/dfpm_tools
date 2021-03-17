@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data_pid,add_general_rule_data_pf  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -492,11 +492,13 @@ def config_rules():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_general_rule=read_table('general_config_rule')
+    df_pid_rule=read_table('general_config_rule_pid')
+    df_pf_rule = read_table('general_config_rule_pf')
 
     if form.validate_on_submit():
         submit_pabu=form.submit_upload_pabu.data
-        submit_general_rule=form.submit_general_rule.data
+        submit_pid_rule=form.submit_pid_rule.data
+        submit_pf_rule=form.submit_pf_rule.data
 
         if submit_pabu:
             fname_pabu=form.file_pabu.data
@@ -528,28 +530,45 @@ def config_rules():
             msg = 'New file has been upload and rules replaced: {}'.format(fname_pabu.filename)
             flash(msg, 'success')
             return redirect(url_for('config_rules'))
-        elif submit_general_rule:
-            pf=form.pf.data.strip().upper()
-            pid_a=form.pid_a.data.strip().upper()
-            pid_b=form.pid_b.data.strip().upper()
-            pid_c=form.pid_c.data.strip().upper()
+        elif submit_pid_rule:
+            pf=form.pf_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_a=form.pid_a_pid_rule.data.strip().upper()
+            pid_b=form.pid_b_pid_rule.data.strip().upper()
+            pid_c=form.pid_c_pid_rule.data.strip().upper()
+            pid_a_exception = form.pid_a_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_b_exception = form.pid_b_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_c_exception = form.pid_c_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            remark=form.remark_pid_rule.data.strip()
 
-            add_general_rule_data(pf, pid_a, pid_b, pid_c, login_user)
+            add_general_rule_data_pid(pf, pid_a, pid_b, pid_c,pid_a_exception, pid_b_exception, pid_c_exception, remark, login_user)
 
-            df_general_rule=read_table('general_config_rule')
+            df_pid_rule=read_table('general_config_rule_pid')
 
             msg = 'New general rule has been added'
             flash(msg, 'success')
-            return render_template('config_rules.html', form=form, user=login_name, subtitle='- Config Rules',
-                                   login_user=login_user,
-                                   df_general_rule_header=df_general_rule.columns,
-                                   df_general_rule_data=df_general_rule.values, )
+            return redirect(url_for('config_rules'))
+        elif submit_pf_rule:
+            pf=form.pf_pf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            exception_pid=form.exception_pid_pf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_a=form.pid_a_pf_rule.data.strip().upper()
+            pid_b=form.pid_b_pf_rule.data.strip().upper()
+            remark=form.remark_pf_rule.data.strip()
 
+            add_general_rule_data_pf(pf, exception_pid, pid_a, pid_b, remark, login_user)
+
+            df_pf_rule=read_table('general_config_rule_pf')
+
+            msg = 'New general rule has been added'
+            flash(msg, 'success')
+            return redirect(url_for('config_rules'))
 
     return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules',
                            login_user=login_user,
-                           df_general_rule_header=df_general_rule.columns,
-                           df_general_rule_data=df_general_rule.values,)
+                           df_pid_rule_header=df_pid_rule.columns,
+                           df_pid_rule_data=df_pid_rule.values,
+                           df_pf_rule_header=df_pf_rule.columns,
+                           df_pf_rule_data=df_pf_rule.values,
+                           )
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
@@ -1313,122 +1332,8 @@ def admin():
 
 
 
-@app.route('/table_data',methods=['GET','POST'])
-def operate_table():
-    form=TableDataForm()
-
-    if form.validate_on_submit():
-        submit_query=form.submit_query.data
-        submit_download=form.submit_download.data
-        submit_delete=form.submit_delete.data
-        table_name = form.table_name.data
-        password = form.password.data
-        criteria = form.criteria.data
-        max_records = form.max_records.data
-        show_last=form.show_last.data
-        id=form.id.data
-
-        criteria_string = None
-        records_limit = None
-        if criteria:
-            criteria_string = criteria
-        if max_records:
-            records_limit = max_records
-
-        if submit_query:
-            if password=='4585':
-                try:
-                    df=read_table(table_name,show_last=show_last, criteria_string=criteria_string, records_limit=records_limit)
-                   
-                    return render_template('3a4_operate_table.html',
-                                       table_data=df.values,
-                                       table_header=df.columns,
-                                       table_name=table_name,
-                                       form=form)
-                except Exception as e:
-                    flash(e,'warning')
-
-                    return render_template('3a4_operate_table.html', form=form)
-            else:
-                flash('Input the correct password to operate this.','warning')
-
-                return render_template('3a4_operate_table.html',form=form)
-        elif submit_download:
-            if password=='4585':
-                try:
-                    df=read_table(table_name,show_last=show_last, criteria_string=criteria_string, records_limit=records_limit)
-                except:
-                    flash('Your query returned with error - check your input!','warning')
-                    return render_template('3a4_operate_table.html', form=form)
-
-                send_downloaded_table(table_name, df,show_last,criteria_string,records_limit,'APJC DFPM')
-                flash('Your query result shown below sent to kwang2@cisco.com!', 'success')
-
-                return render_template('3a4_operate_table.html',
-                                       table_data=df.values,
-                                       table_header=df.columns,
-                                       table_name=table_name,
-                                       form=form)
-
-            else:
-                flash('Input the correct password to operate this.','warning')
-
-                return render_template('3a4_operate_table.html',form=form)
-
-        elif submit_delete:
-            if password=='4585':
-                if id=='':
-                    flash('Input ID to delete!','warning')
-                    return render_template('3a4_operate_table.html', form=form)
-                else:
-                    id=id.replace(' ','')
-                    if ',' in id:
-                        id_list=id.split(',')
-                        id_list = [int(x) for x in id_list]
-                    elif '~' in id:
-                        id_list = id.split('~')
-                        id_list=[int(x) for x in id_list]
-                        id_list=[x for x in range(id_list[0],id_list[1]+1)]
-                    else:
-                        id_list=[int(id)]
-
-
-                    # 检查id_list是否都存在于table中
-                    df = read_table(table_name, show_last=show_last, criteria_string=criteria_string, records_limit=records_limit)
-                    id_df=df.id.values
-                    id_not_exist=np.setdiff1d(id_list,id_df)
-                    if len(id_not_exist)>0:
-                        flash('These id do not exist in the table: {}'.format(id_not_exist),'warning')
-                        return render_template('3a4_operate_table.html',
-                                               table_data=df.values,
-                                               table_header=df.columns,
-                                               table_name=table_name,
-                                               form=form)
-                    else:
-                        delete_record(table_name,id_list)
-                        flash('Record ({}) is deleted from {}'.format(id_list,table_name),'success')
-                        df = read_table(table_name, show_last=show_last, criteria_string=criteria_string, records_limit=records_limit)
-
-                        return render_template('3a4_operate_table.html',
-                                           table_data=df.values,
-                                           table_header=df.columns,
-                                           table_name=table_name,
-                                           form=form)
-            else:
-                flash('Input the correct password operate this.','warning')
-                df = read_table(table_name, show_last=show_last, criteria_string=criteria_string, records_limit=records_limit)
-
-                return render_template('3a4_operate_table.html',
-                                       table_data=df.values,
-                                       table_header=df.columns,
-                                       table_name=table_name,
-                                       form=form)
-
-    return render_template('3a4_operate_table.html', form=form)
-
-
-@app.route('/r/<login_user>/<added_by>/<record_id>',methods=['GET'])
-def delete_general_config_rule_record(login_user,added_by,record_id):
+@app.route('/pid/<login_user>/<added_by>/<record_id>',methods=['GET'])
+def delete_general_config_rule_pid_record(login_user,added_by,record_id):
     if login_user == 'unknown':
         http_scheme = 'http'
     else:
@@ -1436,7 +1341,7 @@ def delete_general_config_rule_record(login_user,added_by,record_id):
 
     if login_user==added_by or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('general_config_rule', id_list)
+        delete_record('general_config_rule_pid', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:
@@ -1445,6 +1350,23 @@ def delete_general_config_rule_record(login_user,added_by,record_id):
 
     return redirect(url_for("config_rules", _external=True, _scheme=http_scheme, viewarg1=1))
 
+@app.route('/pf/<login_user>/<added_by>/<record_id>',methods=['GET'])
+def delete_general_config_rule_pf_record(login_user,added_by,record_id):
+    if login_user == 'unknown':
+        http_scheme = 'http'
+    else:
+        http_scheme = 'https'
+
+    if login_user==added_by or login_user==super_user:
+        id_list=[str(record_id)]
+        delete_record('general_config_rule_pf', id_list)
+        msg = 'General rule deleted: {}'.format(record_id)
+        flash(msg, 'success')
+    else:
+        msg = 'You can only delete record created by you!'
+        flash(msg,'warning')
+
+    return redirect(url_for("config_rules", _external=True, _scheme=http_scheme, viewarg1=1))
 
 
 if __name__ == '__main__':

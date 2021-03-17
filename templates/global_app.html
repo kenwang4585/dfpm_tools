@@ -32,11 +32,8 @@
                     <span style="font-size: large;"> <strong>Select tasks:</strong></span><br>
                         {{ form.backlog_summary }}&nbsp;{{ form.backlog_summary.label }}<br>
                         {{ form.wnbu_compliance }}&nbsp;{{ form.wnbu_compliance.label }}<br>
-                        {{ form.config_check }} &nbsp;{{ form.config_check.label }}<br>
-                            Config rules enabled: <a href="{{ url_for('config_rules') }}" target="">Manage rules</a><br>
-                            {% for note in config_notes %}
-                                <span style="font-size: small"> {{ note }}</span><br>
-                            {% endfor %}
+                        {{ form.config_check }} &nbsp;{{ form.config_check.label }} &nbsp;(<a href="{{ url_for('config_rules') }}" target="">Manage rules</a>)<br>
+
                     <br>
                 </td>
                 <td width="10%"></td>

@@ -128,11 +128,22 @@ class ConfigRules(FlaskForm):
     confirm_srgbu = BooleanField('Confirm to replace with new file!')
     submit_upload_srgbu = SubmitField('Upload rule file')
 
-    pf=StringField("PF (separate by '/':")
-    pid_a=StringField('PID_A')
-    pid_b=StringField('PID_B')
-    pid_c=StringField('PID_C')
-    submit_general_rule=SubmitField('Add rule')
+    pf_pid_rule=TextAreaField("PF")
+    pid_a_pid_rule=StringField('PID_A')
+    pid_b_pid_rule=StringField('PID_B')
+    pid_c_pid_rule=StringField('PID_C')
+    pid_a_exception_pid_rule = TextAreaField('PID_A_EXCEPTION')
+    pid_b_exception_pid_rule = TextAreaField('PID_B_EXCEPTION')
+    pid_c_exception_pid_rule = TextAreaField('PID_C_EXCEPTION')
+    remark_pid_rule=TextAreaField('Remark')
+    submit_pid_rule=SubmitField('Add rule')
+
+    pf_pf_rule = TextAreaField("PF")
+    exception_pid_pf_rule = TextAreaField('EXCEPTION_PID')
+    pid_a_pf_rule = StringField('PID_A')
+    pid_b_pf_rule = StringField('PID_B')
+    remark_pf_rule = TextAreaField('Remark')
+    submit_pf_rule = SubmitField('Add rule')
 
 
 
@@ -173,14 +184,31 @@ class Subscription(db.Model):
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
 
-class GeneralConfigRule(db.Model):
+class GeneralConfigRulePid(db.Model):
     '''
     Email setting db table
     '''
     id=db.Column(db.Integer,primary_key=True)
-    PF=db.Column(db.String(40))
+    PF=db.Column(db.String(60))
     PID_A=db.Column(db.String(30))
     PID_B = db.Column(db.String(30))
     PID_C = db.Column(db.String(30))
+    PID_A_EXCEPTION = db.Column(db.String(100))
+    PID_B_EXCEPTION = db.Column(db.String(100))
+    PID_C_EXCEPTION = db.Column(db.String(100))
+    REMARK = db.Column(db.String(100))
+    Added_by = db.Column(db.String(10))
+    Added_on = db.Column(db.Date)
+
+class GeneralConfigRulePf(db.Model):
+    '''
+    Email setting db table
+    '''
+    id=db.Column(db.Integer,primary_key=True)
+    PF=db.Column(db.String(60))
+    PID_EXCEPTION =db.Column(db.String(100))
+    PID_A = db.Column(db.String(30))
+    PID_B = db.Column(db.String(30))
+    REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
