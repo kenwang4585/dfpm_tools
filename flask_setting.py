@@ -128,22 +128,26 @@ class ConfigRules(FlaskForm):
     confirm_srgbu = BooleanField('Confirm to replace with new file!')
     submit_upload_srgbu = SubmitField('Upload rule file')
 
-    pf_pid_rule=TextAreaField("PF")
-    pid_a_pid_rule=StringField('PID_A')
-    pid_b_pid_rule=StringField('PID_B')
-    pid_c_pid_rule=StringField('PID_C')
-    pid_a_exception_pid_rule = TextAreaField('PID_A_EXCEPTION')
-    pid_b_exception_pid_rule = TextAreaField('PID_B_EXCEPTION')
-    pid_c_exception_pid_rule = TextAreaField('PID_C_EXCEPTION')
-    remark_pid_rule=TextAreaField('Remark')
+    org_pid_rule=StringField('ORG*:',default='FOC;FDO')
+    bu_pid_rule=StringField('BU:',default='SRGBU')
+    pf_pid_rule=TextAreaField("PF*:",default='4200ISR;4300ISR')
+    pid_a_pid_rule=StringField('PID_A*:',default='-AC;-DC')
+    pid_b_pid_rule=StringField('PID_B:',default='XYZ;ABC')
+    pid_c_pid_rule=StringField('PID_C:',default='CDE;WER')
+    pid_a_exception_pid_rule = TextAreaField('PID_A_EXCEPTION:',default='sdfwr-AC;tewr-DC')
+    pid_b_exception_pid_rule = TextAreaField('PID_B_EXCEPTION:',default='werw-XYZ;qwqw-ABC')
+    pid_c_exception_pid_rule = TextAreaField('PID_C_EXCEPTION:',default='tutyu-CDE;erer-WER')
+    remark_pid_rule=TextAreaField('Remark:')
     submit_pid_rule=SubmitField('Add rule')
 
-    pf_pf_rule = TextAreaField("PF")
-    exception_pid_pf_rule = TextAreaField('EXCEPTION_PID')
-    pid_a_pf_rule = StringField('PID_A')
-    pid_b_pf_rule = StringField('PID_B')
-    remark_pf_rule = TextAreaField('Remark')
-    submit_pf_rule = SubmitField('Add rule')
+    org_bupf_rule = StringField('ORG*:',default='FOC;FDO')
+    bu_bupf_rule = StringField('BU:',default='SRGBU')
+    pf_bupf_rule = TextAreaField("PF*:",default='4200ISR;4300ISR')
+    exception_main_pid_bupf_rule = TextAreaField('EXCEPTION_MAIN_PID:',default='ENCS5406P/K9;ENCS5412P/K9')
+    pid_a_bupf_rule = StringField('PID_A:',default='-AC;-DC')
+    pid_b_bupf_rule = StringField('PID_B:',default='XYZ;ABC')
+    remark_bupf_rule = TextAreaField('Remark:',default='Mandatory AC/DC PSU')
+    submit_bupf_rule = SubmitField('Add rule')
 
 
 
@@ -189,6 +193,8 @@ class GeneralConfigRulePid(db.Model):
     Email setting db table
     '''
     id=db.Column(db.Integer,primary_key=True)
+    ORG = db.Column(db.String(20))
+    BU = db.Column(db.String(15))
     PF=db.Column(db.String(60))
     PID_A=db.Column(db.String(30))
     PID_B = db.Column(db.String(30))
@@ -200,13 +206,15 @@ class GeneralConfigRulePid(db.Model):
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
 
-class GeneralConfigRulePf(db.Model):
+class GeneralConfigRuleBuPf(db.Model):
     '''
     Email setting db table
     '''
     id=db.Column(db.Integer,primary_key=True)
+    ORG=db.Column(db.String(20))
+    BU=db.Column(db.String(15))
     PF=db.Column(db.String(60))
-    PID_EXCEPTION =db.Column(db.String(100))
+    EXCEPTION_MAIN_PID =db.Column(db.String(100))
     PID_A = db.Column(db.String(30))
     PID_B = db.Column(db.String(30))
     REMARK = db.Column(db.String(100))

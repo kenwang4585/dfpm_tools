@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data_pid,add_general_rule_data_pf  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data_pid,add_general_rule_data_bupf  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -186,12 +186,13 @@ def global_app():
                 else:
                     save_to_tracker = False
 
-                wrong_po_dict,pf_checked = identify_config_error_po(df_3a4,config_rules)
+                df_bupf_rule=read_table('general_config_rule_bu_pf')
+                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_bupf_rule,config_rules)
                 qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
                     df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
 
-                msg = 'Config check completed and sent for {} with PF: {}; Total no. of new errors found: {}'.format(
-                    region,set(pf_checked),qty_new_error)
+                msg = 'Config check completed and sent for {}; Total no. of new errors found: {}'.format(
+                    region,qty_new_error)
                 flash(msg, 'success')
 
                 # send the error summary to users
@@ -259,108 +260,6 @@ def global_app():
             return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
 
     return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
-
-"""
-@app.route('/config', methods=['GET', 'POST'])
-def config_check():
-    form = ConfigCheckForm()
-
-    login_user = request.headers.get('Oidc-Claim-Sub')
-    login_name = request.headers.get('Oidc-Claim-Fullname')
-    login_title = request.headers.get('Oidc-Claim-Title')
-
-    if login_user == None:
-        login_user = 'unknown'
-        login_name = 'unknown'
-        login_title = 'unknown'
-
-    config_rules, notes = config_rule_mapping()
-
-    if form.validate_on_submit():
-        start_time_=pd.Timestamp.now()
-        # 通过条件判断及邮件赋值，开始执行任务
-        f = form.file.data
-        running_option=form.running_option.data
-
-        filename_3a4 = secure_filename(f.filename)
-        ext_3a4 = os.path.splitext(filename_3a4)[1]
-
-        if ext_3a4 == '.csv':
-            file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for config check - ' + login_user + '.csv')
-        elif ext_3a4 == '.xlsx':
-            file_path_3a4 = os.path.join(base_dir_uploaded, '3a4 for config check - ' + login_user + '.xlsx')
-        else:
-            flash('3A4 file type error: Only csv or xlsx file accepted! File you were trying to upload: {}'.format(
-                    f.filename),'warning')
-            return redirect(url_for('config_check'))
-
-        # 存储文件
-        f.save(file_path_3a4)
-
-        # 预读取文件做格式和内容判断
-        if ext_3a4 == '.csv':
-            df = pd.read_csv(file_path_3a4,encoding='iso-8859-1',nrows=3)
-        elif ext_3a4 == 'xlsx':
-            df = pd.read_excel(file_path_3a4,encoding='iso-8859-1',nrows=3)
-
-        # 检查文件是否包含需要的列：
-        if not np.all(np.in1d(col_3a4_must_have_config_check, df.columns)):
-            flash('File format error! Following required \
-                                        columns not found in 3a4 data: {}'.format(
-                    str(np.setdiff1d(col_3a4_must_have_config_check, df.columns))),
-                    'warning')
-            del df
-            gc.collect()
-
-            return redirect(url_for('config_check'))
-
-        try:
-            df_3a4 = read_3a4(file_path_3a4)
-            df_3a4 = scale_down_po_to_one_set(df_3a4)
-            # 生成main_X列 - discarded due to now based on 3a4 with main PID only
-            df_3a4 = commonize_and_create_main_item(df_3a4, 'BUSINESS_UNIT', 'main_bu')
-            df_3a4 = commonize_and_create_main_item(df_3a4, 'PRODUCT_FAMILY', 'main_pf')
-
-            if running_option != 'test':
-                save_to_tracker = True
-            else:
-                save_to_tracker = False
-
-            wrong_po_dict, pf_checked = identify_config_error_po(df_3a4, config_rules)
-            region = ''
-            qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
-                df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
-
-            msg = 'Config check completed with PF: {}; Total no. of new errors found: {}'.format(set(pf_checked),qty_new_error)
-            flash(msg, 'success')
-
-            # write program log to log file
-            add_user_log(user=login_user, location='Config check', user_action='Run',
-                         summary='Checked for {}. New errors: {}'.format(set(pf_checked),qty_new_error))
-
-            return render_template('config_check.html', form=form, user=login_name,
-                                   subtitle='- Config Check',
-                                   error_result_header=df_error_new.columns,
-                                   error_result_data=df_error_new.values)
-
-        except Exception as e:
-            msg = 'Error: {}'.format(str(e))
-            flash(msg, 'warning')
-
-            traceback.print_exc()
-            add_user_log(user=login_user, location='Config check', user_action='Run',
-                         summary='Error: {}: '.format(str(e)))
-            error_msg = '\n[' + login_user + '] Config check ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
-            with open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+') as file_object:
-                file_object.write(error_msg)
-            traceback.print_exc(file=open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+'))
-
-            return redirect(url_for('config_check'))
-
-    return render_template('config_check.html', form=form,user=login_name,
-                           subtitle='- Config Check',config_notes=notes)
-
-"""
 
 
 @app.route('/ranking', methods=['GET', 'POST'])
@@ -493,12 +392,12 @@ def config_rules():
         login_name = 'unknown'
 
     df_pid_rule=read_table('general_config_rule_pid')
-    df_pf_rule = read_table('general_config_rule_pf')
+    df_pf_rule = read_table('general_config_rule_bu_pf')
 
     if form.validate_on_submit():
         submit_pabu=form.submit_upload_pabu.data
         submit_pid_rule=form.submit_pid_rule.data
-        submit_pf_rule=form.submit_pf_rule.data
+        submit_bupf_rule=form.submit_bupf_rule.data
 
         if submit_pabu:
             fname_pabu=form.file_pabu.data
@@ -547,16 +446,18 @@ def config_rules():
             msg = 'New general rule has been added'
             flash(msg, 'success')
             return redirect(url_for('config_rules'))
-        elif submit_pf_rule:
-            pf=form.pf_pf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            exception_pid=form.exception_pid_pf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_a=form.pid_a_pf_rule.data.strip().upper()
-            pid_b=form.pid_b_pf_rule.data.strip().upper()
-            remark=form.remark_pf_rule.data.strip()
+        elif submit_bupf_rule:
+            org=form.org_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            bu = form.bu_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pf=form.pf_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            exception_main_pid_bupf_rule=form.exception_main_pid_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_a=form.pid_a_bupf_rule.data.strip().upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            pid_b=form.pid_b_bupf_rule.data.strip().upper().replace(' ', '').replace('\n', '').replace('\r', '')
+            remark=form.remark_bupf_rule.data.strip()
 
-            add_general_rule_data_pf(pf, exception_pid, pid_a, pid_b, remark, login_user)
+            add_general_rule_data_bupf(org,bu,pf, exception_main_pid_bupf_rule, pid_a, pid_b, remark, login_user)
 
-            df_pf_rule=read_table('general_config_rule_pf')
+            df_pf_rule=read_table('general_config_rule_bu_pf')
 
             msg = 'New general rule has been added'
             flash(msg, 'success')
@@ -1359,7 +1260,7 @@ def delete_general_config_rule_pf_record(login_user,added_by,record_id):
 
     if login_user==added_by or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('general_config_rule_pf', id_list)
+        delete_record('general_config_rule_bu_pf', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:

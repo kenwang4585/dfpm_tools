@@ -44,10 +44,22 @@
 
         <hr />
         <h2 align="center">General inclusion and exclusion rule - PID based</h2>
-        <h5 align="center">Definition: If order includes PID_A, then it must include PID_B, and must NOT include PID_C. </h5>
+        <h5 style="color: #005cbf" align="center">
+            Definition: For related BU or PF, if it includes PID_A, it must also include PID_B, and must NOT include PID_C. <br>
+            (if multiple input (e.g. AC;DC), for PID_A,it's considered as AC 'or' DC (same for PID_B); in case of PID_C,it's considered as AC 'and' DC)
+        </h5>
+
         <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="50%">
             <tr align="center">
-                <td>{{ form.pf_pid_rule.label }} <br> {{ form.pf_pid_rule }}</td>
+                <td>
+                    {{ form.org_bupf_rule.label }} <br> {{ form.org_bupf_rule }}
+                </td>
+                <td>
+                    {{ form.bu_bupf_rule.label }} <br> {{ form.bu_bupf_rule }}
+                </td>
+                <td>
+                    {{ form.pf_pid_rule.label }} <br> {{ form.pf_pid_rule }}
+                </td>
                 <td>
                     {{ form.pid_a_pid_rule.label }} <br> {{ form.pid_a_pid_rule }} <br>
                     {{ form.pid_a_exception_pid_rule.label }} <br> {{ form.pid_a_exception_pid_rule }}
@@ -64,7 +76,6 @@
                 <td valign="middle"><br>{{ form.submit_pid_rule }}</td>
             </tr>
         </table>
-        <h5 style="color: #005cbf" align="center">To input multiple PF or exceptions PIDs, separate by ';'.</h5>
 
         <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="90%">
             <tr> <!-- For viewing the details -->
@@ -85,7 +96,7 @@
                                         <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
                                     {% endfor %}
                                     <td align="center">
-                                        <a href="{{ url_for('delete_general_config_rule_pid_record',login_user=login_user,added_by=row[9],record_id=row[0]) }}">remove</a>
+                                        <a href="{{ url_for('delete_general_config_rule_pid_record',login_user=login_user,added_by=row[11],record_id=row[0]) }}">remove</a>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -98,25 +109,33 @@
 
         <br><br><br>
         <hr />
-        <h2 align="center">General inclusion and exclusion rule - PF based</h2>
-        <h5 align="center">Definition: For related PF, it must include PID_A, and must NOT include PID_B. </h5>
+        <h2 align="center">General inclusion and exclusion rule - BU/PF based</h2>
+        <h5   style="color: #005cbf" align="center">
+            Definition: For related BU or PF, it must include PID_A, and must NOT include PID_B. <br>
+            (if multiple input(e.g. AC;DC), for PID_A,it's considered as AC 'or' DC; in case of PID_B,it's considered as AC 'and' DC)
+        </h5>
         <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="50%">
             <tr align="center">
                 <td>
-                    {{ form.pf_pf_rule.label }} <br> {{ form.pf_pf_rule }} <br>
-                    {{ form.exception_pid_pf_rule.label }} <br> {{ form.exception_pid_pf_rule }}
+                    {{ form.org_bupf_rule.label }} <br> {{ form.org_bupf_rule }}
                 </td>
                 <td>
-                    {{ form.pid_a_pf_rule.label }} <br> {{ form.pid_a_pf_rule }}
+                    {{ form.bu_bupf_rule.label }} <br> {{ form.bu_bupf_rule }}
+                </td>
+                <td>
+                    {{ form.pf_bupf_rule.label }} <br> {{ form.pf_bupf_rule }} <br>
+                    {{ form.exception_main_pid_bupf_rule.label }} <br> {{ form.exception_main_pid_bupf_rule }}
+                </td>
+                <td>
+                    {{ form.pid_a_bupf_rule.label }} <br> {{ form.pid_a_bupf_rule }}
                 </td>>
                 <td>
-                    {{ form.pid_b_pf_rule.label }} <br> {{ form.pid_b_pf_rule }}
+                    {{ form.pid_b_bupf_rule.label }} <br> {{ form.pid_b_bupf_rule }}
                 </td>
-                <td>{{ form.remark_pf_rule.label }} <br> {{ form.remark_pf_rule }}</td>
-                <td valign="middle"><br>{{ form.submit_pf_rule }}</td>
+                <td>{{ form.remark_bupf_rule.label }} <br> {{ form.remark_bupf_rule }}</td>
+                <td valign="middle"><br>{{ form.submit_bupf_rule }}</td>
             </tr>
         </table>
-        <h5 style="color: #005cbf" align="center">To input multiple PF or exceptions PIDs, separate by ';'.</h5>
 
         <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="90%">
             <tr> <!-- For viewing the details -->
@@ -137,7 +156,7 @@
                                         <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
                                     {% endfor %}
                                     <td align="center">
-                                        <a href="{{ url_for('delete_general_config_rule_pf_record',login_user=login_user,added_by=row[6],record_id=row[0]) }}">remove</a>
+                                        <a href="{{ url_for('delete_general_config_rule_pf_record',login_user=login_user,added_by=row[8],record_id=row[0]) }}">remove</a>
                                     </td>
                                 </tr>
                             {% endfor %}

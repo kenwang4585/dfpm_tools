@@ -11,10 +11,11 @@ def config_rule_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     config_rules = (
-                    [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
-                    [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
-                    [['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
-                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
+                    #[[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
+                    #[['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
+                    #[['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
+                    #[[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
+                    [[],[],'find_missing_pid_base_on_general_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
                     )
 
     notes = [
@@ -232,6 +233,124 @@ def find_srg_psu_missing(dfx,wrong_po_dict):
 
     return wrong_po_dict
 
+
+def find_missing_pid_base_on_general_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
+    '''
+    Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
+    '''
+    for row in df_bupf_rule.itertuples():
+        id=row.id
+        org=row.ORG.split(';')
+        bu = row.BU.split(';')
+        pf=row.PF.split(';')
+        exception_main_pid=row.EXCEPTION_MAIN_PID.split(';')
+        pid_a=row.PID_A.split(';')
+        pid_b=row.PID_B.split(';')
+        remark=row.REMARK
+
+        # limit the df based on org/bu/pf
+        dfy=dfx.copy()
+        if org!=['']:
+            dfy=dfy[dfy.ORGANIZATION_CODE.isin(org)].copy()
+        if bu!=['']:
+            dfy = dfy[dfy.main_bu.isin(bu)].copy()
+        if pf!=['']:
+            dfy = dfy[dfy.main_pf.isin(pf)].copy()
+
+        dfy_main= dfy[(dfy.OPTION_NUMBER == 0)]
+        main_po_pid=zip(dfy_main.PO_NUMBER,dfy_main.PRODUCT_ID)
+        po_list=[]
+        for po,pid in main_po_pid:
+            if '=' not in pid and 'MISC' not in pid:
+                if pid not in exception_main_pid:
+                    po_list.append(po)
+
+        for po in po_list:
+            pid_list=dfy[dfy.PO_NUMBER==po].PRODUCT_ID.unique()
+
+            if pid_a!=['']:
+                missing_pid_a = True
+                for including_pid_keyword in pid_a:
+                    for pid in pid_list:
+                        if including_pid_keyword in pid:
+                            missing_pid_a = False
+                            break
+                    if missing_pid_a==False:
+                        break
+                if missing_pid_a==True:
+                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+
+            if missing_pid_a==False and pid_b!=['']:
+                extra_pid_b = False
+                for pid in pid_list:
+                    for extra_pid in pid_b:
+                        if extra_pid in pid:
+                            extra_pid_b = True
+                            break
+                if extra_pid_b:
+                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+
+    return wrong_po_dict
+
+
+def find_missing_pid_base_on_general_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
+    '''
+    Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
+    '''
+    for row in df_pid_rule.itertuples():
+        id=row.id
+        org=row.ORG.split(';')
+        bu = row.BU.split(';')
+        pf=row.PF.split(';')
+        exception_main_pid=row.EXCEPTION_MAIN_PID.split(';')
+        pid_a=row.PID_A.split(';')
+        pid_b=row.PID_B.split(';')
+        remark=row.REMARK
+
+        # limit the df based on org/bu/pf
+        dfy=dfx.copy()
+        if org!=['']:
+            dfy=dfy[dfy.ORGANIZATION_CODE.isin(org)].copy()
+        if bu!=['']:
+            dfy = dfy[dfy.main_bu.isin(bu)].copy()
+        if pf!=['']:
+            dfy = dfy[dfy.main_pf.isin(pf)].copy()
+
+        #TODO: below need to be updated for not main PID
+        dfy_main= dfy[(dfy.OPTION_NUMBER == 0)]
+        main_po_pid=zip(dfy_main.PO_NUMBER,dfy_main.PRODUCT_ID)
+        po_list=[]
+        for po,pid in main_po_pid:
+            if '=' not in pid and 'MISC' not in pid:
+                if pid not in exception_main_pid:
+                    po_list.append(po)
+
+        for po in po_list:
+            pid_list=dfy[dfy.PO_NUMBER==po].PRODUCT_ID.unique()
+
+            if pid_a!=['']:
+                missing_pid_a = True
+                for including_pid_keyword in pid_a:
+                    for pid in pid_list:
+                        if including_pid_keyword in pid:
+                            missing_pid_a = False
+                            break
+                    if missing_pid_a==False:
+                        break
+                if missing_pid_a==True:
+                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+
+            if missing_pid_a==False and pid_b!=['']:
+                extra_pid_b = False
+                for pid in pid_list:
+                    for extra_pid in pid_b:
+                        if extra_pid in pid:
+                            extra_pid_b = True
+                            break
+                if extra_pid_b:
+                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+
+    return wrong_po_dict
 
 
 def isr43xx_vg450_rules_sm_nim(pid_qty, extra_slot, wrong_po_dict, po, sm_criteria, nim_criteria):
@@ -577,15 +696,13 @@ def scale_down_po_to_one_set(df):
     for po,qty in po_qty:
         po_qty_dic[po]=qty
 
-
     df.loc[:,'max_qty']=df.PO_NUMBER.map(lambda x: po_qty_dic[x] if x in po_qty_dic.keys() else 1)
     df.loc[:,'ORDERED_QUANTITY']=df.ORDERED_QUANTITY / df.max_qty
 
     return df
 
-def identify_config_error_po(df_3a4,config_rules):
+def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
     wrong_po_dict = {}
-    pf_checked = []
 
     # pick out ATO PO
     df_pivot=df_3a4.pivot_table(index='PO_NUMBER',values='OPTION_NUMBER',aggfunc=sum)
@@ -593,12 +710,13 @@ def identify_config_error_po(df_3a4,config_rules):
     df_ato=df_3a4[df_3a4.PO_NUMBER.isin(ato_po)].copy()
 
     for org_pf_func in config_rules:
-        start = time.time()
-        dfx = df_ato[(~df_ato.ORGANIZATION_CODE.isin(org_pf_func[0]))&(df_ato.main_pf.isin(org_pf_func[1]))].copy()  # used in below config_func
-        if dfx.shape[0] > 0:
-            pf_checked += org_pf_func[1]
-            print('Checking config on PF: {}'.format(org_pf_func[1]))
-            wrong_po_dict = eval(org_pf_func[2])
-        print('Time spent to check PF {}: {}'.format(org_pf_func[1], time.time() - start))
+        dfx=df_ato.copy() # make a copy of original each time
+        if org_pf_func[0]!=[]:
+            dfx = dfx[(~df_ato.ORGANIZATION_CODE.isin(org_pf_func[0]))].copy()
+        if org_pf_func[1]!=[]:
+            dfx=dfx[dfx.main_pf.isin(org_pf_func[1])].copy()  # used in below config_func
 
-    return wrong_po_dict,pf_checked
+        if dfx.shape[0] > 0:
+            wrong_po_dict = eval(org_pf_func[2])
+
+    return wrong_po_dict

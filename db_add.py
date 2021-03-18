@@ -73,18 +73,20 @@ def add_general_rule_data_pid(pf,pid_a,pid_b,pid_c,pid_a_exception,pid_b_excepti
     db.session.commit()
     #print('User log added')
 
-def add_general_rule_data_pf(pf, exception_pid, pid_a, pid_b, remark, login_user):
+def add_general_rule_data_bupf(org, bu, pf, exception_main_pid_bupf_rule, pid_a, pid_b, remark, login_user):
     '''
     Add the general rule data to db
     '''
 
-    record = GeneralConfigRulePf(PF=pf,
-                  PID_EXCEPTION=exception_pid,
-                  PID_A=pid_a,
-                  PID_B=pid_b,
-                  REMARK=remark,
-                  Added_by=login_user,
-                  Added_on=pd.Timestamp.now().date(),)
+    record = GeneralConfigRuleBuPf( ORG=org,
+                                    BU=bu,
+                                    PF=pf,
+                                    EXCEPTION_MAIN_PID=exception_main_pid_bupf_rule,
+                                    PID_A=pid_a,
+                                    PID_B=pid_b,
+                                    REMARK=remark,
+                                    Added_by=login_user,
+                                    Added_on=pd.Timestamp.now().date(),)
 
     db.session.add(record)  # can also use add_all() for multiple adding at one time
     db.session.commit()

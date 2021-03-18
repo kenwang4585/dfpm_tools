@@ -37,9 +37,6 @@
     </head>
 
     <body>
-        {% block content %}
-        {% endblock %}
-
         {% block flash_message %}
             <!-- below for flashed messages -->
             <table style="border-collapse:collapse" border="0" cellspacing="0px" align="center">
@@ -60,6 +57,9 @@
                     </tr>
                 </tbody>
             </table>
+        {% endblock %}
+
+        {% block content %}
         {% endblock %}
 
         {% block content_below_msg %}
