@@ -1238,7 +1238,7 @@ def delete_general_config_rule_pid_record(login_user,added_by,record_id):
     if login_user == 'unknown':
         http_scheme = 'http'
     else:
-        http_scheme = 'https'
+        http_scheme = 'http'
 
     if login_user==added_by or login_user==super_user:
         id_list=[str(record_id)]
@@ -1256,7 +1256,7 @@ def delete_general_config_rule_pf_record(login_user,added_by,record_id):
     if login_user == 'unknown':
         http_scheme = 'http'
     else:
-        http_scheme = 'https'
+        http_scheme = 'http'
 
     if login_user==added_by or login_user==super_user:
         id_list=[str(record_id)]
