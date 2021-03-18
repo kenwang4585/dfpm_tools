@@ -11,10 +11,10 @@ def config_rule_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     config_rules = (
-                    #[[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
-                    #[['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
+                    [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
+                    [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
                     #[['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
-                    #[[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
+                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
                     [[],[],'find_missing_pid_base_on_general_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
                     )
 
