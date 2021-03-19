@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_general_rule_data_pid,add_general_rule_data_bupf  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -187,7 +187,8 @@ def global_app():
                     save_to_tracker = False
 
                 df_bupf_rule=read_table('general_config_rule_bu_pf')
-                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_bupf_rule,config_rules)
+                df_pid_rule=read_table('general_config_rule_pid')
+                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules)
                 qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
                     df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
 
@@ -379,9 +380,9 @@ def backlog_ranking():
 
     return render_template('backlog_ranking.html', form=form,user=login_name,subtitle='- Backlog Ranking')
 
-@app.route('/config_rules',methods=['GET','POST'])
-def config_rules():
-    form=ConfigRules()
+@app.route('/config_rules_incl_excl_bupf',methods=['GET','POST'])
+def config_rules_incl_excl_bupf_based():
+    form=ConfigRulesInclExclBuPfBased()
 
     login_user = request.headers.get('Oidc-Claim-Sub')
     login_name = request.headers.get('Oidc-Claim-Fullname')
@@ -391,13 +392,87 @@ def config_rules():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_pid_rule=read_table('general_config_rule_pid')
-    df_pf_rule = read_table('general_config_rule_bu_pf')
+    df_rule=read_table('general_config_rule_bu_pf')
+
+    if form.validate_on_submit():
+        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        exception_main_pid=form.exception_main_pid.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        remark=form.remark.data.strip()
+
+        add_incl_excl_rule_bupf(org,bu,pf, exception_main_pid, pid_a, pid_b, remark, login_user)
+
+        df_rule=read_table('general_config_rule_bu_pf')
+
+        msg = 'New general rule has been added'
+        flash(msg, 'success')
+        return redirect(url_for('config_rules_incl_excl_bupf_based'))
+
+    return render_template('config_rules_inclusion_exclusion_bupf_based.html',
+                           form=form,user=login_name,subtitle='- Config Rules',
+                           login_user=login_user,
+                           df_rule_header=df_rule.columns,
+                           df_rule_data=df_rule.values,
+                           )
+
+@app.route('/config_rules_incl_excl_pid',methods=['GET','POST'])
+def config_rules_incl_excl_pid_based():
+    form=ConfigRulesInclExclPidBased()
+
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
+
+    df_rule=read_table('general_config_rule_pid')
+
+    if form.validate_on_submit():
+        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_c=form.pid_c.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_a_exception = form.pid_a_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_b_exception = form.pid_b_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        pid_c_exception = form.pid_c_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        remark=form.remark.data.strip()
+
+        add_incl_excl_rule_pid(org,bu,pf, pid_a, pid_b, pid_c,pid_a_exception, pid_b_exception, pid_c_exception, remark, login_user)
+
+        df_rule=read_table('general_config_rule_pid')
+
+        msg = 'New inclusion/exclusion rule has been added'
+        flash(msg, 'success')
+        return redirect(url_for('config_rules_incl_excl_pid_based'))
+
+    return render_template('config_rules_inclusion_exclusion_pid_based.html',
+                           form=form,user=login_name,subtitle='- Config Rules',
+                           login_user=login_user,
+                           df_rule_header=df_rule.columns,
+                           df_rule_data=df_rule.values,
+                           )
+
+@app.route('/config_rules_combination',methods=['GET','POST'])
+def config_rules_combination():
+    form=ConfigRulesCombination()
+
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
 
     if form.validate_on_submit():
         submit_pabu=form.submit_upload_pabu.data
-        submit_pid_rule=form.submit_pid_rule.data
-        submit_bupf_rule=form.submit_bupf_rule.data
 
         if submit_pabu:
             fname_pabu=form.file_pabu.data
@@ -428,48 +503,29 @@ def config_rules():
             fname_pabu.save(file_path_pabu)
             msg = 'New file has been upload and rules replaced: {}'.format(fname_pabu.filename)
             flash(msg, 'success')
-            return redirect(url_for('config_rules'))
-        elif submit_pid_rule:
-            pf=form.pf_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_a=form.pid_a_pid_rule.data.strip().upper()
-            pid_b=form.pid_b_pid_rule.data.strip().upper()
-            pid_c=form.pid_c_pid_rule.data.strip().upper()
-            pid_a_exception = form.pid_a_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_b_exception = form.pid_b_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_c_exception = form.pid_c_exception_pid_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            remark=form.remark_pid_rule.data.strip()
+            return redirect(url_for('config_rules_combination'))
 
-            add_general_rule_data_pid(pf, pid_a, pid_b, pid_c,pid_a_exception, pid_b_exception, pid_c_exception, remark, login_user)
+    return render_template('config_rules_combination.html',
+                           form=form,user=login_name,subtitle='- Config Rules',
+                           login_user=login_user)
 
-            df_pid_rule=read_table('general_config_rule_pid')
 
-            msg = 'New general rule has been added'
-            flash(msg, 'success')
-            return redirect(url_for('config_rules'))
-        elif submit_bupf_rule:
-            org=form.org_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            bu = form.bu_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pf=form.pf_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            exception_main_pid_bupf_rule=form.exception_main_pid_bupf_rule.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_a=form.pid_a_bupf_rule.data.strip().upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            pid_b=form.pid_b_bupf_rule.data.strip().upper().replace(' ', '').replace('\n', '').replace('\r', '')
-            remark=form.remark_bupf_rule.data.strip()
+@app.route('/config_rules_main',methods=['GET','POST'])
+def config_rules_main():
+    form=ConfigRulesMain()
 
-            add_general_rule_data_bupf(org,bu,pf, exception_main_pid_bupf_rule, pid_a, pid_b, remark, login_user)
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
 
-            df_pf_rule=read_table('general_config_rule_bu_pf')
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
 
-            msg = 'New general rule has been added'
-            flash(msg, 'success')
-            return redirect(url_for('config_rules'))
-
-    return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules',
-                           login_user=login_user,
-                           df_pid_rule_header=df_pid_rule.columns,
-                           df_pid_rule_data=df_pid_rule.values,
-                           df_pf_rule_header=df_pf_rule.columns,
-                           df_pf_rule_data=df_pf_rule.values,
-                           )
+    return render_template('config_rules_main.html',
+                            form=form,
+                            user=login_name, subtitle='- Config Rules',
+                            login_user=login_user)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
@@ -1249,10 +1305,10 @@ def delete_general_config_rule_pid_record(login_user,added_by,record_id):
         msg = 'You can only delete record created by you!'
         flash(msg,'warning')
 
-    return redirect(url_for("config_rules", _external=True, _scheme=http_scheme, viewarg1=1))
+    return redirect(url_for("config_rules_incl_excl_pid_based", _external=True, _scheme=http_scheme, viewarg1=1))
 
-@app.route('/pf/<login_user>/<added_by>/<record_id>',methods=['GET'])
-def delete_general_config_rule_pf_record(login_user,added_by,record_id):
+@app.route('/bupf/<login_user>/<added_by>/<record_id>',methods=['GET'])
+def delete_general_config_rule_bupf_record(login_user,added_by,record_id):
     if login_user == 'unknown':
         http_scheme = 'http'
     else:
@@ -1267,7 +1323,7 @@ def delete_general_config_rule_pf_record(login_user,added_by,record_id):
         msg = 'You can only delete record created by you!'
         flash(msg,'warning')
 
-    return redirect(url_for("config_rules", _external=True, _scheme=http_scheme, viewarg1=1))
+    return redirect(url_for("config_rules_incl_excl_bupf_based", _external=True, _scheme=http_scheme, viewarg1=1))
 
 
 if __name__ == '__main__':

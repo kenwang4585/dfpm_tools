@@ -15,14 +15,16 @@ def config_rule_mapping():
                     [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
                     #[['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
                     [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
-                    [[],[],'find_missing_pid_base_on_general_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
+                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
+                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)']
                     )
 
     notes = [
              '- UABU C9400: PSU/LC/SUP combinations (Alex Solis Gonzalez)',
              '- SRGBU 4300ISR/4400ISR/ICV (FVE excluded): SM/NIM combinations (Rachel Zhang)',
              '- SRGBU 4xxxISR/800BB/900ISR/CAT8200/CAT8300/ENCS/ISR1K/ISR900 (FVE excluded; 3 config spares excluded): missing PSU (Rachel Zhang)',
-             '- PABU ASR903: Slot related check (Calina, Joe,.. )'
+             '- PABU ASR903: Slot related check (Calina, Joe,.. )',
+             '- Other general inclusion/excelusion rules',
              ]
 
     return config_rules,notes
@@ -234,7 +236,7 @@ def find_srg_psu_missing(dfx,wrong_po_dict):
     return wrong_po_dict
 
 
-def find_missing_pid_base_on_general_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
+def find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
     '''
     Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
     '''
@@ -293,7 +295,7 @@ def find_missing_pid_base_on_general_config_rule_bupf(dfx,df_bupf_rule,wrong_po_
     return wrong_po_dict
 
 
-def find_missing_pid_base_on_general_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
+def find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
     '''
     Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
     '''
@@ -302,9 +304,12 @@ def find_missing_pid_base_on_general_config_rule_pid(dfx,df_pid_rule,wrong_po_di
         org=row.ORG.split(';')
         bu = row.BU.split(';')
         pf=row.PF.split(';')
-        exception_main_pid=row.EXCEPTION_MAIN_PID.split(';')
-        pid_a=row.PID_A.split(';')
-        pid_b=row.PID_B.split(';')
+        pid_a = row.PID_A.split(';')
+        pid_a_exception=row.PID_A_EXCEPTION.split(';')
+        pid_b = row.PID_B.split(';')
+        pid_b_exception = row.PID_B_EXCEPTION.split(';')
+        pid_c = row.PID_C.split(';')
+        pid_c_exception = row.PID_C_EXCEPTION.split(';')
         remark=row.REMARK
 
         # limit the df based on org/bu/pf
@@ -316,39 +321,37 @@ def find_missing_pid_base_on_general_config_rule_pid(dfx,df_pid_rule,wrong_po_di
         if pf!=['']:
             dfy = dfy[dfy.main_pf.isin(pf)].copy()
 
-        #TODO: below need to be updated for not main PID
-        dfy_main= dfy[(dfy.OPTION_NUMBER == 0)]
-        main_po_pid=zip(dfy_main.PO_NUMBER,dfy_main.PRODUCT_ID)
-        po_list=[]
-        for po,pid in main_po_pid:
-            if '=' not in pid and 'MISC' not in pid:
-                if pid not in exception_main_pid:
-                    po_list.append(po)
+        #Identify the elible order that includes pid_a
+        dfy.loc[:,'eligible']=np.where(dfy.PRODUCT_ID.isin(pid_a),
+                                       'YES',
+                                       'NO')
+        dfy_eligible=dfy[dfy.eligible=='YES']
+        po_list=dfy_eligible.PO_NUMBER.values
 
         for po in po_list:
-            pid_list=dfy[dfy.PO_NUMBER==po].PRODUCT_ID.unique()
+            pid_list=dfy_eligible[dfy_eligible.PO_NUMBER==po].PRODUCT_ID.unique()
 
-            if pid_a!=['']:
-                missing_pid_a = True
-                for including_pid_keyword in pid_a:
+            if pid_b!=['']:
+                missing_pid_b = True
+                for including_pid_keyword in pid_b:
                     for pid in pid_list:
                         if including_pid_keyword in pid:
-                            missing_pid_a = False
+                            missing_pid_b = False
                             break
-                    if missing_pid_a==False:
+                    if missing_pid_b==False:
                         break
-                if missing_pid_a==True:
-                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+                if missing_pid_b==True:
+                    wrong_po_dict[po] = 'PID rule #{}:{}'.format(id,remark)
 
-            if missing_pid_a==False and pid_b!=['']:
-                extra_pid_b = False
+            if missing_pid_b==False and pid_c!=['']:
+                extra_pid_c = False
                 for pid in pid_list:
                     for extra_pid in pid_b:
                         if extra_pid in pid:
-                            extra_pid_b = True
+                            extra_pid_c = True
                             break
-                if extra_pid_b:
-                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
+                if extra_pid_c:
+                    wrong_po_dict[po] = 'PID rule #{}:{}'.format(id,remark)
 
     return wrong_po_dict
 
@@ -675,7 +678,7 @@ def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_er
     send_attachment_and_embded_image(to_address, subject, html,
                                      sender=sender,
                                      att_filenames=att_file,
-                                     bcc=['kwang2@cisco.com'],
+                                     bcc=[super_user + '@cisco.com'],
                                      new_error_header=df_error_new.columns,
                                      new_error_data=df_error_new.values,
                                      old_error_header=df_error_old.columns,

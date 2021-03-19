@@ -35,7 +35,7 @@ def download_and_send_tracker_as_backup(backup_day,login_user):
             att_files.append((base_dir_tracker,file))
 
         # Send to ken
-        to_address = ['kwang2@cisco.com']
+        to_address = [super_user + '@cisco.com']
         subject = 'Addressable backlog tracker files - triggered by: {}'.format(login_user)
         html = 'tracker_email.html'
 
@@ -415,7 +415,7 @@ def remove_priority_ss_from_smtsheet_and_notify(df_removal,login_user,sender='AP
         send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
                                          embeded_filenames=None,
                                          sender=sender,
-                                         bcc=['kwang2@cisco.com'],
+                                         bcc=[super_user + '@cisco.com'],
                                          removal_ss_header=df_removal.columns,
                                          removal_ss_details=df_removal.values,
                                          user=login_user)
@@ -2352,7 +2352,7 @@ def create_and_send_wnbu_compliance(wnbu_compliance_hold_emails, df_compliance_r
 
     msg,size_over_limit = send_attachment_and_embded_image(to_address, subject, html_template,
                                                            sender=sender,
-                                                           bcc=['kwang2@cisco.com'],
+                                                           bcc=[super_user + '@cisco.com'],
                                                            ok_release_header=df_compliance_release.columns,
                                                            ok_release_data=df_compliance_release.values,
                                                            keep_on_hold_header=df_compliance_hold.columns,
@@ -2520,7 +2520,7 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
 
         msg,size_over_limit = send_attachment_and_embded_image(to_address, subject, html, att_filenames=None,
                                                 sender=sender,
-                                                bcc=['kwang2@cisco.com'],
+                                                bcc=[super_user + '@cisco.com'],
                                                 embeded_filenames=backlog_chart_global[region],
                                                 banner_addr='cid:banner_addr',
                                                 apjc_add_summary='cid:apjc_add_summary',
@@ -2541,7 +2541,7 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
 
         msg, size_over_limit = send_attachment_and_embded_image(to_address, subject, html, att_filenames=None,
                                                                 sender=sender,
-                                                                bcc=['kwang2@cisco.com'],
+                                                                bcc=[super_user + '@cisco.com'],
                                                                 embeded_filenames=backlog_chart_global[region],
                                                                 banner_addr='cid:banner_addr',
                                                                 emea_add_summary='cid:emea_add_summary',
@@ -2556,7 +2556,7 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
 
         msg, size_over_limit = send_attachment_and_embded_image(to_address, subject, html, att_filenames=None,
                                                                 sender=sender,
-                                                                bcc=['kwang2@cisco.com'],
+                                                                bcc=[super_user + '@cisco.com'],
                                                                 embeded_filenames=backlog_chart_global[region],
                                                                 banner_addr='cid:banner_addr',
                                                                 americas_add_summary='cid:americas_add_summary',

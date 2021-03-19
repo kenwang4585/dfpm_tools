@@ -117,7 +117,13 @@ class AdminForm(FlaskForm):
     file_name=StringField(validators=[DataRequired()])
     submit_delete=SubmitField('Delete')
 
-class ConfigRules(FlaskForm):
+class ConfigRulesMain(FlaskForm):
+    file_upload_error=FileField('Report/save new error config (.xlsx)')
+    file_remove_error = FileField('Remove error config from db (.xlsx)')
+    submit_upload_error=SubmitField('UPLOAD')
+    submit_remove_error = SubmitField('REMOVE')
+
+class ConfigRulesCombination(FlaskForm):
     submit_download_pabu = SubmitField('Download rule file')
     file_pabu = FileField('Select rule file:')
     confirm_pabu = BooleanField('Confirm to replace with new file!')
@@ -128,26 +134,28 @@ class ConfigRules(FlaskForm):
     confirm_srgbu = BooleanField('Confirm to replace with new file!')
     submit_upload_srgbu = SubmitField('Upload rule file')
 
-    org_pid_rule=StringField('ORG*:',default='FOC;FDO')
-    bu_pid_rule=StringField('BU:',default='SRGBU')
-    pf_pid_rule=TextAreaField("PF*:",default='4200ISR;4300ISR')
-    pid_a_pid_rule=StringField('PID_A*:',default='-AC;-DC')
-    pid_b_pid_rule=StringField('PID_B:',default='XYZ;ABC')
-    pid_c_pid_rule=StringField('PID_C:',default='CDE;WER')
-    pid_a_exception_pid_rule = TextAreaField('PID_A_EXCEPTION:',default='sdfwr-AC;tewr-DC')
-    pid_b_exception_pid_rule = TextAreaField('PID_B_EXCEPTION:',default='werw-XYZ;qwqw-ABC')
-    pid_c_exception_pid_rule = TextAreaField('PID_C_EXCEPTION:',default='tutyu-CDE;erer-WER')
-    remark_pid_rule=TextAreaField('Remark:')
-    submit_pid_rule=SubmitField('Add rule')
+class ConfigRulesInclExclPidBased(FlaskForm):
+    org=StringField('ORG*:')
+    bu=StringField('BU:')
+    pf=TextAreaField("PF:")
+    pid_a=StringField('PID_A*:')
+    pid_b=StringField('PID_B:')
+    pid_c=StringField('PID_C:')
+    pid_a_exception = TextAreaField('PID_A_EXCEPTION:')
+    pid_b_exception = TextAreaField('PID_B_EXCEPTION:')
+    pid_c_exception = TextAreaField('PID_C_EXCEPTION:')
+    remark=TextAreaField('Remark:')
+    submit=SubmitField('Add rule')
 
-    org_bupf_rule = StringField('ORG*:',default='FOC;FDO')
-    bu_bupf_rule = StringField('BU:',default='SRGBU')
-    pf_bupf_rule = TextAreaField("PF*:",default='4200ISR;4300ISR')
-    exception_main_pid_bupf_rule = TextAreaField('EXCEPTION_MAIN_PID:',default='ENCS5406P/K9;ENCS5412P/K9')
-    pid_a_bupf_rule = StringField('PID_A:',default='-AC;-DC')
-    pid_b_bupf_rule = StringField('PID_B:',default='XYZ;ABC')
-    remark_bupf_rule = TextAreaField('Remark:',default='Mandatory AC/DC PSU')
-    submit_bupf_rule = SubmitField('Add rule')
+class ConfigRulesInclExclBuPfBased(FlaskForm):
+    org = StringField('ORG*:')
+    bu = StringField('BU:')
+    pf = TextAreaField("PF:")
+    exception_main_pid = TextAreaField('EXCEPTION_MAIN_PID:')
+    pid_a = StringField('PID_A:')
+    pid_b = StringField('PID_B:')
+    remark = TextAreaField('Remark:')
+    submit = SubmitField('Add rule')
 
 
 
