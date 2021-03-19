@@ -118,10 +118,10 @@ class AdminForm(FlaskForm):
     submit_delete=SubmitField('Delete')
 
 class ConfigRulesMain(FlaskForm):
-    file_upload_error=FileField('Report/save new error config (.xlsx)')
+    file_upload_error=FileField('Add new error config (.xlsx)')
     file_remove_error = FileField('Remove error config from db (.xlsx)')
-    submit_upload_error=SubmitField('UPLOAD')
-    submit_remove_error = SubmitField('REMOVE')
+    submit_upload_error=SubmitField('PROCEED')
+    submit_remove_error = SubmitField('PROCEED')
 
 class ConfigRulesCombination(FlaskForm):
     submit_download_pabu = SubmitField('Download rule file')
