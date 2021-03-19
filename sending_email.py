@@ -7,7 +7,7 @@ import pandas as pd
 from send_sms import send_me_sms
 
 
-def send_attachment_and_embded_image(to_address,subject,html_template,att_filenames=None, embeded_filenames=None,sender='APJC DF',bcc=None,**kwargs):
+def send_attachment_and_embded_image(to_address,subject,body=None,html_template=None,att_filenames=None, embeded_filenames=None,sender='APJC DF',cc=None,bcc=None,**kwargs):
     '''
     Use Flask_mail to send the result to defined emails
     :param to_address:
@@ -36,15 +36,27 @@ def send_attachment_and_embded_image(to_address,subject,html_template,att_filena
     # app.config['SERVER_NAME'] = 'example.com' #必须设置此项如果用到url_for
     with app.app_context():
         time_stamp1 = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')
-        time_stamp2 = pd.Timestamp.now().strftime('%Y-%m-%d')
 
-        message = Message(subject= subject + ' - ' + time_stamp1,
-                          recipients=to_address,
-                          bcc=bcc,
-                          body='',
-                          # body=render_template('email.txt',data=data),
-                          html=render_template(html_template, **kwargs)
-                          )
+        if html_template ==None:
+            message = Message(subject= subject + ' - ' + time_stamp1,
+                              recipients=to_address,
+                              cc=cc,
+                              bcc=bcc,
+                              body=body,
+                              #html=html,
+                              # body=render_template('email.txt',data=data),
+                              #html=render_template(html_template, **kwargs)
+                              )
+        else:
+            message = Message(subject=subject + ' - ' + time_stamp1,
+                              recipients=to_address,
+                              cc=cc,
+                              bcc=bcc,
+                              #body=body,
+                              # html=html,
+                              # body=render_template('email.txt',data=data),
+                              html=render_template(html_template, **kwargs)
+                              )
         #添加excel附件
         att_size = 0
         size_over_limit=False
@@ -59,7 +71,7 @@ def send_attachment_and_embded_image(to_address,subject,html_template,att_filena
                 if att_size<=20000000:
                     with app.open_resource(full_fname) as at:
                         #dated_fname=short_fname[:-5]+' ('+time_stamp2 + ').xlsx'
-                        message.attach(short_fname, 'excel/xlsx', at.read())
+                        message.attach(short_fname, 'application/octet-stream', at.read())
                 else:
                     size_over_limit=True
                     message.body='Attachment not added due to over size limit (20Mb).'
@@ -84,15 +96,17 @@ def send_attachment_and_embded_image(to_address,subject,html_template,att_filena
 if __name__=='__main__':
     # Send program report to Ken wang
     to_address=['kwang2@cisco.com']
-    subject = 'Config error identification result'
-    html_template = 'config_prediction_result.html'
+    subject = 'Email test'
+    #html_template='dfpm_3a4.html'
+    html_template=None
+    att=[(os.path.join(os.getcwd(),'database'), 'foo.db')]
+    body_content='this is a test'
 
-    send_attachment_and_embded_image(to_address, subject, html_template,
-                                     summary=summary.values,
-                                     new_error=new_error.values,
-                                     unval_error=unval_error.values,
-                                     old_error=old_error.values,
-                                     log_messages=log_msg,
-                                     alert_messages=alert_msg,
-
-                                     att_filenames=None, embeded_filenames=None)
+    send_attachment_and_embded_image(to_address, subject,
+                                     body=body_content,
+                                     html_template=html_template,
+                                     att_filenames=att,
+                                     embeded_filenames=None,
+                                     sender='APJC DF',
+                                     cc=['kwang2@cisco.com'],
+                                      )

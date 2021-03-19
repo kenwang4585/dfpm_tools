@@ -10,6 +10,7 @@ import time
 #import xlsxwriter # used to avoid
 from blg_settings import *
 from sending_email import send_attachment_and_embded_image
+from sending_email_test import send_attachment_and_embded_image_test
 from db_read import read_table
 import gc
 import numpy as np
@@ -32,11 +33,14 @@ def download_and_send_tracker_as_backup(backup_day,login_user):
         # 添加文件到附件列表 # List of tuples (path, file_name)
         att_files = []
         for file in file_list:
-            att_files.append((base_dir_tracker,file))
+            ext=os.path.splitext(file)[1]
+            if ext=='.xlsx':
+                att_files.append((base_dir_tracker,file))
+        att_files.append((base_dir_db,'foo.db')) # add the db file
 
         # Send to ken
         to_address = [super_user + '@cisco.com']
-        subject = 'Addressable backlog tracker files - triggered by: {}'.format(login_user)
+        subject = 'DFPM auto tool tracker files - triggered by: {}'.format(login_user)
         html = 'tracker_email.html'
 
         msg, size_over_limit = send_attachment_and_embded_image(to_address, subject, html,
@@ -415,7 +419,7 @@ def remove_priority_ss_from_smtsheet_and_notify(df_removal,login_user,sender='AP
         send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
                                          embeded_filenames=None,
                                          sender=sender,
-                                         bcc=[super_user + '@cisco.com'],
+                                         bcc=None,
                                          removal_ss_header=df_removal.columns,
                                          removal_ss_details=df_removal.values,
                                          user=login_user)
@@ -3178,7 +3182,6 @@ if __name__ == '__main__':
     sms = SendSms()
     sms.send_sms(message, to_num)
     """
-    a,b,c=read_subscription_data()
-    print(a)
-    print(b)
-    print(c)
+    login_user='kw'
+    backup_day='Friday'
+    download_and_send_tracker_as_backup(backup_day,login_user)
