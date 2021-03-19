@@ -1296,7 +1296,7 @@ def delete_general_config_rule_pid_record(login_user,added_by,record_id):
     else:
         http_scheme = 'http'
 
-    if login_user==added_by or login_user==super_user:
+    if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
         delete_record('general_config_rule_pid', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
@@ -1314,7 +1314,7 @@ def delete_general_config_rule_bupf_record(login_user,added_by,record_id):
     else:
         http_scheme = 'http'
 
-    if login_user==added_by or login_user==super_user:
+    if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
         delete_record('general_config_rule_bu_pf', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
