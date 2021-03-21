@@ -748,6 +748,8 @@ def get_same_config_data_to_remove(df_error_db, df_remove):
     unique_config_po=df_remove_p.PO_NUMBER.values
     df_remove=df_remove[df_remove.PO_NUMBER.isin(unique_config_po)].copy()
     df_remove.loc[:,'Added_by']=''
+    # Fill up remark
+    df_remove = fill_up_remark(df_remove)
 
     # find out the new configs not yet in database
     fsc = FindSameConfig()
