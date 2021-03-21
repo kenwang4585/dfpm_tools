@@ -12,10 +12,10 @@ def config_rule_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     config_rules = (
-                    #[[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
-                    #[['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
-                    #[[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
-                    #[[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
+                    [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
+                    [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
+                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
+                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
                     [[],[],'find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)'],
                     [[],[],'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)'],
                     )
@@ -733,6 +733,31 @@ def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
 
 
 ### config comparison
+
+def get_same_config_data_to_remove(df_error_db, df_remove):
+    """
+    Find out same config data in error db based on data user upload to remove
+    """
+    # remove the duplicated configs from the uploading df
+    df_remove_p = df_remove.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+                                aggfunc=sum)
+
+    df_remove_p = df_remove_p.apply(lambda x: x / x.min(), axis=1)
+    df_remove_p.drop_duplicates(inplace=True)
+    df_remove_p.reset_index(inplace=True)
+    unique_config_po=df_remove_p.PO_NUMBER.values
+    df_remove=df_remove[df_remove.PO_NUMBER.isin(unique_config_po)].copy()
+    df_remove.loc[:,'Added_by']=''
+
+    # find out the new configs not yet in database
+    fsc = FindSameConfig()
+    base_config_dict = fsc.create_base_config_dict(df_remove) # use df_remove as the base
+    new_config_dict = fsc.create_new_config_dict(df_error_db)
+    compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
+    # exclude those same configs identified
+    df_error_db_remove=df_error_db[df_error_db.PO_NUMBER.isin(compare_result_dict.keys())].copy()
+
+    return df_error_db_remove
 
 def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
     """

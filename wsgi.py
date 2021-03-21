@@ -523,6 +523,9 @@ def config_rules_main():
         login_user = 'unknown'
         login_name = 'unknown'
 
+    df_error_db = read_table('history_new_error_config_record')
+    num_of_config=len(df_error_db.PO_NUMBER.unique())
+
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
         submit_upload=form.submit_upload_error.data
@@ -548,30 +551,96 @@ def config_rules_main():
             df_upload = pd.read_excel(file_path)
 
             # check formats
-            col_3a4_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
-            if not np.all(np.in1d(col_3a4_must_have, df_upload.columns)):
+            col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
+            if not np.all(np.in1d(col_must_have, df_upload.columns)):
                 msg='File format error! Following required columns not found in uploaded file: {}. Pls use the template provided.'.format(
-                        str(np.setdiff1d(col_3a4_must_have, df_upload.columns)))
+                        str(np.setdiff1d(col_must_have, df_upload.columns)))
                 flash(msg,'warning')
                 return redirect(url_for("config_rules_main"))
 
             # get new config data and upload
             df_error_db=read_table('history_new_error_config_record')
-            df_error_db = fill_up_remark(df_error_db)
+            #df_error_db = fill_up_remark(df_error_db)
             report_po_qty=len(df_upload.PO_NUMBER.unique())
             df_upload=get_unique_new_error_config_data_to_upload(df_upload, df_error_db)
             new_config_po_qty=len(df_upload.PO_NUMBER.unique())
-            add_error_config_data(df_upload, login_user)
+            if df_upload.shape[0]>0:
+                add_error_config_data(df_upload, login_user)
+                msg = 'Thank you! You reported {} PO with error configs which includes {} new configs, which is saved to database.'.format(
+                    report_po_qty, new_config_po_qty)
+                flash(msg, 'success')
 
-            msg='Thank you! You reported {} PO with error configs; {} are new configs and saved to database.'.format(report_po_qty,new_config_po_qty)
-            flash(msg,'success')
+                # read and count again:
+                df_error_db = read_table('history_new_error_config_record')
+                num_of_config = len(df_error_db.PO_NUMBER.unique())
+            else:
+                msg = 'Thank you! You reported {} PO with error configs which already exist in database, thus no action taken.'.format(report_po_qty)
+                flash(msg, 'info')
+
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config', user_action='Upload error config',
+                             summary='Upload configs: {}; new configs saved: {}'.format(report_po_qty, new_config_po_qty))
+
+            return redirect(url_for("config_rules_main"))
+        elif submit_remove:
+            file_remove_error=form.file_remove_error.data
+
+            if not file_remove_error:
+                msg='Pls select the data to upload'
+                flash(msg,'warning')
+                return redirect(url_for("config_rules_main"))
+
+            # 存储文件
+            filename = secure_filename(file_remove_error.filename)
+            file_path = os.path.join(base_dir_uploaded,
+                                             'Removal error config upload (' + login_user + ')' + start_time.strftime(
+                                                 '%Y-%m-%d %H:%M:%S') + '.xlsx')
+
+            file_remove_error.save(file_path)
+
+            #Read the data
+            df_remove = pd.read_excel(file_path)
+
+            # check formats
+            col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
+            if not np.all(np.in1d(col_must_have, df_remove.columns)):
+                msg='File format error! Following required columns not found in uploaded file: {}. Pls use the template provided.'.format(
+                        str(np.setdiff1d(col_must_have, df_remove.columns)))
+                flash(msg,'warning')
+                return redirect(url_for("config_rules_main"))
+
+            # find same config data from db and remove
+            df_error_db=read_table('history_new_error_config_record')
+            print(df_error_db)
+            #df_error_db = fill_up_remark(df_error_db)
+            #report_po_qty=len(df_upload.PO_NUMBER.unique())
+            df_error_db_remove=get_same_config_data_to_remove(df_error_db, df_remove) # use df_remove as the base
+            remove_config_po_qty=len(df_error_db_remove.PO_NUMBER.unique())
+            id_list=df_error_db_remove.id.values
+            id_list = [str(x) for x in id_list]
+            if len(id_list)>0:
+                delete_record('history_new_error_config_record', id_list)
+                msg = 'Thanks, we have found {} same config record in database which have been removed'.format(remove_config_po_qty)
+                flash(msg, 'success')
+                # read and count again:
+                df_error_db = read_table('history_new_error_config_record')
+                num_of_config = len(df_error_db.PO_NUMBER.unique())
+            else:
+                msg = 'No same config record found in database to remove.'
+                flash(msg, 'info')
+
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config', user_action='Remove config',
+                             summary='No of matching configs removed from database: {}'.format(remove_config_po_qty))
+
             return redirect(url_for("config_rules_main"))
 
 
     return render_template('config_rules_main.html',
                             form=form,
                             user=login_name, subtitle='- Config Rules',
-                            login_user=login_user)
+                            login_user=login_user,
+                           num_of_config=num_of_config)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])

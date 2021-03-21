@@ -8,10 +8,15 @@
 <body>
 
 <br>
-<p style="color: #983d00">Note: Error configuration identified based on below rules - in case you see wrong alert pls feedback for rule update!</p>
-{% for note in config_notes %}
-    {{ note }}<br>
-{% endfor %}
+<p style="color: #983d00">
+    Note: Error configs identified below were based on rules and user uploaded historical configs.
+    Pls actively manage them through <a href="{{ url_for("config_rules_main") }}" target="_blank">HERE!</a>
+    If you encounter new type of config errors, pls report/upload them timely!<br>
+    What if wrong alert?
+    <li>If it's based on rule: Pls review the rule and make correction!</li>
+    <li>If it's based on historical config: Pls remove that from database if that config is no longer wrong!</li>
+</p>
+
 <h2>Error config orders - new errors:</h2>
 <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
     <tr>
