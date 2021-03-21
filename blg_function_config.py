@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sending_email import send_attachment_and_embded_image
 from blg_settings import *
+from db_read import read_table
 import time
 
 def config_rule_mapping():
@@ -11,12 +12,12 @@ def config_rule_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     config_rules = (
-                    [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
-                    [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
-                    #[['FVE'],['4200ISR','4300ISR','4400ISR','800BB','900ISR','CAT8200','CAT8300','ENCS','ISR1K','ISR900'],'find_srg_psu_missing(dfx,wrong_po_dict)'],
-                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
-                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
-                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)']
+                    #[[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
+                    #[['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
+                    #[[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
+                    #[[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
+                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)'],
+                    [[],[],'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)'],
                     )
 
     notes = [
@@ -24,7 +25,7 @@ def config_rule_mapping():
              '- SRGBU 4300ISR/4400ISR/ICV (FVE excluded): SM/NIM combinations (Rachel Zhang)',
              '- SRGBU 4xxxISR/800BB/900ISR/CAT8200/CAT8300/ENCS/ISR1K/ISR900 (FVE excluded; 3 config spares excluded): missing PSU (Rachel Zhang)',
              '- PABU ASR903: Slot related check (Calina, Joe,.. )',
-             '- Other general inclusion/excelusion rules',
+             '- Inclusion/excelusion rules',
              ]
 
     return config_rules,notes
@@ -723,3 +724,135 @@ def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
             wrong_po_dict = eval(org_pf_func[2])
 
     return wrong_po_dict
+
+
+
+
+
+
+
+
+### config comparison
+
+def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
+    """
+    For user to report/upload new error config to database. When uploading remove the duplicated error configs in uploading data,
+    and also only save new config errors.
+    """
+    # remove the duplicated configs from the uploading df
+    df_upload_p = df_upload.pivot_table(index=['PO_NUMBER', 'REMARK'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+                                aggfunc=sum)
+
+    df_upload_p = df_upload_p.apply(lambda x: x / x.min(), axis=1)
+    df_upload_p.drop_duplicates(inplace=True)
+    df_upload_p.reset_index(inplace=True)
+    unique_config_po=df_upload_p.PO_NUMBER.values
+    df_upload=df_upload[df_upload.PO_NUMBER.isin(unique_config_po)].copy()
+
+    # find out the new configs not yet in database
+    fsc = FindSameConfig()
+    base_config_dict = fsc.create_base_config_dict(df_error_db)
+    new_config_dict = fsc.create_new_config_dict(df_upload)
+    compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
+    # exclude those same configs
+    df_upload=df_upload[~df_upload.PO_NUMBER.isin(compare_result_dict.keys())].copy()
+
+    error_remark={}
+    df_upload_main=df_upload[df_upload.OPTION_NUMBER==0]
+    for row in df_upload_main.itertuples():
+        if pd.isnull(row.REMARK):
+            error_remark[row.PO_NUMBER] = 'No reason provided'
+        else:
+            error_remark[row.PO_NUMBER]=row.REMARK
+    df_upload.loc[:,'REMARK']=df_upload.PO_NUMBER.map(lambda x: error_remark[x])
+
+    return df_upload
+
+def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
+    '''
+    做config对比，找出相同的error config订单。
+    :param dfx: new order df to find error with
+    :param wrong_po_dict: {PO:error_message}
+    '''
+
+    # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
+    df_history_error=read_table('history_new_error_config_record')
+
+    # 生成模型对象并使用方法
+    fsc = FindSameConfig()
+    base_config_dict=fsc.create_base_config_dict(df_history_error)
+    new_config_dict=fsc.create_new_config_dict(dfx) # dfx is the new order df
+    compare_result_dict=fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
+
+    for po,info in compare_result_dict.items():
+        if po not in wrong_po_dict.keys():
+            wrong_po_dict[row.PO_NUMBER]='Same config error as {}:({}){}'.format(info[0],info[1],info[2])
+
+    return wrong_po_dict
+
+
+class FindSameConfig():
+    '''
+    FindSameConfig，生成以下方法：
+    create_base_config_dict: from base df
+    create_new_config_dict: from new df
+    compare_new_and_base_dict: get comparison result for same config
+    '''
+
+    def __init__(self):
+        self.base_config_dict = {}
+        self.new_config_dict = {}
+        self.compare_result_dict = {}
+        self.df_new_order_error = pd.DataFrame()
+
+    def create_base_config_dict(self, df_base):
+        # create the base_config_dict based on df_base - different from new config: here also include "REMARK"
+        df_base_p = df_base.pivot_table(index=['PO_NUMBER','Added_by','REMARK'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+                                      aggfunc=sum)
+
+        df_base_p = df_base_p.apply(lambda x: x / x.min(), axis=1)
+
+        base_config_dict = {}
+
+        for i in range(df_base_p.shape[0]):
+            df_line = df_base_p.iloc[i].dropna()
+
+            sub_dic = {}
+            for pid, qty in zip(df_line.index, df_line.values):
+                sub_dic[pid] = qty
+
+            base_config_dict[df_line.name] = sub_dic
+
+        return base_config_dict
+
+    def create_new_config_dict(self,df_new):
+        # create the new_config_dict based on df_new
+        df_new_p = df_new.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+                                          aggfunc=sum)
+
+        df_new_p = df_new_p.apply(lambda x: x / x.min(), axis=1)
+
+        new_config_dict = {}
+
+        for i in range(df_new_p.shape[0]):
+            df_line = df_new_p.iloc[i].dropna()
+
+            sub_dic = {}
+            for pid, qty in zip(df_line.index, df_line.values):
+                sub_dic[pid] = qty
+
+            new_config_dict[df_line.name] = sub_dic
+
+        return new_config_dict
+
+    def compare_new_and_base_dict(self,new_config_dict, base_config_dict):
+        # compare the new config_dict against the base_config_dict for same config
+        compare_result_dict = {}
+        for key, value in new_config_dict.items():
+            matches = filter(lambda x: x[1] == value, base_config_dict.items())
+
+            for order_label, _ in matches:
+                # compare_result_dict[key]=(order_label[0],order_label[1])
+                compare_result_dict[key] = order_label  # 如果字典中有重复的值，一直循环并取最后一个。
+
+        return compare_result_dict

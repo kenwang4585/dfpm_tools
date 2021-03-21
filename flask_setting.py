@@ -175,7 +175,7 @@ class UserLog(db.Model):
 
 class DfpmMapping(db.Model):
     '''
-    Email setting db table
+    DFPM mapping db table
     '''
     id=db.Column(db.Integer,primary_key=True)
     DFPM=db.Column(db.String(10))
@@ -198,7 +198,7 @@ class Subscription(db.Model):
 
 class GeneralConfigRulePid(db.Model):
     '''
-    Email setting db table
+    PID based inclusion/exclusion rules db table
     '''
     id=db.Column(db.Integer,primary_key=True)
     ORG = db.Column(db.String(20))
@@ -216,7 +216,7 @@ class GeneralConfigRulePid(db.Model):
 
 class GeneralConfigRuleBuPf(db.Model):
     '''
-    Email setting db table
+    BU/PF based inclusion/exclusion rules db table
     '''
     id=db.Column(db.Integer,primary_key=True)
     ORG=db.Column(db.String(20))
@@ -228,3 +228,17 @@ class GeneralConfigRuleBuPf(db.Model):
     REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
+
+class HistoryNewErrorConfigRecord(db.Model):
+    '''
+    db table to store uploaded error config details
+    '''
+    id=db.Column(db.Integer,primary_key=True)
+    ORGANIZATION_CODE=db.Column(db.String(3))
+    BUSINESS_UNIT=db.Column(db.String(10))
+    PO_NUMBER=db.Column(db.String(11))
+    OPTION_NUMBER =db.Column(db.Integer)
+    PRODUCT_ID = db.Column(db.String(30))
+    ORDERED_QUANTITY = db.Column(db.Integer)
+    REMARK=db.Column(db.String(100))
+    Added_by=db.Column(db.String(15))

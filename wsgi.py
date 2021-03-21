@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_error_config_data  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -41,7 +41,6 @@ def global_app():
         return 'Sorry, you are not authorized to access this.'
 
     user_selection = []
-    config_rules, notes = config_rule_mapping()
 
     if form.validate_on_submit():
         start_time_=pd.Timestamp.now()
@@ -180,6 +179,8 @@ def global_app():
                 flash(msg, 'success')
 
             if config_check:
+                config_rules, notes = config_rule_mapping()
+
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
                 if running_option == 'formal':
                     save_to_tracker = True
@@ -260,7 +261,7 @@ def global_app():
 
             return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
 
-    return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+    return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
 
 @app.route('/ranking', methods=['GET', 'POST'])
@@ -521,6 +522,50 @@ def config_rules_main():
     if login_user == None:
         login_user = 'unknown'
         login_name = 'unknown'
+
+    if form.validate_on_submit():
+        start_time=pd.Timestamp.now()
+        submit_upload=form.submit_upload_error.data
+        submit_remove=form.submit_remove_error.data
+
+        if submit_upload:
+            file_upload_error=form.file_upload_error.data
+
+            # 存储文件
+            filename = secure_filename(file_upload_error.filename)
+            file_path = os.path.join(base_dir_uploaded,
+                                             'New error config upload (' + login_user + ')' + start_time.strftime(
+                                                 '%Y-%m-%d %H:%M:%S') + '.xlsx')
+
+            file_upload_error.save(file_path)
+
+            #Read the data
+            df_upload = pd.read_excel(file_path)
+
+            # check formats
+            col_3a4_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
+            if not np.all(np.in1d(col_3a4_must_have, df_upload.columns)):
+                flash('File format error! Following required \
+                                            columns not found in uploaded file: {}. Pls use the template provided.'.format(
+                        str(np.setdiff1d(col_3a4_must_have, df_upload.columns))),
+                        'warning')
+
+            # get new config data and upload
+            df_error_db=read_table('history_new_error_config_record')
+            print(df_error_db)
+            report_po_qty=len(df_upload.PO_NUMBER.unique())
+            df_upload=get_unique_new_error_config_data_to_upload(df_upload, df_error_db)
+            new_config_po_qty=len(df_upload.PO_NUMBER.unique())
+            add_error_config_data(df_upload, login_user)
+
+            df=read_table('history_new_error_config_record')
+            print(df)
+
+
+            msg='Thank you! You reported {} PO with error configs; {} are new configs and saved to database.'.format(report_po_qty,new_config_po_qty)
+            flash(msg,'success')
+            return redirect(url_for("config_rules_main"))
+
 
     return render_template('config_rules_main.html',
                             form=form,

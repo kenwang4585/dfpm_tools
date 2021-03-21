@@ -95,6 +95,30 @@ def add_incl_excl_rule_bupf(org, bu, pf, exception_main_pid_bupf_rule, pid_a, pi
     db.session.commit()
     #print('User log added')
 
+def add_error_config_data(df_upload,login_user):
+    '''
+    Add the error config data to db
+    '''
+
+    df_data = df_upload.values
+
+    db.session.bulk_insert_mappings(HistoryNewErrorConfigRecord,
+                                    [dict(
+                                        ORGANIZATION_CODE=row[0],
+                                        BUSINESS_UNIT=row[1],
+                                        PO_NUMBER=row[2],
+                                        OPTION_NUMBER=row[3],
+                                        PRODUCT_ID=row[4],
+                                        ORDERED_QUANTITY=row[5],
+                                        REMARK=row[6],
+                                        Added_by=login_user,
+                                        Added_on=pd.Timestamp.now().date()
+                                        )
+                                     for row in df_data]
+                                    )
+    db.session.commit()
+
+
 def add_data_from_file_initial():
     '''
     Add data from file: initial update
