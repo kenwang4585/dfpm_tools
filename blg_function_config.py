@@ -754,19 +754,29 @@ def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
     base_config_dict = fsc.create_base_config_dict(df_error_db)
     new_config_dict = fsc.create_new_config_dict(df_upload)
     compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
+    print(compare_result_dict)
     # exclude those same configs
     df_upload=df_upload[~df_upload.PO_NUMBER.isin(compare_result_dict.keys())].copy()
 
+    # Fill up remark
+    df_upload=fill_up_remark(df_upload)
+
+    return df_upload
+
+def fill_up_remark(df):
+    """
+    Fill up/replace the remark with the error remark put in the option 0 line
+    """
     error_remark={}
-    df_upload_main=df_upload[df_upload.OPTION_NUMBER==0]
-    for row in df_upload_main.itertuples():
+    df_main=df[df.OPTION_NUMBER==0]
+    for row in df_main.itertuples():
         if pd.isnull(row.REMARK):
             error_remark[row.PO_NUMBER] = 'No reason provided'
         else:
             error_remark[row.PO_NUMBER]=row.REMARK
-    df_upload.loc[:,'REMARK']=df_upload.PO_NUMBER.map(lambda x: error_remark[x])
+    df.loc[:,'REMARK']=df.PO_NUMBER.map(lambda x: error_remark[x])
 
-    return df_upload
+    return df
 
 def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
     '''
@@ -786,7 +796,7 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
 
     for po,info in compare_result_dict.items():
         if po not in wrong_po_dict.keys():
-            wrong_po_dict[row.PO_NUMBER]='Same config error as {}:({}){}'.format(info[0],info[1],info[2])
+            wrong_po_dict[po]='Same config error as {}:({}){}'.format(info[0],info[1],info[2])
 
     return wrong_po_dict
 
@@ -807,6 +817,7 @@ class FindSameConfig():
 
     def create_base_config_dict(self, df_base):
         # create the base_config_dict based on df_base - different from new config: here also include "REMARK"
+        # TODO: create new pid to combine module&slot
         df_base_p = df_base.pivot_table(index=['PO_NUMBER','Added_by','REMARK'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
                                       aggfunc=sum)
 
@@ -827,6 +838,7 @@ class FindSameConfig():
 
     def create_new_config_dict(self,df_new):
         # create the new_config_dict based on df_new
+        #TODO: create new pid to combine module&slot
         df_new_p = df_new.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
                                           aggfunc=sum)
 
