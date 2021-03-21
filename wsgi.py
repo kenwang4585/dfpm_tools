@@ -67,13 +67,13 @@ def global_app():
             print('Start to create below selected reports: {}'.format('/'.join(user_selection)))
         else:
             flash('You should at least select one task to do!', 'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+            return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
         user_selection.append('Running option: {}'.format(running_option))
 
         if f==None:
             flash('Pls upload 3a4 file!', 'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+            return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
         # 上传的文件名称并判断文件类型
         filename_3a4 = secure_filename(f.filename)
@@ -86,7 +86,7 @@ def global_app():
         else:
             flash('3A4 file type error: Only csv or xlsx file accepted! File you were trying to upload: {}'.format(
                     f.filename),'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+            return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
         # 存储文件
         f.save(file_path_3a4)
@@ -125,14 +125,14 @@ def global_app():
                 # org check
                 if not np.all(np.in1d(org_name_global[region][region], df_3a4.ORGANIZATION_CODE.unique())):
                     flash('The 3a4 you uploaded does not contain all orgs from {}!'.format(region), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
                 # col check
                 if not np.all(np.in1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns)):
                     flash('File format error! Following required \
                                                 columns for regional backlog summary not found in 3a4 data: {}'.format(
                         str(np.setdiff1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns))),'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
             if wnbu_compliance:
                 # col check
@@ -140,7 +140,7 @@ def global_app():
                     flash('File format error! Following required \
                                                             columns for WNBU compliance check not found in 3a4 data: {}'.format(
                         str(np.setdiff1d(col_3a4_must_have_global_wnbu_compliance, df_3a4.columns))), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
             if config_check:
                 # col check
@@ -148,7 +148,7 @@ def global_app():
                     flash('File format error! Following required \
                                                                 columns for config check not found in 3a4 data: {}'.format(
                             str(np.setdiff1d(col_3a4_must_have_global_config_check, df_3a4.columns))), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
             if running_option=='test':
                 if backlog_summary and config_check:
@@ -240,7 +240,7 @@ def global_app():
             # write program log to log file
             add_user_log(user=login_user, location='Home', user_action='Run', summary='Processing time: ' + str(processing_time) + 'min; parameters: ' + '/'.join(user_selection))
 
-            return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+            return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
         except Exception as e:
             try:
@@ -259,7 +259,7 @@ def global_app():
                 file_object.write(error_msg)
             traceback.print_exc(file=open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+'))
 
-            return render_template('global_app.html', form=form,user=login_name,subtitle='',config_notes=notes)
+            return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
     return render_template('global_app.html', form=form,user=login_name,subtitle='')
 

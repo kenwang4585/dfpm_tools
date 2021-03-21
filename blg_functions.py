@@ -3182,5 +3182,5 @@ if __name__ == '__main__':
     sms.send_sms(message, to_num)
     """
     login_user='kw'
-    backup_day='Friday'
+    backup_day='Sunday'
     download_and_send_tracker_as_backup(backup_day,login_user)

@@ -683,7 +683,7 @@ def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_er
                                      new_error_header=df_error_new.columns,
                                      new_error_data=df_error_new.values,
                                      old_error_header=df_error_old.columns,
-                                     old_error_data=df_error_old.values,config_notes=notes)
+                                     old_error_data=df_error_old.values)
 
 
 
@@ -821,7 +821,7 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
 
     for po,info in compare_result_dict.items():
         if po not in wrong_po_dict.keys():
-            wrong_po_dict[po]='Same config error as {}:({}){}'.format(info[0],info[1],info[2])
+            wrong_po_dict[po]='Same error as {}:({}){}'.format(info[0],info[1],info[2])
 
     return wrong_po_dict
 

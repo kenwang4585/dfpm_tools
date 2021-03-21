@@ -7,7 +7,7 @@ import pandas as pd
 from send_sms import send_me_sms
 
 
-def send_attachment_and_embded_image(to_address,subject,body=None,html_template=None,att_filenames=None, embeded_filenames=None,sender='APJC DF',cc=None,bcc=None,**kwargs):
+def send_attachment_and_embded_image(to_address,subject,html_template,bcc=None,att_filenames=None, embeded_filenames=None,sender='APJC DF',**kwargs):
     '''
     Use Flask_mail to send the result to defined emails
     :param to_address:
@@ -37,26 +37,13 @@ def send_attachment_and_embded_image(to_address,subject,body=None,html_template=
     with app.app_context():
         time_stamp1 = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')
 
-        if html_template ==None:
-            message = Message(subject= subject + ' - ' + time_stamp1,
-                              recipients=to_address,
-                              cc=cc,
-                              bcc=bcc,
-                              body=body,
-                              #html=html,
-                              # body=render_template('email.txt',data=data),
-                              #html=render_template(html_template, **kwargs)
-                              )
-        else:
-            message = Message(subject=subject + ' - ' + time_stamp1,
-                              recipients=to_address,
-                              cc=cc,
-                              bcc=bcc,
-                              #body=body,
-                              # html=html,
-                              # body=render_template('email.txt',data=data),
-                              html=render_template(html_template, **kwargs)
-                              )
+        message = Message(subject=subject + ' - ' + time_stamp1,
+                          recipients=to_address,
+                          body='',
+                          bcc=bcc,
+                          # body=render_template('email.txt',data=data),
+                          html=render_template(html_template, **kwargs)
+                          )
         #添加excel附件
         att_size = 0
         size_over_limit=False
@@ -71,7 +58,8 @@ def send_attachment_and_embded_image(to_address,subject,body=None,html_template=
                 if att_size<=20000000:
                     with app.open_resource(full_fname) as at:
                         #dated_fname=short_fname[:-5]+' ('+time_stamp2 + ').xlsx'
-                        message.attach(short_fname, 'application/octet-stream', at.read())
+                        #message.attach(short_fname, 'application/octet-stream', at.read()) # this hsould be OK too.
+                        message.attach(short_fname, 'excel/xlsx', at.read()) # this can also attach other file types
                 else:
                     size_over_limit=True
                     message.body='Attachment not added due to over size limit (20Mb).'
