@@ -33,28 +33,25 @@
                     {{ form.pf.label }} <br> {{ form.pf }}
                 </td>
                 <td>
-                    {{ form.pid_a.label }} <br> {{ form.pid_a }} <br>
-                    {{ form.pid_a_exception.label }} <br> {{ form.pid_a_exception }}
+                    {{ form.pid_a.label }} <br> {{ form.pid_a }}
                 </td>>
                 <td>
-                    {{ form.pid_b.label }} <br> {{ form.pid_b }} <br>
-                    {{ form.pid_b_exception.label }} <br> {{ form.pid_b_exception }}
+                    {{ form.pid_b.label }} <br> {{ form.pid_b }}
                 </td>
                 <td>
-                    {{ form.pid_c.label }} <br> {{ form.pid_c }} <br>
-                    {{ form.pid_c_exception.label }} <br> {{ form.pid_c_exception }}
+                    {{ form.pid_c.label }} <br> {{ form.pid_c }}
                 </td>
                 <td>{{ form.remark.label }} <br> {{ form.remark }}</td>
                 <td valign="middle"><br>{{ form.submit }}</td>
             </tr>
         </table>
-        <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="75%">
+        <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="70%">
             <tr align="left">
                 <td>
                     Note:
                     <li>All buckets allow multiple value inputs separated by ';'</li>
-                    <li>The PID inputs allow full PID name input, or keyword input</li>
-                    <li>If multiple input, e.g. input 'AC;DC' for PID_A or PID_B, it means PID_A or PID_B can be either 'AC' <strong>OR</strong> 'DC'; in case of PID_B,it means 'AC' <strong>AND</strong> 'DC'</li>
+                    <li>For PID_A/B/C, pls input full name</li>
+                    <li>If multiple input, e.g. input 'XYZ;ABC' for PID_A or PID_B, it means either 'XYZ' <strong>OR</strong> 'ABC'; in case of PID_B,it means 'XYZ' <strong>AND</strong> 'ABC'</li>
                 </td>
             </tr>
         </table>

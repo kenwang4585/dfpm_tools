@@ -16,8 +16,8 @@ def config_rule_mapping():
                     [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
                     [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
                     [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
-                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
-                    [[],[],'find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)'],
+                    [[],[],'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
+                    [[],[],'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)'],
                     [[],[],'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)'],
                     )
 
@@ -206,36 +206,7 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
 
     return wrong_po_dict
 
-
-
-def find_srg_psu_missing(dfx,wrong_po_dict):
-    '''
-    Check if any PO in SRG missing PSU
-    '''
-    exclusion_pids= ['ENCS5406P/K9','ENCS5412P/K9','ENCS5408P/K9'] #config_spare
-    dfx_main= dfx[(dfx.OPTION_NUMBER == 0)]
-    main_po_pid=zip(dfx_main.PO_NUMBER,dfx_main.PRODUCT_ID)
-    po_list=[]
-    for po,pid in main_po_pid:
-        if '=' not in pid and 'MISC' not in pid:
-            if pid not in exclusion_pids:
-                po_list.append(po)
-
-    for po in po_list:
-        pid_list=dfx[dfx.PO_NUMBER==po].PRODUCT_ID.unique()
-
-        missing_psu = True
-        for pid in pid_list:
-            if 'AC' in pid or 'DC' in pid:
-                missing_psu = False
-                break
-        if missing_psu:
-            wrong_po_dict[po] = 'Missing PSU'
-
-    return wrong_po_dict
-
-
-def find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
+def find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
     '''
     Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
     '''
@@ -269,8 +240,8 @@ def find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_p
         for po in po_list:
             pid_list=dfy[dfy.PO_NUMBER==po].PRODUCT_ID.unique()
 
+            missing_pid_a = True
             if pid_a!=['']:
-                missing_pid_a = True
                 for including_pid_keyword in pid_a:
                     for pid in pid_list:
                         if including_pid_keyword in pid:
@@ -281,8 +252,8 @@ def find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_p
                 if missing_pid_a==True:
                     wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
 
+            extra_pid_b = False
             if missing_pid_a==False and pid_b!=['']:
-                extra_pid_b = False
                 for pid in pid_list:
                     for extra_pid in pid_b:
                         if extra_pid in pid:
@@ -294,7 +265,7 @@ def find_missing_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_p
     return wrong_po_dict
 
 
-def find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
+def find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
     '''
     Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
     '''
@@ -304,11 +275,11 @@ def find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_
         bu = row.BU.split(';')
         pf=row.PF.split(';')
         pid_a = row.PID_A.split(';')
-        pid_a_exception=row.PID_A_EXCEPTION.split(';')
+        #pid_a_exception=row.PID_A_EXCEPTION.split(';')
         pid_b = row.PID_B.split(';')
-        pid_b_exception = row.PID_B_EXCEPTION.split(';')
+        #pid_b_exception = row.PID_B_EXCEPTION.split(';')
         pid_c = row.PID_C.split(';')
-        pid_c_exception = row.PID_C_EXCEPTION.split(';')
+        #pid_c_exception = row.PID_C_EXCEPTION.split(';')
         remark=row.REMARK
 
         # limit the df based on org/bu/pf
@@ -320,37 +291,36 @@ def find_missing_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_
         if pf!=['']:
             dfy = dfy[dfy.main_pf.isin(pf)].copy()
 
-        #Identify the elible order that includes pid_a
+        #Identify the elible order that includes pid_a (pid_a is list of full pid names)
         dfy.loc[:,'eligible']=np.where(dfy.PRODUCT_ID.isin(pid_a),
                                        'YES',
                                        'NO')
-        dfy_eligible=dfy[dfy.eligible=='YES']
-        po_list=dfy_eligible.PO_NUMBER.values
+        dfy_eligible_pid=dfy[dfy.eligible=='YES']
+        po_list=dfy_eligible_pid.PO_NUMBER.values
+        dfy_eligible=dfy[dfy.PO_NUMBER.isin(po_list)]
 
         for po in po_list:
             pid_list=dfy_eligible[dfy_eligible.PO_NUMBER==po].PRODUCT_ID.unique()
 
+            missing_pid_b = True
+            extra_pid_c = False
             if pid_b!=['']:
-                missing_pid_b = True
-                for including_pid_keyword in pid_b:
-                    for pid in pid_list:
-                        if including_pid_keyword in pid:
-                            missing_pid_b = False
-                            break
-                    if missing_pid_b==False:
+                for including_pid in pid_b:
+                    if including_pid in pid_list:
+                        missing_pid_b = False
                         break
-                if missing_pid_b==True:
-                    wrong_po_dict[po] = 'PID rule #{}:{}'.format(id,remark)
 
-            if missing_pid_b==False and pid_c!=['']:
-                extra_pid_c = False
-                for pid in pid_list:
-                    for extra_pid in pid_b:
-                        if extra_pid in pid:
-                            extra_pid_c = True
-                            break
-                if extra_pid_c:
-                    wrong_po_dict[po] = 'PID rule #{}:{}'.format(id,remark)
+                if missing_pid_b==True:
+                    wrong_po_dict[po] = 'PID rule #{}:{}(missing)'.format(id,remark)
+
+            if pid_c!=[''] and missing_pid_b==False:
+                for extra_pid in pid_c:
+                    if extra_pid in pid_list:
+                        extra_pid_c = True
+                        break
+
+                if extra_pid_c==True:
+                    wrong_po_dict[po] = 'PID rule #{}:{}(extra)'.format(id,remark)
 
     return wrong_po_dict
 

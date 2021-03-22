@@ -53,7 +53,7 @@ def add_subscription(email,task,login_user):
     db.session.commit()
     #print('User log added')
 
-def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,pid_a_exception,pid_b_exception,pid_c_exception,remark,login_user):
+def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,remark,login_user):
     '''
     Add the general rule data to db
     '''
@@ -65,9 +65,9 @@ def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,pid_a_exception,pid_b_exc
                   PID_A=pid_a,
                   PID_B=pid_b,
                   PID_C=pid_c,
-                  PID_A_EXCEPTION=pid_a_exception,
-                  PID_B_EXCEPTION=pid_b_exception,
-                  PID_C_EXCEPTION=pid_c_exception,
+                  #PID_A_EXCEPTION=pid_a_exception,
+                  #PID_B_EXCEPTION=pid_b_exception,
+                  #PID_C_EXCEPTION=pid_c_exception,
                   REMARK=remark,
                   Added_by=login_user,
                   Added_on=pd.Timestamp.now().date(),)

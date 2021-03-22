@@ -440,12 +440,12 @@ def config_rules_incl_excl_pid_based():
         pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
         pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
         pid_c=form.pid_c.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_a_exception = form.pid_a_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_b_exception = form.pid_b_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_c_exception = form.pid_c_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        #pid_a_exception = form.pid_a_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        #pid_b_exception = form.pid_b_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
+        #pid_c_exception = form.pid_c_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
         remark=form.remark.data.strip()
 
-        add_incl_excl_rule_pid(org,bu,pf, pid_a, pid_b, pid_c,pid_a_exception, pid_b_exception, pid_c_exception, remark, login_user)
+        add_incl_excl_rule_pid(org,bu,pf, pid_a, pid_b, pid_c, remark, login_user)
 
         df_rule=read_table('general_config_rule_pid')
 
@@ -549,7 +549,7 @@ def config_rules_main():
 
             #Read the data
             df_upload = pd.read_excel(file_path)
-            df_upload = commonize_and_create_main_item(df_upload, 'BUSINESS_UNIT', 'main_bu')
+            #df_upload = commonize_and_create_main_item(df_upload, 'BUSINESS_UNIT', 'main_bu')
 
             # check formats
             col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
@@ -561,7 +561,7 @@ def config_rules_main():
 
             # get new config data and upload
             df_error_db=read_table('history_new_error_config_record')
-            df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
+            #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
 
             #df_error_db = fill_up_remark(df_error_db)
             report_po_qty=len(df_upload.PO_NUMBER.unique())
@@ -603,7 +603,7 @@ def config_rules_main():
 
             #Read the data
             df_remove = pd.read_excel(file_path)
-            df_remove = commonize_and_create_main_item(df_remove, 'BUSINESS_UNIT', 'main_bu')
+            #df_remove = commonize_and_create_main_item(df_remove, 'BUSINESS_UNIT', 'main_bu')
 
             # check formats
             col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
@@ -615,7 +615,7 @@ def config_rules_main():
 
             # find same config data from db and remove
             df_error_db=read_table('history_new_error_config_record')
-            df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
+            #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
             #report_po_qty=len(df_upload.PO_NUMBER.unique())
             df_error_db_remove=get_same_config_data_to_remove(df_error_db, df_remove) # use df_remove as the base
             remove_config_po_qty=len(df_error_db_remove.PO_NUMBER.unique())
