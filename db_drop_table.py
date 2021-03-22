@@ -16,9 +16,11 @@ def drop_table():
 
     print(engine.table_names())
 
-def drop_table(table_name):
+def drop_table():
    engine = create_engine(os.getenv('DB_URI'))
    print('Existing tables:', engine.table_names())
+
+   table_name = input('Input table name to drop:')
 
    base = declarative_base()
    metadata = MetaData(engine, reflect=True)
@@ -31,5 +33,4 @@ def drop_table(table_name):
 
 
 if __name__=='__main__':
-    table_name = input('Input table name to drop:')
     drop_table(table_name)
