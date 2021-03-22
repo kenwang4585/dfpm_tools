@@ -549,6 +549,7 @@ def config_rules_main():
 
             #Read the data
             df_upload = pd.read_excel(file_path)
+            df_upload = commonize_and_create_main_item(df_upload, 'BUSINESS_UNIT', 'main_bu')
 
             # check formats
             col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
@@ -560,6 +561,8 @@ def config_rules_main():
 
             # get new config data and upload
             df_error_db=read_table('history_new_error_config_record')
+            df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
+
             #df_error_db = fill_up_remark(df_error_db)
             report_po_qty=len(df_upload.PO_NUMBER.unique())
             df_upload=get_unique_new_error_config_data_to_upload(df_upload, df_error_db)
@@ -600,6 +603,7 @@ def config_rules_main():
 
             #Read the data
             df_remove = pd.read_excel(file_path)
+            df_remove = commonize_and_create_main_item(df_remove, 'BUSINESS_UNIT', 'main_bu')
 
             # check formats
             col_must_have=['ORGANIZATION_CODE','BUSINESS_UNIT','PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY','REMARK']
@@ -611,6 +615,7 @@ def config_rules_main():
 
             # find same config data from db and remove
             df_error_db=read_table('history_new_error_config_record')
+            df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
             #report_po_qty=len(df_upload.PO_NUMBER.unique())
             df_error_db_remove=get_same_config_data_to_remove(df_error_db, df_remove) # use df_remove as the base
             remove_config_po_qty=len(df_error_db_remove.PO_NUMBER.unique())

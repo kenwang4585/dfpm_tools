@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sending_email import send_attachment_and_embded_image
 from blg_settings import *
+from blg_functions import commonize_and_create_main_item
 from db_read import read_table
 import time
 
@@ -85,7 +86,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
             excl_rules[pid_slot_a_base] = pid_slot_list
             config_rules_exclusion[pid_chassis_base]=excl_rules
 
-    print(config_rules_exclusion)
     # create inclusion rules
     config_rules_inclusion = {}
     incl_rules = {}
@@ -159,8 +159,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
 
     for po,main_pid in po_pid_dict.items():
         pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.unique()
-        if po=='111431523-2':
-            print(pid_list)
         # check no support pid_slot
         no_support=False
         if main_pid in pid_list:
@@ -754,7 +752,7 @@ def get_same_config_data_to_remove(df_error_db, df_remove):
     # find out the new configs not yet in database
     fsc = FindSameConfig()
     base_config_dict = fsc.create_base_config_dict(df_remove) # use df_remove as the base
-    new_config_dict = fsc.create_new_config_dict(df_error_db)
+    new_config_dict = fsc.create_new_config_dict(df_error_db,df_remove)
     compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
     # exclude those same configs identified
     df_error_db_remove=df_error_db[df_error_db.PO_NUMBER.isin(compare_result_dict.keys())].copy()
@@ -779,9 +777,8 @@ def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
     # find out the new configs not yet in database
     fsc = FindSameConfig()
     base_config_dict = fsc.create_base_config_dict(df_error_db)
-    new_config_dict = fsc.create_new_config_dict(df_upload)
+    new_config_dict = fsc.create_new_config_dict(df_upload,df_error_db)
     compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
-    print(compare_result_dict)
     # exclude those same configs
     df_upload=df_upload[~df_upload.PO_NUMBER.isin(compare_result_dict.keys())].copy()
 
@@ -814,11 +811,12 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
 
     # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
     df_history_error=read_table('history_new_error_config_record')
+    df_history_error = commonize_and_create_main_item(df_history_error, 'BUSINESS_UNIT', 'main_bu')
 
     # 生成模型对象并使用方法
     fsc = FindSameConfig()
     base_config_dict=fsc.create_base_config_dict(df_history_error)
-    new_config_dict=fsc.create_new_config_dict(dfx) # dfx is the new order df
+    new_config_dict=fsc.create_new_config_dict(dfx,df_history_error) # dfx is the new order df
     compare_result_dict=fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
 
     for po,info in compare_result_dict.items():
@@ -845,6 +843,7 @@ class FindSameConfig():
     def create_base_config_dict(self, df_base):
         # create the base_config_dict based on df_base - different from new config: here also include "REMARK"
         # TODO: create new pid to combine module&slot
+
         df_base_p = df_base.pivot_table(index=['PO_NUMBER','Added_by','REMARK'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
                                       aggfunc=sum)
 
@@ -863,24 +862,35 @@ class FindSameConfig():
 
         return base_config_dict
 
-    def create_new_config_dict(self,df_new):
-        # create the new_config_dict based on df_new
+    def create_new_config_dict(self,df_new,df_base):
+        # create the new_config_dict based on df_new; as df_new may be big, so limit df_new based on df_base BU, and
+        # create the dict by batch then combine. This shall avoid memory overflow when doing pivot table.
         #TODO: create new pid to combine module&slot
-        df_new_p = df_new.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
-                                          aggfunc=sum)
 
-        df_new_p = df_new_p.apply(lambda x: x / x.min(), axis=1)
-
+        # limit df_new by df_base BU
+        df_new=df_new[df_new.main_bu.isin(df_base.main_bu)].copy()
+        bu_list=df_new.main_bu.unique()
         new_config_dict = {}
+        for bu in bu_list:
+            bu_new_config_dict = {}
+            dfx=df_new[df_new.main_bu==bu].copy()
 
-        for i in range(df_new_p.shape[0]):
-            df_line = df_new_p.iloc[i].dropna()
+            dfx_p = dfx.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+                                              aggfunc=sum)
 
-            sub_dic = {}
-            for pid, qty in zip(df_line.index, df_line.values):
-                sub_dic[pid] = qty
+            dfx_p = dfx_p.apply(lambda x: x / x.min(), axis=1)
 
-            new_config_dict[df_line.name] = sub_dic
+            for i in range(dfx_p.shape[0]):
+                df_line = dfx_p.iloc[i].dropna()
+
+                sub_dic = {}
+                for pid, qty in zip(df_line.index, df_line.values):
+                    sub_dic[pid] = qty
+
+                bu_new_config_dict[df_line.name] = sub_dic
+
+            # combine to the main dict
+            new_config_dict.update(bu_new_config_dict)
 
         return new_config_dict
 
