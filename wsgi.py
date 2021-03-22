@@ -524,7 +524,6 @@ def config_rules_main():
         login_name = 'unknown'
 
     df_error_db = read_table('history_new_error_config_record')
-    num_of_config=len(df_error_db.PO_NUMBER.unique())
 
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
@@ -575,7 +574,6 @@ def config_rules_main():
 
                 # read and count again:
                 df_error_db = read_table('history_new_error_config_record')
-                num_of_config = len(df_error_db.PO_NUMBER.unique())
             else:
                 msg = 'Thank you! You reported {} PO with error configs which already exist in database, thus no action taken.'.format(report_po_qty)
                 flash(msg, 'info')
@@ -627,7 +625,6 @@ def config_rules_main():
                 flash(msg, 'success')
                 # read and count again:
                 df_error_db = read_table('history_new_error_config_record')
-                num_of_config = len(df_error_db.PO_NUMBER.unique())
             else:
                 msg = 'No same config record found in database to remove.'
                 flash(msg, 'info')
@@ -638,12 +635,15 @@ def config_rules_main():
 
             return redirect(url_for("config_rules_main"))
 
+    df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
+    df_error_db_summary.rename(columns={'PO_NUMBER':'No. of error configs'},inplace=True)
 
     return render_template('config_rules_main.html',
                             form=form,
                             user=login_name, subtitle='- Config Rules',
                             login_user=login_user,
-                           num_of_config=num_of_config)
+                           df_error_db_summary_header=df_error_db_summary.columns,
+                           df_error_db_summary_data=df_error_db_summary.values)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])

@@ -781,7 +781,6 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
 
     # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
     df_history_error=read_table('history_new_error_config_record')
-    df_history_error = commonize_and_create_main_item(df_history_error, 'BUSINESS_UNIT', 'main_bu')
 
     # 生成模型对象并使用方法
     fsc = FindSameConfig()
@@ -838,6 +837,11 @@ class FindSameConfig():
         #TODO: create new pid to combine module&slot
 
         # limit df_new by df_base BU
+        if 'main_bu' not in df_new.columns:
+            df_new = commonize_and_create_main_item(df_new, 'BUSINESS_UNIT', 'main_bu')
+        if 'main_bu' not in df_base.columns:
+            df_base = commonize_and_create_main_item(df_base, 'BUSINESS_UNIT', 'main_bu')
+
         df_new=df_new[df_new.main_bu.isin(df_base.main_bu)].copy()
         bu_list=df_new.main_bu.unique()
         new_config_dict = {}
