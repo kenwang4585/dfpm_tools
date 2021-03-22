@@ -5,18 +5,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import MetaData
 
 def drop_table():
-    engine = create_engine(os.getenv('DB_URI'))
-    print(engine.table_names())
-
-    table_class = input('Input table object class:')
-
-    eval(table_class).__table__.drop(engine)
-
-    ConfigRulesInclExclPidBased
-
-    print(engine.table_names())
-
-def drop_table():
    engine = create_engine(os.getenv('DB_URI'))
    print('Existing tables:', engine.table_names())
 
