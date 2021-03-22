@@ -21,4 +21,4 @@ def drop_table():
 
 
 if __name__=='__main__':
-    drop_table(table_name)
+    drop_table()
