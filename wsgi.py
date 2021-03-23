@@ -615,7 +615,7 @@ def config_rules_main():
             df_error_db=read_table('history_new_error_config_record')
             #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
             #report_po_qty=len(df_upload.PO_NUMBER.unique())
-            df_error_db_remove=get_same_config_data_to_remove(df_error_db, df_remove) # use df_remove as the base
+            df_error_db_remove=get_same_config_data_to_remove_from_db(df_error_db, df_remove) # use df_remove as the base
             remove_config_po_qty=len(df_error_db_remove.PO_NUMBER.unique())
             id_list=df_error_db_remove.id.values
             id_list = [str(x) for x in id_list]

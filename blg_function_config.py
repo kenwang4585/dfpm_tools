@@ -702,9 +702,9 @@ def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
 
 ### config comparison
 
-def get_same_config_data_to_remove(df_error_db, df_remove):
+def get_same_config_data_to_remove_from_db(df_error_db, df_remove):
     """
-    Find out same config data in error db based on data user upload to remove
+    Remove same config in error db to remove based on uploaded config data
     """
     # remove the duplicated configs from the uploading df
     df_remove_p = df_remove.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
@@ -735,12 +735,11 @@ def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
     and also only save new config errors.
     """
     # remove the duplicated configs from the uploading df
-    df_upload_p = df_upload.pivot_table(index=['PO_NUMBER', 'REMARK'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
+    df_upload_p = df_upload.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
                                 aggfunc=sum)
 
     df_upload_p = df_upload_p.apply(lambda x: x / x.min(), axis=1)
     df_upload_p.drop_duplicates(inplace=True)
-    df_upload_p.reset_index(inplace=True)
     unique_config_po=df_upload_p.PO_NUMBER.values
     df_upload=df_upload[df_upload.PO_NUMBER.isin(unique_config_po)].copy()
 
