@@ -4,7 +4,7 @@ from sending_email import send_attachment_and_embded_image
 from blg_settings import *
 from blg_functions import commonize_and_create_main_item
 from db_read import read_table
-import time
+from db_add import add_error_config_data
 
 def config_rule_mapping():
     """
@@ -729,11 +729,16 @@ def get_same_config_data_to_remove_from_db(df_error_db, df_remove):
 
     return df_error_db_remove
 
-def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
+
+
+def add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload,df_error_db,login_user):
     """
     For user to report/upload new error config to database. When uploading remove the duplicated error configs in uploading data,
     and also only save new config errors.
     """
+    # Fill up remark based on option 0 remark
+    df_upload = fill_up_remark(df_upload)
+
     # remove the duplicated configs from the uploading df
     df_upload_p = df_upload.pivot_table(index=['PO_NUMBER'], columns='PRODUCT_ID', values='ORDERED_QUANTITY',
                                 aggfunc=sum)
@@ -742,20 +747,32 @@ def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
     df_upload_p.drop_duplicates(inplace=True)
     #df_upload_p.reset_index(inplace=True)
     #unique_config_po=df_upload_p.PO_NUMBER.values
-    df_upload=df_upload[df_upload.PO_NUMBER.isin(df_upload_p.index)].copy()
+    df_upload_unique=df_upload[df_upload.PO_NUMBER.isin(df_upload_p.index)].copy()
 
     # find out the new configs not yet in database
     fsc = FindSameConfig()
     base_config_dict = fsc.create_base_config_dict(df_error_db)
-    new_config_dict = fsc.create_new_config_dict(df_upload,df_error_db)
+    new_config_dict = fsc.create_new_config_dict(df_upload_unique,df_error_db)
     compare_result_dict = fsc.compare_new_and_base_dict(new_config_dict, base_config_dict)
     # exclude those same configs
-    df_upload=df_upload[~df_upload.PO_NUMBER.isin(compare_result_dict.keys())].copy()
+    df_upload_unique=df_upload_unique[~df_upload_unique.PO_NUMBER.isin(compare_result_dict.keys())].copy()
 
-    # Fill up remark
-    df_upload=fill_up_remark(df_upload)
+    # add to database
+    new_config_po_qty = len(df_upload.PO_NUMBER.unique())
+    if new_config_po_qty > 0:
+        add_error_config_data(df_upload_unique, login_user)
 
-    return df_upload
+    # TODO: add to tracker file as well (issue, deleting from tracker might be an issue if want to)
+    df_error_tracker = pd.read_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
+    df_upload_main_new = df_upload[(~df_upload.PO_NUMBER.isin(df_error_tracker.PO_NUMBER))&(df_upload.OPTION_NUMBER==0)]
+    df_upload_main_new.loc[:,'Config_error']=df_upload_main_new.REMARK.map(lambda x: '(user report) '+ x)
+    df_upload_main_new.loc[:, 'Report date'] = pd.Timestamp.now()
+    df_upload_main_new.drop(['REMARK'],axis=1,inplace=True)
+    df_error_tracker=pd.concat([df_error_tracker,df_upload_main_new],sort=False)
+    df_error_tracker.set_index('ORGANIZATION_CODE',inplace=True)
+    df_error_tracker.to_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
+
+    return new_config_po_qty
 
 def fill_up_remark(df):
     """

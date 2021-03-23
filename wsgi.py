@@ -564,23 +564,18 @@ def config_rules_main():
 
             #df_error_db = fill_up_remark(df_error_db)
             report_po_qty=len(df_upload.PO_NUMBER.unique())
-            df_upload=get_unique_new_error_config_data_to_upload(df_upload, df_error_db)
-            new_config_po_qty=len(df_upload.PO_NUMBER.unique())
-            if df_upload.shape[0]>0:
-                add_error_config_data(df_upload, login_user)
-                msg = 'Thank you! You reported {} PO with error configs which includes {} new configs, which is saved to database.'.format(
+            new_config_po_qty=add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload, df_error_db,login_user)
+            msg = 'Thank you! You reported {} PO with error configs, {} PO are new configs added to database.'.format(
                     report_po_qty, new_config_po_qty)
-                flash(msg, 'success')
+            flash(msg, 'success')
 
-                # read and count again:
+            # read and count again:
+            if new_config_po_qty>0:
                 df_error_db = read_table('history_new_error_config_record')
-            else:
-                msg = 'Thank you! You reported {} PO with error configs which already exist in database, thus no action taken.'.format(report_po_qty)
-                flash(msg, 'info')
 
             # write program log to log file
             add_user_log(user=login_user, location='Manage config', user_action='Upload error config',
-                             summary='Upload configs: {}; new configs saved: {}'.format(report_po_qty, new_config_po_qty))
+                             summary='Uploaded PO saved to tracker: {}; new configs saved to db: {}'.format(report_po_qty, new_config_po_qty))
 
             return redirect(url_for("config_rules_main"))
         elif submit_remove:
