@@ -10,10 +10,10 @@
         {{ form.csrf_token }}
         <br>
         <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="80%">
-            <tr><br>
+            <tr>
                 <td width="40%" align="center">
                     <h2>
-                        <strong>Manage configuration rules</strong>
+                        <strong>Manage config rules</strong>
                     </h2>
                 </td>
                 <td width="60%" align="left">
@@ -26,7 +26,7 @@
                 <br>
             </tr>
         </table>
-        <br><br><br><br>
+        <br><br>
 
         <table style="border-collapse:collapse"  bgcolor="#f5f5f5" border="0" cellspacing="0px" align="center" width="80%">
             <tr>
@@ -34,7 +34,7 @@
                     <h2>
                         <strong>Report new error configs</strong>
                     </h2>
-                    <br>
+                    (for errors without rule to capture)<br>
                     <a href="{{ url_for('download_file_tracker',filename='Error config upload template.xlsx') }}">Download template</a>
                 </td>
                 <td width="60%" align="left">
@@ -76,5 +76,4 @@
 
 
 {% block empty_space %}
-    <br><br><br>
 {% endblock %}
