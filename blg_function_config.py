@@ -740,8 +740,9 @@ def get_unique_new_error_config_data_to_upload(df_upload,df_error_db):
 
     df_upload_p = df_upload_p.apply(lambda x: x / x.min(), axis=1)
     df_upload_p.drop_duplicates(inplace=True)
-    unique_config_po=df_upload_p.PO_NUMBER.values
-    df_upload=df_upload[df_upload.PO_NUMBER.isin(unique_config_po)].copy()
+    #df_upload_p.reset_index(inplace=True)
+    #unique_config_po=df_upload_p.PO_NUMBER.values
+    df_upload=df_upload[df_upload.PO_NUMBER.isin(df_upload_p.index)].copy()
 
     # find out the new configs not yet in database
     fsc = FindSameConfig()
