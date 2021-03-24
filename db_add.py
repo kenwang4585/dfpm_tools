@@ -53,6 +53,19 @@ def add_subscription(email,task,login_user):
     db.session.commit()
     #print('User log added')
 
+def add_slot(slot_pid,login_user):
+    '''
+    Add the user log to db
+    '''
+
+    record = Slot(SLOT_PID=slot_pid,
+                  Added_by=login_user,
+                  Added_on=pd.Timestamp.now().date(),)
+
+    db.session.add(record)  # can also use add_all() for multiple adding at one time
+    db.session.commit()
+    #print('User log added')
+
 def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,remark,login_user):
     '''
     Add the general rule data to db

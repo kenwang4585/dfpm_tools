@@ -32,6 +32,34 @@ def config_rule_mapping():
     return config_rules,notes
 
 
+def combine_pid_and_slot(df):
+    """
+    Identify the slot PIDs and combine it with the module PID beneath it
+    """
+    df_slot=read_table('slot')
+    slot_list=df_slot.SLOT_PID.values
+    for slot in slot_list:
+        df.loc[:,'slot']=np.where(df.PRODUCT_ID.str.contains(slot),
+                                      df.PRODUCT_ID,
+                                      np.nan)
+
+    df.loc[:, 'pid_slot'] = np.nan
+    slot = ''
+    for row in df.itertuples():
+        if not pd.isnull(row.slot):
+            slot = row.slot
+        else:
+            if slot != '':
+                df.loc[row.Index, 'pid_slot'] = row.PRODUCT_ID + '_' + slot
+                slot = ''
+
+    df.loc[:, 'PRODUCT_ID'] = np.where(df.pid_slot.notnull(),
+                                        df.pid_slot,
+                                        df.PRODUCT_ID)
+
+    return df
+
+
 def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
     """
     Check related PABU product if the cards are using right slot or if necessary PIDs are included.
@@ -131,22 +159,6 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
             pid_slot_list = []
             pid_slot_list.append(row.PID_SLOT_A)
             config_rules_no_support[pid_chassis_base] = pid_slot_list
-
-    # Update the PRODUCT_ID to PID_SLOT when eligiable slot PID is found
-    slots = df_rule_exclusion.SLOT_A.unique().tolist() + df_rule_exclusion.SLOT_B.unique().tolist() + df_rule_inclusion.SLOT_A.unique().tolist()
-    slot=''
-    dfx.loc[:, 'pid_slot'] = np.nan
-    for row in dfx.itertuples():
-        if row.PRODUCT_ID in slots:
-            slot = row.PRODUCT_ID
-        else:
-            if slot!='':
-                dfx.loc[row.Index,'pid_slot']=row.PRODUCT_ID + '_' + slot
-                slot=''
-
-    dfx.loc[:,'PRODUCT_ID']=np.where(dfx.pid_slot.notnull(),
-                                     dfx.pid_slot,
-                                     dfx.PRODUCT_ID)
 
     # get the ATO PO list
     target_main_pid=list(config_rules_exclusion.keys())+list(config_rules_inclusion.keys())+list(config_rules_no_support.keys())

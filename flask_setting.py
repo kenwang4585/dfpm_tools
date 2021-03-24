@@ -123,6 +123,9 @@ class ConfigRulesMain(FlaskForm):
     submit_upload_error=SubmitField('PROCEED')
     submit_remove_error = SubmitField('PROCEED')
 
+    slot_pid=StringField('Add slot PID keyword:')
+    submit_add_slot=SubmitField('ADD')
+
 class ConfigRulesCombination(FlaskForm):
     submit_download_pabu = SubmitField('Download rule file')
     file_pabu = FileField('Select rule file:')
@@ -242,3 +245,12 @@ class HistoryNewErrorConfigRecord(db.Model):
     ORDERED_QUANTITY = db.Column(db.Integer)
     REMARK=db.Column(db.String(100))
     Added_by=db.Column(db.String(15))
+
+class Slot(db.Model):
+    '''
+    db table to store uploaded error config details
+    '''
+    id=db.Column(db.Integer,primary_key=True)
+    SLOT_PID = db.Column(db.String(25))
+    Added_by=db.Column(db.String(15))
+    Added_on = db.Column(db.Date)

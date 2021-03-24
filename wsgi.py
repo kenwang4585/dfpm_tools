@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_error_config_data  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_slot  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -180,7 +180,8 @@ def global_app():
 
             if config_check:
                 config_rules, notes = config_rule_mapping()
-
+                # combine pid and slot when applicable and use that to replace PID
+                df_3a4=combine_pid_and_slot(df_3a4)
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
                 if running_option == 'formal':
                     save_to_tracker = True
@@ -524,11 +525,13 @@ def config_rules_main():
         login_name = 'unknown'
 
     df_error_db = read_table('history_new_error_config_record')
+    df_slot = read_table('slot')
 
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
         submit_upload=form.submit_upload_error.data
         submit_remove=form.submit_remove_error.data
+        submit_add_slot=form.submit_add_slot.data
 
         if submit_upload:
             file_upload_error=form.file_upload_error.data
@@ -629,6 +632,21 @@ def config_rules_main():
                              summary='No of matching configs removed from database: {}'.format(remove_config_po_qty))
 
             return redirect(url_for("config_rules_main"))
+        elif submit_add_slot:
+            slot_pid=form.slot_pid.data.strip().upper()
+
+            if slot_pid not in df_slot.SLOT_PID.values:
+                add_slot(slot_pid, login_user)
+                msg = 'New slot keyword added.'
+                flash(msg, 'success')
+            else:
+                msg = 'Slot you try to add already exist.'
+                flash(msg, 'info')
+
+            df_slot = read_table('slot')
+
+            return redirect(url_for("config_rules_main"))
+
 
     df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
     df_error_db_summary.rename(columns={'PO_NUMBER':'No. of error configs'},inplace=True)
@@ -638,7 +656,9 @@ def config_rules_main():
                             user=login_name, subtitle='- Config Rules',
                             login_user=login_user,
                            df_error_db_summary_header=df_error_db_summary.columns,
-                           df_error_db_summary_data=df_error_db_summary.values)
+                           df_error_db_summary_data=df_error_db_summary.values,
+                           df_slot_header=df_slot.columns,
+                           df_slot_data=df_slot.values)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
@@ -1400,6 +1420,24 @@ def admin():
                            user=login_name,
                            subtitle=' - Admin')
 
+
+@app.route('/slot/<login_user>/<added_by>/<record_id>',methods=['GET'])
+def delete_slot_record(login_user,added_by,record_id):
+    if login_user == 'unknown':
+        http_scheme = 'http'
+    else:
+        http_scheme = 'http'
+
+    if login_user==added_by:# or login_user==super_user:
+        id_list=[str(record_id)]
+        delete_record('slot', id_list)
+        msg = 'Slot deleted: {}'.format(record_id)
+        flash(msg, 'success')
+    else:
+        msg = 'You can only delete record created by you!'
+        flash(msg,'warning')
+
+    return redirect(url_for("config_rules_main", _external=True, _scheme=http_scheme, viewarg1=1))
 
 
 @app.route('/pid/<login_user>/<added_by>/<record_id>',methods=['GET'])
