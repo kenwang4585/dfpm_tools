@@ -126,16 +126,22 @@ class ConfigRulesMain(FlaskForm):
     slot_pid=StringField('Add slot PID keyword:')
     submit_add_slot=SubmitField('ADD')
 
-class ConfigRulesCombination(FlaskForm):
-    submit_download_pabu = SubmitField('Download rule file')
-    file_pabu = FileField('Select rule file:')
-    confirm_pabu = BooleanField('Confirm to replace with new file!')
-    submit_upload_pabu = SubmitField('Upload rule file')
+class ConfigRulesComplex(FlaskForm):
+    submit_download_calina = SubmitField('Download rule file')
+    file_calina = FileField('Select rule file:')
+    confirm_calina = BooleanField('Confirm to replace with new file!')
+    submit_upload_calina = SubmitField('Upload new rule')
 
-    submit_download_srgbu = SubmitField('Download rule file')
-    file_srgbu = FileField('Select rule file:')
-    confirm_srgbu = BooleanField('Confirm to replace with new file!')
-    submit_upload_srgbu = SubmitField('Upload rule file')
+    submit_download_rachel = SubmitField('Download rule file')
+    file_rachel = FileField('Select rule file:')
+    confirm_rachel = BooleanField('Confirm to replace with new file!')
+    submit_upload_rachel = SubmitField('Upload new rule')
+
+    submit_download_alex = SubmitField('Download rule file')
+    file_alex = FileField('Select rule file:')
+    confirm_alex = BooleanField('Confirm to replace with new file!')
+    submit_upload_alex = SubmitField('Upload new rule')
+
 
 class ConfigRulesInclExclPidBased(FlaskForm):
     org=StringField('ORG*:')

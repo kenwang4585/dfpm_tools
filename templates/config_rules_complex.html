@@ -1,0 +1,80 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+        <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <table style="border-collapse:collapse"  cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="10%"><h4><a href="{{ url_for("config_rules_main") }}">BACK</a> </h4></td>
+            </tr>
+        </table>
+
+        <h2 align="center">PID combination rules / complex rules</h2>
+        <br>
+        <table style="border-collapse:collapse" bgcolor="#f5f5f5" border="1" cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="10%">Owner</td>
+                <td width="10%">Applied Org</td>
+                <td width="7%">BU</td>
+                <td width="20%">Description</td>
+                <td width="15%" align="center">Download config rule</td>
+                <td width="15%">New config file</td>
+                <td width="23%">Upload and replace rule file</td>
+
+            </tr>
+            <tr>
+                <td>Calina Gong</td>
+                <td>{{ org_calina }}</td>
+                <td>PABU</td>
+                <td>Verify if LC is put in the right slot under different situations</td>
+                <td align="center">
+                    <a href="{{ url_for('download_file_tracker',filename='PABU slot config rules.xlsx') }}">download</a>
+                </td>
+                <td>{{ form.file_calina }}</td>
+                <td>{{ form.confirm_calina }}&nbsp;&nbsp;{{ form.confirm_calina.label }}<br>
+                {{ form.submit_upload_calina }}</td>
+
+            </tr>
+            <tr>
+                <td>Rachel Zhang</td>
+                <td>{{ org_rachel }}</td>
+                <td>SRGBU</td>
+                <td>Verify if SM/NIM have the right combinations</td>
+                <td align="center">
+                    <a href="{{ url_for('download_file_tracker',filename='SRGBU SM_NIM config rules.xlsx') }}">download</a>
+                </td>
+                <td>{{ form.file_rachel }}</td>
+                <td>{{ form.confirm_rachel }}&nbsp;&nbsp;{{ form.confirm_rachel.label }}<br>
+                {{ form.submit_upload_rachel }}</td>
+
+            </tr>
+            <tr>
+                <td>Alex Solis Gonzalez</td>
+                <td>{{ org_alex }}</td>
+                <td>EBBU</td>
+                <td>Verify if PWR/SUP/LC have the right combinations</td>
+                <td align="center">
+                    <a href="{{ url_for('download_file_tracker',filename='EBBU PWR_LC_SUP config rules.xlsx') }}">download</a>
+                </td>
+                <td>{{ form.file_alex }}</td>
+                <td>{{ form.confirm_alex }}&nbsp;&nbsp;{{ form.confirm_alex.label }}<br>
+                {{ form.submit_upload_alex }}</td>
+
+            </tr>
+        </table>
+        <h5 align="center" style="color: #a80026">* The rules only apply for ORG specified in the template, if you want same rules to apply for your org, pls work with respective owner to add your org into the template.</h5>
+
+</form>
+{% endblock %}
+
+
+{% block empty_space %}
+    <br><br><br><br><br><br><br><br><br><br><br><br>
+{% endblock %}

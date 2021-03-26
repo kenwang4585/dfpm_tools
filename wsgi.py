@@ -461,9 +461,9 @@ def config_rules_incl_excl_pid_based():
                            df_rule_data=df_rule.values,
                            )
 
-@app.route('/config_rules_combination',methods=['GET','POST'])
-def config_rules_combination():
-    form=ConfigRulesCombination()
+@app.route('/config_rules_complex',methods=['GET','POST'])
+def config_rules_complex():
+    form=ConfigRulesComplex()
 
     login_user = request.headers.get('Oidc-Claim-Sub')
     login_name = request.headers.get('Oidc-Claim-Fullname')
@@ -474,40 +474,72 @@ def config_rules_combination():
         login_name = 'unknown'
 
     if form.validate_on_submit():
-        submit_pabu=form.submit_upload_pabu.data
+        submit_calina=form.submit_upload_calina.data
+        submit_rachel = form.submit_upload_rachel.data
+        submit_alex = form.submit_upload_alex.data
 
-        if submit_pabu:
-            fname_pabu=form.file_pabu.data
-            confirm_pabu=form.confirm_pabu.data
-            if not fname_pabu:
+        if submit_calina:
+            fname_calina=form.file_calina.data
+            confirm_calina=form.confirm_calina.data
+            if not fname_calina:
                 msg = 'Select the new config rule file to upload!'
                 flash(msg, 'warning')
-                return redirect(url_for('config_rules'))
+                return redirect(url_for('config_rules_complex'))
 
-            if not 'PABU' in fname_pabu.filename:
-                msg='This is for PABU rules, select the right file to upload!'
+            if not 'PABU' in fname_calina.filename:
+                msg="This is for PABU rules, ensure 'PABU' in the file name you select!"
                 flash(msg, 'warning')
-                return redirect(url_for('config_rules'))
+                return redirect(url_for('config_rules_complex'))
 
-            file_path_pabu=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
+            file_path_calina=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
 
-            if login_user not in ['unknown','kwang2','cagong']:
+            if login_user not in ['unknown','cagong'] + [super_user]:
                 msg='Only following user is eligible to update rule for this: {}'.format('cagong')
                 flash(msg,'warning')
-                return redirect(url_for('config_rules'))
+                return redirect(url_for('config_rules_complex'))
 
-            if not confirm_pabu:
+            if not confirm_calina:
                 msg = 'Select the upload and replace checkbox to confirm proceeding!'
                 flash(msg, 'warning')
-                return render_template('config_rules.html', form=form,user=login_name,subtitle='- Config Rules')
+                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
 
             # 存储文件
-            fname_pabu.save(file_path_pabu)
-            msg = 'New file has been upload and rules replaced: {}'.format(fname_pabu.filename)
+            fname_calina.save(file_path_calina)
+            msg = 'New file has been upload and rules replaced: {}'.format(fname_calina.filename)
             flash(msg, 'success')
-            return redirect(url_for('config_rules_combination'))
+            return redirect(url_for('config_rules_complex'))
+        elif submit_rachel:
+            fname_rachel=form.file_rachel.data
+            confirm_rachel=form.confirm_rachel.data
+            if not fname_rachel:
+                msg = 'Select the new config rule file to upload!'
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules_complex'))
 
-    return render_template('config_rules_combination.html',
+            if not 'SRGBU' in fname_rachel.filename:
+                msg="This is for SRGBU rules, ensure 'SRGBU' in the file name you select!"
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules_complex'))
+
+            file_path_rachel=os.path.join(base_dir_tracker,'SRGBU SM_NIM config rules.xlsx')
+
+            if login_user not in ['unknown','rachzhan'] + [super_user]:
+                msg='Only following user is eligible to update rule for this: {}'.format('rachzhan')
+                flash(msg,'warning')
+                return redirect(url_for('config_rules_complex'))
+
+            if not confirm_rachel:
+                msg = 'Select the upload and replace checkbox to confirm proceeding!'
+                flash(msg, 'warning')
+                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
+
+            # 存储文件
+            fname_rachel.save(file_path_rachel)
+            msg = 'New file has been upload and rules replaced: {}'.format(fname_rachel.filename)
+            flash(msg, 'success')
+            return redirect(url_for('config_rules_complex'))
+
+    return render_template('config_rules_complex.html',
                            form=form,user=login_name,subtitle='- Config Rules',
                            login_user=login_user)
 
