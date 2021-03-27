@@ -181,6 +181,7 @@ def global_app():
             if config_check:
                 config_rules, notes = config_rule_mapping()
                 # combine pid and slot when applicable and use that to replace PID
+                print(df_3a4.shape)
                 df_3a4=combine_pid_and_slot(df_3a4)
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
                 if running_option == 'formal':
@@ -473,6 +474,14 @@ def config_rules_complex():
         login_user = 'unknown'
         login_name = 'unknown'
 
+    file_path_calina = os.path.join(base_dir_tracker, 'PABU slot config rules.xlsx')
+    file_path_rachel = os.path.join(base_dir_tracker, 'SRGBU SM_NIM config rules.xlsx')
+    file_path_alex = os.path.join(base_dir_tracker, 'EBBU C9400 PWR_LC_SUP combination rule.xlsx')
+
+    org_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_ORG').iloc[0,0]
+    org_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_ORG').iloc[0,0]
+    org_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_ORG').iloc[0,0]
+
     if form.validate_on_submit():
         submit_calina=form.submit_upload_calina.data
         submit_rachel = form.submit_upload_rachel.data
@@ -491,7 +500,6 @@ def config_rules_complex():
                 flash(msg, 'warning')
                 return redirect(url_for('config_rules_complex'))
 
-            file_path_calina=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
 
             if login_user not in ['unknown','cagong'] + [super_user]:
                 msg='Only following user is eligible to update rule for this: {}'.format('cagong')
@@ -521,8 +529,6 @@ def config_rules_complex():
                 flash(msg, 'warning')
                 return redirect(url_for('config_rules_complex'))
 
-            file_path_rachel=os.path.join(base_dir_tracker,'SRGBU SM_NIM config rules.xlsx')
-
             if login_user not in ['unknown','rachzhan'] + [super_user]:
                 msg='Only following user is eligible to update rule for this: {}'.format('rachzhan')
                 flash(msg,'warning')
@@ -541,7 +547,10 @@ def config_rules_complex():
 
     return render_template('config_rules_complex.html',
                            form=form,user=login_name,subtitle='- Config Rules',
-                           login_user=login_user)
+                           login_user=login_user,
+                           org_calina=org_calina,
+                           org_rachel=org_rachel,
+                           org_alex=org_alex)
 
 
 @app.route('/config_rules_main',methods=['GET','POST'])

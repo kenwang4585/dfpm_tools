@@ -504,45 +504,72 @@ def find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict):
     :param dfx: df filtered by PF that need to check with
     :return error order dict
     '''
+    fname_rule = os.path.join(base_dir_tracker, 'UABU C9400 PWR_LC_SUP combination rule.xlsx')
+    df_rule = pd.read_excel(fname_rule, sheet_name='RULE')
+    df_org = pd.read_excel(fname_rule, sheet_name='APPLICABLE_ORG')
 
-    dfx_main= dfx[(dfx.OPTION_NUMBER == 0)]
-    main_po_pid=zip(dfx_main.PO_NUMBER,dfx_main.PRODUCT_ID)
-    po_list=[]
-    for po,pid in main_po_pid:
-        if '=' not in pid:
-            if 'C9410R' in pid or 'C9407R' in pid:
-                po_list.append(po)
+    # Limit data by org
+    org_applicable = df_org.iloc[0, 0].strip().split(';')
+    dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_applicable)].copy()
 
-    for po in po_list:
-        main_pid=dfx[(dfx.PO_NUMBER==po)&(dfx.OPTION_NUMBER==0)].PRODUCT_ID.values[0]
-        dfy=dfx[dfx.PO_NUMBER == po][['PRODUCT_ID','ORDERED_QUANTITY']].groupby('PRODUCT_ID').sum()
-        #print(po,main_pid)
+    # for exclusion rules
+    for row in df_rule.itertuples():
+        bu = row.BU.strip().upper()
+        pf = row.PF.strip().upper()
+        main_pid=row.MAIN_PID.strip().upper()
+        pid_a = row.PID_A.strip().upper()
+        a_criteria = row.A_CRITERIA.strip().upper()
+        a_qty=int(row.A_QTY)
+        pid_b = row.PID_B.strip().upper()
+        b_criteria = row.B_CRITERIA.strip().upper()
+        b_qty = int(row.B_QTY)
+        remark = row.REMARK
 
-        pid_list=dfy.index.values
-        qty_list=dfy.values.reshape(1,-1)[0]
-        pid_qty_list=zip(pid_list,qty_list)
+        # make the criteria
+        if a_criteria=='=':
+            a_criteria='=='
+        if b_criteria == '=':
+            b_criteria = '=='
+        a_criteria_qty=a_criteria+str(a_qty)
+        b_criteria_qty=b_criteria+str(b_qty)
 
-        if 'C9410R' in main_pid:
-            main_pid = 'C9410R*'
+        # limit the df based on rsp/org/bu/pf
+        dfy = dfx.copy()
+        dfy.loc[:, 'eligible'] = np.where(dfy.OPTION_NUMBER==0,
+                                          np.where(dfy.PRODUCT_ID.str.contains(main_pid),
+                                                    'YES',
+                                                    'NO'),
+                                          None)
 
-            if 'C9400-PWR-3200AC' in pid_list:
-                psu_pid='C9400-PWR-3200AC'
-            elif 'C9400-PWR-2100AC' in pid_list:
-                psu_pid = 'C9400-PWR-2100AC'
-            elif 'C9400-PWR-3200DC' in pid_list:
-                psu_pid = 'C9400-PWR-3200DC'
+        dfy_eligible = dfy[dfy.eligible == 'YES']
+        po_list = dfy_eligible.PO_NUMBER.unique()
+        dfy = dfx[dfx.PO_NUMBER.isin(po_list)].copy()
 
-            wrong_po_dict=c9400_rules_pwr_sup_lc(pid_qty_list, wrong_po_dict, po,main_pid,psu_pid)
-        elif 'C9407R' in main_pid:
-            main_pid = 'C9407R*'
-            if 'C9400-PWR-3200AC' in pid_list:
-                psu_pid='C9400-PWR-3200AC'
-            elif 'C9400-PWR-2100AC' in pid_list:
-                psu_pid = 'C9400-PWR-2100AC'
-            elif 'C9400-PWR-3200DC' in pid_list:
-                psu_pid = 'C9400-PWR-3200DC'
+        if bu != '':
+            dfy = dfy[dfy.main_bu==bu].copy()
+        if pf != '':
+            dfy = dfy[dfy.main_pf==pf].copy()
 
-            wrong_po_dict = c9400_rules_pwr_sup_lc(pid_qty_list, wrong_po_dict, po, main_pid, psu_pid)
+        print(pid_a,a_criteria_qty)
+        print(po_list)
+
+        for po in po_list:
+            pid_list = dfy[dfy.PO_NUMBER == po].PRODUCT_ID.values
+
+            # check if including wong pid_slot
+            if pid_a in pid_list:
+                pid_a_qty=dfy[(dfy.PO_NUMBER == po)&(dfy.PRODUCT_ID==pid_a)].ORDERED_QUANTITY.sum()
+                print(pid_a_qty)
+
+                pid_b_qty=dfy[(dfy.PO_NUMBER == po)&(dfy.PRODUCT_ID.str.contains(pid_b))].ORDERED_QUANTITY.sum()
+                print(pid_b_qty)
+
+                if eval('pid_a_qty'+a_criteria_qty):
+                    if not eval('pid_b_qty'+b_criteria_qty):
+                        wrong_po_dict[po] = remark
+
+    print(wrong_po_dict)
+    raise ValueError
 
     return wrong_po_dict
 
