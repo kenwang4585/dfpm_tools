@@ -164,6 +164,11 @@ def global_app():
             # initial basic data processing
             df_3a4=basic_data_processing_global(df_3a4,region,org_name_global)
 
+            if df_3a4.shape[0]==0:
+                msg = 'Empty data to process based on the file you uploaded and region you selected!'
+                flash(msg, 'warning')
+                return render_template('global_app.html', form=form, user=login_name, subtitle='')
+
             # below execute each task
             if wnbu_compliance:
                 df_compliance_table, no_ship = read_compliance_from_smartsheet(df_3a4)
@@ -179,9 +184,8 @@ def global_app():
                 flash(msg, 'success')
 
             if config_check:
-                config_rules, notes = config_rule_mapping()
+                config_func = config_func_mapping()
                 # combine pid and slot when applicable and use that to replace PID
-                print(df_3a4.shape)
                 df_3a4=combine_pid_and_slot(df_3a4)
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
                 if running_option == 'formal':
@@ -191,7 +195,7 @@ def global_app():
 
                 df_bupf_rule=read_table('general_config_rule_bu_pf')
                 df_pid_rule=read_table('general_config_rule_pid')
-                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules)
+                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_func)
                 qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
                     df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
 
@@ -202,7 +206,7 @@ def global_app():
                 # send the error summary to users
                 if qty_new_error > 0 or df_error_old.shape[0]>0:
                     send_config_error_data_by_email(region, df_error_new, df_error_old, fname_new_error,
-                                                    login_user,config_check_emails, sender,notes)
+                                                    login_user,config_check_emails, sender)
 
             if backlog_summary:
                 # Redefine the addressable flag, add in MFG_HOLD, and split out wk+1, wk+2 for outside_window portion

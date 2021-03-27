@@ -6,31 +6,22 @@ from blg_functions import commonize_and_create_main_item
 from db_read import read_table
 from db_add import add_error_config_data
 
-def config_rule_mapping():
+def config_func_mapping():
     """
     Define a config rule mapping based on PF and corresponding function name to do the config check.
     :return:
     """
     #[[exclusion org],[PF],rule_function]
     # the restrction criteria here [org][pf] are disabled!! followed in the template - C9400 need further update
-    config_rules = (
-                    [[],['C9400'],'find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)'],
-                    [['FVE'],['4300ISR','4400ISR','ICV'],'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)'],
-                    [[],['ASR903'],'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)'],
-                    [[],[],'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)'],
-                    [[],[],'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)'],
-                    [[],[],'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)'],
-                    )
+    config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)',
+                    'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)',
+                    'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)',
+                    'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)',
+                    'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)',
+                    'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)',
+                    ]
 
-    notes = [
-             '- UABU C9400: PSU/LC/SUP combinations (Alex Solis Gonzalez)',
-             '- SRGBU 4300ISR/4400ISR/ICV (FVE excluded): SM/NIM combinations (Rachel Zhang)',
-             '- SRGBU 4xxxISR/800BB/900ISR/CAT8200/CAT8300/ENCS/ISR1K/ISR900 (FVE excluded; 3 config spares excluded): missing PSU (Rachel Zhang)',
-             '- PABU ASR903: Slot related check (Calina, Joe,.. )',
-             '- Inclusion/excelusion rules',
-             ]
-
-    return config_rules,notes
+    return config_func
 
 
 def combine_pid_and_slot(df):
@@ -550,26 +541,18 @@ def find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict):
         if pf != '':
             dfy = dfy[dfy.main_pf==pf].copy()
 
-        print(pid_a,a_criteria_qty)
-        print(po_list)
-
         for po in po_list:
             pid_list = dfy[dfy.PO_NUMBER == po].PRODUCT_ID.values
 
             # check if including wong pid_slot
             if pid_a in pid_list:
                 pid_a_qty=dfy[(dfy.PO_NUMBER == po)&(dfy.PRODUCT_ID==pid_a)].ORDERED_QUANTITY.sum()
-                print(pid_a_qty)
 
                 pid_b_qty=dfy[(dfy.PO_NUMBER == po)&(dfy.PRODUCT_ID.str.contains(pid_b))].ORDERED_QUANTITY.sum()
-                print(pid_b_qty)
 
                 if eval('pid_a_qty'+a_criteria_qty):
                     if not eval('pid_b_qty'+b_criteria_qty):
                         wrong_po_dict[po] = remark
-
-    print(wrong_po_dict)
-    raise ValueError
 
     return wrong_po_dict
 
@@ -644,7 +627,7 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
 
     return qty_new_error, df_error_new, df_error_old, fname_new_error
 
-def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_error,login_user,to_address,sender,notes):
+def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_error,login_user,to_address,sender):
     """
     Send the result with attachment
     """
@@ -685,7 +668,7 @@ def scale_down_po_to_one_set(df):
 
     return df
 
-def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
+def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_func):
     wrong_po_dict = {}
 
     # pick out ATO PO
@@ -693,7 +676,7 @@ def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
     ato_po=df_pivot[df_pivot.OPTION_NUMBER>0].index
     df_ato=df_3a4[df_3a4.PO_NUMBER.isin(ato_po)].copy()
 
-    for org_pf_func in config_rules:
+    for org_pf_func in config_func:
         dfx=df_ato.copy() # make a copy of original each time
         """
         if org_pf_func[0]!=[]:
@@ -703,7 +686,7 @@ def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_rules):
         """
 
         if dfx.shape[0] > 0:
-            wrong_po_dict = eval(org_pf_func[2])
+            wrong_po_dict = eval(org_pf_func)
 
     return wrong_po_dict
 
