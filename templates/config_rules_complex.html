@@ -24,8 +24,9 @@
                 <td width="10%">Applied Org</td>
                 <td width="10%">BU</td>
                 <td width="20%">Description</td>
-                <td width="15%" align="center">Config rule detail</td>
-                <td width="35%">New config file</td>
+                <td width="10%" align="center">Config rule detail</td>
+                <td width="10%" align="center">Updated on</td>
+                <td width="30%">Upload new config file</td>
 
             </tr>
             <tr>
@@ -36,6 +37,7 @@
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='PABU slot config rules.xlsx') }}">download</a>
                 </td>
+                <td align="center">{{ c_time_calina }}</td>
                 <td>{{ form.file_calina }}<br>
                 {{ form.confirm_calina }}&nbsp;&nbsp;{{ form.confirm_calina.label }}<br>
                 {{ form.submit_upload_calina }}</td>
@@ -49,6 +51,7 @@
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='SRGBU SM_NIM config rules.xlsx') }}">download</a>
                 </td>
+                <td align="center">{{ c_time_rachel }}</td>
                 <td>{{ form.file_rachel }}<br>
                 {{ form.confirm_rachel }}&nbsp;&nbsp;{{ form.confirm_rachel.label }}<br>
                 {{ form.submit_upload_rachel }}</td>
@@ -62,6 +65,7 @@
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='EBBU PWR_LC_SUP config rules.xlsx') }}">download</a>
                 </td>
+                <td align="center">{{ c_time_alex }}</td>
                 <td>{{ form.file_alex }}<br>
                 {{ form.confirm_alex }}&nbsp;&nbsp;{{ form.confirm_alex.label }}<br>
                 {{ form.submit_upload_alex }}</td>

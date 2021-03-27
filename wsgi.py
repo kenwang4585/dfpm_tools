@@ -480,11 +480,15 @@ def config_rules_complex():
 
     file_path_calina = os.path.join(base_dir_tracker, 'PABU slot config rules.xlsx')
     file_path_rachel = os.path.join(base_dir_tracker, 'SRGBU SM_NIM config rules.xlsx')
-    file_path_alex = os.path.join(base_dir_tracker, 'EBBU C9400 PWR_LC_SUP combination rule.xlsx')
+    file_path_alex = os.path.join(base_dir_tracker, 'UABU C9400 PWR_LC_SUP combination rule.xlsx')
 
     org_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_ORG').iloc[0,0]
     org_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_ORG').iloc[0,0]
     org_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_ORG').iloc[0,0]
+
+    c_time_calina = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_calina).st_ctime))
+    c_time_rachel = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_rachel).st_ctime))
+    c_time_alex = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_alex).st_ctime))
 
     if form.validate_on_submit():
         submit_calina=form.submit_upload_calina.data
@@ -554,7 +558,10 @@ def config_rules_complex():
                            login_user=login_user,
                            org_calina=org_calina,
                            org_rachel=org_rachel,
-                           org_alex=org_alex)
+                           org_alex=org_alex,
+                           c_time_calina=c_time_calina,
+                           c_time_rachel=c_time_rachel,
+                           c_time_alex=c_time_alex)
 
 
 @app.route('/config_rules_main',methods=['GET','POST'])
