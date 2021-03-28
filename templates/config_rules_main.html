@@ -54,13 +54,18 @@
             <tr>
                 <td width="40%" align="center">
                     <h2>
-                        <strong>Slot management</strong>
+                        <strong>PABU slot management</strong>
                     </h2>
                 </td>
-                <td width="60%" align="left">
+                <td width="37%" align="left">
                     <br>
-                    {{ form.slot_pid.label }}&emsp; {{ form.slot_pid }}&emsp; {{ form.submit_add_slot }}
+                    {{ form.pf.label }}&nbsp; {{ form.pf }} <br>
+                    {{ form.slot_keyword.label }}&emsp; {{ form.slot_keyword }} <br>
+                    {{ form.rsp_keyword.label }}&emsp; {{ form.rsp_keyword }}
                     <br><br>
+                </td>
+                <td width="23" valign="middle" align="left">
+                    {{ form.submit_add_slot }}
                 </td>
             </tr>
         </table>
@@ -92,7 +97,7 @@
                     <td valign="top">
                         <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
                             <tr><br><br>
-                            <h4 align="center">Summary of Slot PID keyword</h4>
+                            <h4 align="center">Summary of PABU slot PID keyword</h4>
                                 {% for col in df_slot_header %}
                                     <td align="center"><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
                                 {% endfor %}
@@ -105,7 +110,7 @@
                                         <td align="center"><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
                                     {% endfor %}
                                     <td align="center">
-                                        <a href="{{ url_for('delete_slot_record',login_user=login_user,added_by=row[2],record_id=row[0]) }}">D</a>
+                                        <a href="{{ url_for('delete_slot_record',login_user=login_user,added_by=row[4],record_id=row[0]) }}">D</a>
                                     </td>
                                 </tr>
                             {% endfor %}

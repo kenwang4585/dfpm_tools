@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_slot  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_slot_and_rsp_keyword  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -186,8 +186,13 @@ def global_app():
             if config_check:
                 config_func = config_func_mapping()
                 # combine pid and slot when applicable and use that to replace PID
+                time1=time.time()
                 df_3a4=combine_pid_and_slot(df_3a4)
+                time2 = time.time()
+                print('Combine pid and slot:', time2-time1)
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
+                time3 = time.time()
+                print('Scale down to 1 set:', time3-time2)
                 if running_option == 'formal':
                     save_to_tracker = True
                 else:
@@ -482,9 +487,15 @@ def config_rules_complex():
     file_path_rachel = os.path.join(base_dir_tracker, 'SRGBU SM_NIM config rules.xlsx')
     file_path_alex = os.path.join(base_dir_tracker, 'UABU C9400 PWR_LC_SUP combination rule.xlsx')
 
-    org_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_ORG').iloc[0,0]
-    org_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_ORG').iloc[0,0]
-    org_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_ORG').iloc[0,0]
+    org_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_SCOPE').iloc[0,0]
+    org_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_SCOPE').iloc[0,0]
+    org_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_SCOPE').iloc[0,0]
+    bu_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_SCOPE').iloc[0, 1]
+    bu_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_SCOPE').iloc[0, 1]
+    bu_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_SCOPE').iloc[0, 1]
+    pf_calina = pd.read_excel(file_path_calina, sheet_name='APPLICABLE_SCOPE').iloc[0, 2]
+    pf_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_SCOPE').iloc[0, 2]
+    pf_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_SCOPE').iloc[0, 2]
 
     c_time_calina = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_calina).st_ctime))
     c_time_rachel = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_rachel).st_ctime))
@@ -559,6 +570,12 @@ def config_rules_complex():
                            org_calina=org_calina,
                            org_rachel=org_rachel,
                            org_alex=org_alex,
+                           bu_calina=bu_calina,
+                           bu_rachel=bu_rachel,
+                           bu_alex=bu_alex,
+                           pf_calina=pf_calina,
+                           pf_rachel=pf_rachel,
+                           pf_alex=pf_alex,
                            c_time_calina=c_time_calina,
                            c_time_rachel=c_time_rachel,
                            c_time_alex=c_time_alex)
@@ -577,7 +594,7 @@ def config_rules_main():
         login_name = 'unknown'
 
     df_error_db = read_table('history_new_error_config_record')
-    df_slot = read_table('slot')
+    df_rsp_slot = read_table('rsp_slot')
 
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
@@ -685,17 +702,19 @@ def config_rules_main():
 
             return redirect(url_for("config_rules_main"))
         elif submit_add_slot:
-            slot_pid=form.slot_pid.data.strip().upper()
+            pf=form.pf.data.strip().upper()
+            slot_keyword=form.slot_keyword.data.strip().upper()
+            rsp_keyword = form.rsp_keyword.data.strip().upper()
 
-            if slot_pid not in df_slot.SLOT_PID.values:
-                add_slot(slot_pid, login_user)
+            if rsp_keyword not in df_rsp_slot.RSP_KEYWORD.values:
+                add_slot_and_rsp_keyword(pf,rsp_keyword,slot_keyword, login_user)
                 msg = 'New slot keyword added.'
                 flash(msg, 'success')
             else:
                 msg = 'Slot you try to add already exist.'
                 flash(msg, 'info')
 
-            df_slot = read_table('slot')
+            df_rsp_slot = read_table('rsp_slot')
 
             return redirect(url_for("config_rules_main"))
 
@@ -709,8 +728,8 @@ def config_rules_main():
                             login_user=login_user,
                            df_error_db_summary_header=df_error_db_summary.columns,
                            df_error_db_summary_data=df_error_db_summary.values,
-                           df_slot_header=df_slot.columns,
-                           df_slot_data=df_slot.values)
+                           df_slot_header=df_rsp_slot.columns,
+                           df_slot_data=df_rsp_slot.values)
 
 
 @app.route('/summary_3a4', methods=['GET', 'POST'])
@@ -1426,7 +1445,7 @@ def admin():
         login_user = 'unknown'
         login_title = 'unknown'
 
-    if login_user!='kwang2':
+    if login_user not in [super_user] + ['unknown']:
         raise ValueError
         add_user_log(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
@@ -1482,7 +1501,7 @@ def delete_slot_record(login_user,added_by,record_id):
 
     if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('slot', id_list)
+        delete_record('rsp_slot', id_list)
         msg = 'Slot deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:

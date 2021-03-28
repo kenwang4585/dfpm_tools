@@ -123,7 +123,9 @@ class ConfigRulesMain(FlaskForm):
     submit_upload_error=SubmitField('PROCEED')
     submit_remove_error = SubmitField('PROCEED')
 
-    slot_pid=StringField('Add slot PID keyword:')
+    pf=StringField('Product Family:')
+    slot_keyword=StringField('Slot keyword:')
+    rsp_keyword=StringField('RSP keyword:')
     submit_add_slot=SubmitField('ADD')
 
 class ConfigRulesComplex(FlaskForm):
@@ -252,11 +254,13 @@ class HistoryNewErrorConfigRecord(db.Model):
     REMARK=db.Column(db.String(100))
     Added_by=db.Column(db.String(15))
 
-class Slot(db.Model):
+class RspSlot(db.Model):
     '''
     db table to store uploaded error config details
     '''
     id=db.Column(db.Integer,primary_key=True)
-    SLOT_PID = db.Column(db.String(25))
+    PF=db.Column(db.String(20))
+    RSP_KEYWORD = db.Column(db.String(20))
+    SLOT_KEYWORD = db.Column(db.String(20))
     Added_by=db.Column(db.String(15))
     Added_on = db.Column(db.Date)

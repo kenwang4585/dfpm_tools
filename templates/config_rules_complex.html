@@ -23,16 +23,18 @@
                 <td width="10%">Owner</td>
                 <td width="10%">Applied Org</td>
                 <td width="10%">BU</td>
+                <td width="10%">PF</td>
                 <td width="20%">Description</td>
                 <td width="10%" align="center">Config rule detail</td>
                 <td width="10%" align="center">Updated on</td>
-                <td width="30%">Upload new config file</td>
+                <td width="20%">Upload new config file</td>
 
             </tr>
             <tr>
                 <td>Calina Gong</td>
                 <td>{{ org_calina }}</td>
-                <td>PABU</td>
+                <td>{{ bu_calina }}</td>
+                <td>{{ pf_calina }}</td>
                 <td>Verify if LC is put in the right slot under different situations</td>
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='PABU slot config rules.xlsx') }}">download</a>
@@ -46,7 +48,8 @@
             <tr>
                 <td>Rachel Zhang</td>
                 <td>{{ org_rachel }}</td>
-                <td>SRGBU</td>
+                <td>{{ bu_rachel }}</td>
+                <td>{{ pf_rachel }}</td>
                 <td>Verify if SM/NIM have the right combinations</td>
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='SRGBU SM_NIM config rules.xlsx') }}">download</a>
@@ -60,7 +63,8 @@
             <tr>
                 <td>Alex Solis Gonzalez</td>
                 <td>{{ org_alex }}</td>
-                <td>EBBU</td>
+                <td>{{ bu_alex }}</td>
+                <td>{{ pf_alex }}</td>
                 <td>Verify if PWR/SUP/LC have the right combinations</td>
                 <td align="center">
                     <a href="{{ url_for('download_file_tracker',filename='UABU C9400 PWR_LC_SUP combination rule.xlsx') }}">download</a>

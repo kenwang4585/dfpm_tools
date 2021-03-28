@@ -13,9 +13,9 @@ def config_func_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     # the restrction criteria here [org][pf] are disabled!! followed in the template - C9400 need further update
-    config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict)',
+    config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict)',
                     'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)',
-                    'find_pabu_wrong_slot_combination(dfx,wrong_po_dict)',
+                    'find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict)',
                     'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)',
                     'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)',
                     'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)',
@@ -28,26 +28,30 @@ def combine_pid_and_slot(df):
     """
     Identify the slot PIDs and combine it with the module PID beneath it
     """
-    df_slot=read_table('slot')
-    slot_list=df_slot.SLOT_PID.values
-    for slot in slot_list:
-        df.loc[:,'slot']=np.where(df.PRODUCT_ID.str.contains(slot),
-                                      df.PRODUCT_ID,
-                                      np.nan)
+    df_rsp_slot=read_table('rsp_slot')
+    for row in df_rsp_slot.itertuples():
+        pf_list=row.PF.split(';')
+        rsp=row.RSP_KEYWORD
+        slot=row.SLOT_KEYWORD
 
-    df.loc[:, 'pid_slot'] = np.nan
-    slot = ''
-    for row in df.itertuples():
-        if not pd.isnull(row.slot):
-            slot = row.slot
-        else:
-            if slot != '':
-                df.loc[row.Index, 'pid_slot'] = row.PRODUCT_ID + '_' + slot
-                slot = ''
+        df.loc[:,'slot']=np.where((df.main_pf.isin(pf_list)) & (df.PRODUCT_ID.str.contains(slot)),
+                                  df.PRODUCT_ID,
+                                  np.nan)
+
+        df.loc[:, 'pid_slot'] = np.nan
+        slot = ''
+        for row in df.itertuples():
+            if not pd.isnull(row.slot):
+                slot = row.slot
+            else:
+                if slot != '':
+                    if not rsp in row.PRODUCT_ID:
+                        df.loc[row.Index, 'pid_slot'] = row.PRODUCT_ID + '_' + slot
+                    slot = ''
 
     df.loc[:, 'PRODUCT_ID'] = np.where(df.pid_slot.notnull(),
-                                        df.pid_slot,
-                                        df.PRODUCT_ID)
+                                            df.pid_slot,
+                                            df.PRODUCT_ID)
 
     return df
 
@@ -194,6 +198,120 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
 
             if extra_wrong_pid==True:
                 wrong_po_dict[po]=remark
+
+    return wrong_po_dict
+
+
+def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict):
+    """
+    Check related PABU product if the cards are using right slot or if necessary PIDs are included.
+    Three types are checked:
+    1) Exclusion:
+    2) Inclusion:
+    3) No support:
+    """
+    fname_config=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
+    df_rule_exclusion=pd.read_excel(fname_config, sheet_name='EXCLUSION')
+    df_rule_exclusion.loc[:,'PID_SLOT_A']=df_rule_exclusion.PID_A.str.strip() + '_' + df_rule_exclusion.SLOT_A.str.strip()
+    df_rule_exclusion.loc[:, 'PID_SLOT_B'] = df_rule_exclusion.PID_B.str.strip() + '_' + df_rule_exclusion.SLOT_B.str.strip()
+    df_rule_exclusion.drop_duplicates(['PID_RSP','PID_SLOT_A','PID_SLOT_B'],inplace=True) # in case duplication
+    df_rule_exclusion.sort_values(['PID_RSP','PID_SLOT_A','PID_SLOT_B'],inplace=True)
+
+    df_rule_inclusion=pd.read_excel(fname_config, sheet_name='INCLUSION')
+    df_rule_inclusion.loc[:,'PID_SLOT_A']=df_rule_inclusion.PID_A.str.strip() + '_' + df_rule_inclusion.SLOT_A.str.strip()
+    df_rule_inclusion.loc[:, 'PID_SLOT_B'] = df_rule_inclusion.PID_B.str.strip()  # no need consider slot
+    df_rule_inclusion.drop_duplicates(['PID_RSP','PID_SLOT_A','PID_SLOT_B'],inplace=True) # in case duplication
+    df_rule_inclusion.sort_values(['PID_RSP','PID_SLOT_A','PID_SLOT_B'],inplace=True)
+
+    df_rule_no_support = pd.read_excel(fname_config, sheet_name='NO_SUPPORT')
+    df_rule_no_support.loc[:, 'PID_SLOT_A'] = df_rule_no_support.PID_A.str.strip() + '_' + df_rule_no_support.SLOT_A.str.strip()
+    df_rule_no_support.drop_duplicates(['PID_RSP','PID_SLOT_A'], inplace=True)  # in case duplication
+
+    df_scope=pd.read_excel(fname_config, sheet_name='APPLICABLE_SCOPE')
+
+    df_rule_exclusion.fillna('',inplace=True)
+    df_rule_inclusion.fillna('',inplace=True)
+    df_rule_no_support.fillna('',inplace=True)
+    df_scope.fillna('',inplace=True)
+
+    # Limit dfx based on applicable:org/bu/pf
+    org_scope=df_scope.iloc[0,0].strip().split(';')
+    bu_scope=df_scope.iloc[0,1].strip().split(';')
+    pf_scope=df_scope.iloc[0,2].strip().split(';')
+
+    if org_scope!=['']:
+        dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    if bu_scope!=['']:
+        dfx=dfx[dfx.main_bu.isin(bu_scope)].copy()
+    if pf_scope!=['']:
+        dfx=dfx[dfx.main_pf.isin(pf_scope)].copy()
+
+    # Further limit dfx based on RSP PID
+    pid_rsp_list=list(df_rule_exclusion.PID_RSP.unique())+list(df_rule_inclusion.PID_RSP.unique()) + list(df_rule_no_support.PID_RSP.unique())
+    for pid_rsp in pid_rsp_list:
+        dfx.loc[:, 'eligible'] = np.where(dfx.PRODUCT_ID.str.contains(pid_rsp), # do this because PID is already combined PID and SLOT
+                                          'YES',
+                                          'NO')
+
+    dfx_eligible = dfx[dfx.eligible == 'YES']
+    po_list = dfx_eligible.PO_NUMBER.unique()
+    dfx = dfx[dfx.PO_NUMBER.isin(po_list)].copy()
+
+    # check po
+    for po in po_list:
+        pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.values
+
+        for row in df_rule_exclusion.itertuples():
+            pid_rsp = row.PID_RSP.strip().upper()
+            pid_slot_a = row.PID_SLOT_A.strip().upper()
+            pid_slot_b = row.PID_SLOT_B.strip().upper()
+            remark = row.REMARK
+
+            # judge if pid_rsp is in pid_list and hence apply this rule
+            if pid_rsp in pid_list:
+                if pid_slot_a in pid_list:
+                    if pid_slot_b in pid_list:
+                        wrong_pid_slot = True
+                    else:
+                        wrong_pid_slot = False
+
+                    if wrong_pid_slot==True:
+                        wrong_po_dict[po]=remark
+                        break # if already fine one error, skip with other rule for this order
+
+        for row in df_rule_inclusion.itertuples():
+            pid_rsp = row.PID_RSP.strip().upper()
+            pid_slot_a = row.PID_SLOT_A.strip().upper()
+            pid_b = row.PID_B.strip().upper()
+            remark = row.REMARK
+
+            # judge if pid_rsp is in pid_list and hence apply this rule
+            if pid_rsp in pid_list:
+                if pid_slot_a in pid_list:
+                    if pid_b in pid_list:
+                        missing_pid = False
+                    else:
+                        missing_pid = True
+
+                    if missing_pid == True:
+                        wrong_po_dict[po] = remark
+                        break  # if already fine one error, skip with other rule for this order
+
+        for row in df_rule_no_support.itertuples():
+            pid_rsp = row.PID_RSP.upper()
+            pid_slot_a = row.PID_SLOT_A.strip().upper()
+            remark = row.REMARK
+
+            # judge if pid_rsp is in pid_list and hence apply this rule
+            if pid_rsp in pid_list:
+                if pid_slot_a in pid_list:
+                    extra_wrong_pid = True
+                else:
+                    extra_wrong_pid = False
+
+                if extra_wrong_pid == True:
+                    wrong_po_dict[po] = remark
+                    break  # if already fine one error, skip with other rule for this order
 
     return wrong_po_dict
 
@@ -355,9 +473,12 @@ def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict):
     '''
     fname_rule=os.path.join(base_dir_tracker,'SRGBU SM_NIM config rules.xlsx')
     df_pid_slots=pd.read_excel(fname_rule,sheet_name='SM_NIM')
-    df_org=pd.read_excel(fname_rule,sheet_name='APPLICABLE_ORG')
+    df_scope=pd.read_excel(fname_rule,sheet_name='APPLICABLE_SCOPE')
+    df_scope.fillna('',inplace=True)
 
-    org_applicable=df_org.iloc[0,0].strip().split(';')
+    org_scope=df_scope.iloc[0,0].strip().split(';')
+    bu_scope=df_scope.iloc[0,1].strip().split(';')
+    pf_scope=df_scope.iloc[0,2].strip().split(';')
     nim_pid_slots_dict={}
     sm_pid_slots_dict = {}
     adapter_pid_slot_dict={}
@@ -369,14 +490,18 @@ def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict):
         elif row.TYPE=='ADAPTER':
             adapter_pid_slot_dict[row.PID.strip().upper()] = int(row.SLOTS)
 
-    # find main and also limit based on org_applicable
-    dfx_main= dfx[(dfx.ORGANIZATION_CODE.isin(org_applicable))&(dfx.OPTION_NUMBER == 0)]
-    main_po_pid=zip(dfx_main.PO_NUMBER,dfx_main.PRODUCT_ID)
-    po_list=[]
-    for po,pid in main_po_pid:
-        if '=' not in pid:
-            if 'ISR4321' in pid or 'ISR4331' in pid or 'ISR4351' in pid or 'ISR4461' in pid or 'VG450' in pid:
-                po_list.append(po)
+    # find main and also limit dfx based on applicable:org/bu/pf
+    if org_scope!=['']:
+        dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    if bu_scope!=['']:
+        dfx=dfx[dfx.main_bu.isin(bu_scope)].copy()
+    if pf_scope!=['']:
+        dfx=dfx[dfx.main_pf.isin(pf_scope)].copy()
+
+    # Identify in scope po_list to check with
+    dfx_main = dfx[dfx.OPTION_NUMBER == 0]
+    #main_po_pid=zip(dfx_main.PO_NUMBER,dfx_main.PRODUCT_ID)
+    po_list=dfx_main.PO_NUMBER.values
 
     for po in po_list:
         main_pid=dfx[(dfx.PO_NUMBER==po)&(dfx.OPTION_NUMBER==0)].PRODUCT_ID.values[0]
@@ -556,7 +681,75 @@ def find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict):
 
     return wrong_po_dict
 
+def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict):
+    '''
+    Check if any PO in UAG C9400 having wrong config based on Chassis-PWR-PSU-LC rules
+    :param dfx: df filtered by PF that need to check with
+    :return error order dict
+    '''
+    fname_rule = os.path.join(base_dir_tracker, 'UABU C9400 PWR_LC_SUP combination rule.xlsx')
+    df_rule = pd.read_excel(fname_rule, sheet_name='RULE')
+    df_scope = pd.read_excel(fname_rule, sheet_name='APPLICABLE_SCOPE')
 
+    # Limit dfx based on applicable:org/bu/pf
+    df_scope.fillna('', inplace=True)
+    org_scope = df_scope.iloc[0, 0].strip().split(';')
+    bu_scope = df_scope.iloc[0, 1].strip().split(';')
+    pf_scope = df_scope.iloc[0, 2].strip().split(';')
+
+    if org_scope != ['']:
+        dfx = dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    if bu_scope != ['']:
+        dfx = dfx[dfx.main_bu.isin(bu_scope)].copy()
+    if pf_scope != ['']:
+        dfx = dfx[dfx.main_pf.isin(pf_scope)].copy()
+
+    # Further limit dfx based on RSP PID
+    main_pid_list = df_rule.MAIN_PID.unique()
+    for main_pid in main_pid_list:
+        dfx.loc[:, 'eligible'] = np.where(dfx.PRODUCT_ID.str.contains(main_pid),
+                                          # do this because PID might be already combined PID and SLOT
+                                          'YES',
+                                          'NO')
+
+    dfx_eligible = dfx[dfx.eligible == 'YES']
+    po_list = dfx_eligible.PO_NUMBER.unique()
+    dfx = dfx[dfx.PO_NUMBER.isin(po_list)].copy()
+
+    # check po
+    for po in po_list:
+        pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.values
+
+        for row in df_rule.itertuples():
+            main_pid = row.MAIN_PID.strip().upper()
+            pid_a = row.PID_A.strip().upper()
+            a_criteria = row.A_CRITERIA.strip().upper()
+            a_qty = int(row.A_QTY)
+            pid_b = row.PID_B.strip().upper()
+            b_criteria = row.B_CRITERIA.strip().upper()
+            b_qty = int(row.B_QTY)
+            remark = row.REMARK
+
+            # make the criteria
+            if a_criteria == '=':
+                a_criteria = '=='
+            if b_criteria == '=':
+                b_criteria = '=='
+            a_criteria_qty = a_criteria + str(a_qty)
+            b_criteria_qty = b_criteria + str(b_qty)
+
+            # judge if main_pid is in pid_list and hence apply this rule
+            if main_pid in pid_list:
+                # check if including wong pid_slot
+                if pid_a in pid_list:
+                    pid_a_qty = dfx[(dfx.PO_NUMBER == po) & (dfx.PRODUCT_ID == pid_a)].ORDERED_QUANTITY.sum()
+                    pid_b_qty = dfx[(dfx.PO_NUMBER == po) & (dfx.PRODUCT_ID.str.contains(pid_b))].ORDERED_QUANTITY.sum()
+
+                    if eval('pid_a_qty' + a_criteria_qty):
+                        if not eval('pid_b_qty' + b_criteria_qty):
+                            wrong_po_dict[po] = remark
+
+    return wrong_po_dict
 
 
 def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wrong_po_dict,save_to_tracker):

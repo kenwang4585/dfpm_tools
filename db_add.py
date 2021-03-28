@@ -53,12 +53,13 @@ def add_subscription(email,task,login_user):
     db.session.commit()
     #print('User log added')
 
-def add_slot(slot_pid,login_user):
+def add_slot_and_rsp_keyword(pf,rsp_keyword,slot_keyword,login_user):
     '''
-    Add the user log to db
     '''
 
-    record = Slot(SLOT_PID=slot_pid,
+    record = RspSlot(PF=pf,
+                    RSP_KEYWORD=rsp_keyword,
+                    SLOT_KEYWORD=slot_keyword,
                   Added_by=login_user,
                   Added_on=pd.Timestamp.now().date(),)
 
