@@ -239,8 +239,9 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict):
     bu_scope=df_scope.iloc[0,1].strip().split(';')
     pf_scope=df_scope.iloc[0,2].strip().split(';')
 
-    if org_scope!=['']:
-        dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    #if org_scope!=['']:
+    dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+
     if bu_scope!=['']:
         dfx=dfx[dfx.main_bu.isin(bu_scope)].copy()
     if pf_scope!=['']:
@@ -491,8 +492,9 @@ def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict):
             adapter_pid_slot_dict[row.PID.strip().upper()] = int(row.SLOTS)
 
     # find main and also limit dfx based on applicable:org/bu/pf
-    if org_scope!=['']:
-        dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    #if org_scope!=['']:
+    dfx=dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+
     if bu_scope!=['']:
         dfx=dfx[dfx.main_bu.isin(bu_scope)].copy()
     if pf_scope!=['']:
@@ -697,8 +699,9 @@ def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_
     bu_scope = df_scope.iloc[0, 1].strip().split(';')
     pf_scope = df_scope.iloc[0, 2].strip().split(';')
 
-    if org_scope != ['']:
-        dfx = dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+    #if org_scope != ['']:
+    dfx = dfx[dfx.ORGANIZATION_CODE.isin(org_scope)].copy()
+
     if bu_scope != ['']:
         dfx = dfx[dfx.main_bu.isin(bu_scope)].copy()
     if pf_scope != ['']:

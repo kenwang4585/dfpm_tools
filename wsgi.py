@@ -497,6 +497,13 @@ def config_rules_complex():
     pf_rachel = pd.read_excel(file_path_rachel, sheet_name='APPLICABLE_SCOPE').iloc[0, 2]
     pf_alex = pd.read_excel(file_path_alex, sheet_name='APPLICABLE_SCOPE').iloc[0, 2]
 
+    if pd.isnull(org_alex):
+        org_alex=''
+    if pd.isnull(org_calina):
+        org_calina=''
+    if pd.isnull(org_rachel):
+        org_rachel=''
+
     c_time_calina = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_calina).st_ctime))
     c_time_rachel = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_rachel).st_ctime))
     c_time_alex = time.strftime('%Y-%m-%d', time.localtime(os.stat(file_path_alex).st_ctime))
@@ -1445,7 +1452,7 @@ def admin():
         login_user = 'unknown'
         login_title = 'unknown'
 
-    if login_user not in [super_user] + ['unknown']:
+    if login_user not in [super_user]:
         raise ValueError
         add_user_log(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
