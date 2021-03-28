@@ -539,6 +539,9 @@ def config_rules_complex():
 
             # 存储文件
             fname_calina.save(file_path_calina)
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+                         summary='')
             msg = 'New file has been upload and rules replaced: {}'.format(fname_calina.filename)
             flash(msg, 'success')
             return redirect(url_for('config_rules_complex'))
@@ -567,7 +570,42 @@ def config_rules_complex():
 
             # 存储文件
             fname_rachel.save(file_path_rachel)
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+                         summary='')
             msg = 'New file has been upload and rules replaced: {}'.format(fname_rachel.filename)
+            flash(msg, 'success')
+            return redirect(url_for('config_rules_complex'))
+        elif submit_alex:
+            fname_alex=form.file_alex.data
+            confirm_alex=form.confirm_alex.data
+            if not fname_alex:
+                msg = 'Select the new config rule file to upload!'
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules_complex'))
+
+            if not 'UABU' in fname_alex.filename:
+                msg="This is for UABU rules, ensure 'UABU' in the file name you select!"
+                flash(msg, 'warning')
+                return redirect(url_for('config_rules_complex'))
+
+            if login_user not in ['unknown','gsolisgo'] + [super_user]:
+                msg='Only following user is eligible to update rule for this: {}'.format('gsolisgo')
+                flash(msg,'warning')
+                return redirect(url_for('config_rules_complex'))
+
+            if not confirm_alex:
+                msg = 'Select the upload and replace checkbox to confirm proceeding!'
+                flash(msg, 'warning')
+                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
+
+            # 存储文件
+            fname_alex.save(file_path_alex)
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+                         summary='')
+
+            msg = 'New file has been upload and rules replaced: {}'.format(fname_alex.filename)
             flash(msg, 'success')
             return redirect(url_for('config_rules_complex'))
 
