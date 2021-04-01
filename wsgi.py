@@ -14,7 +14,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule_bupf,add_slot_and_rsp_keyword  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule,add_slot_and_rsp_keyword  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -198,9 +198,7 @@ def global_app():
                 else:
                     save_to_tracker = False
 
-                df_bupf_rule=read_table('general_config_rule_bu_pf')
-                df_pid_rule=read_table('general_config_rule_pid')
-                wrong_po_dict = identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_func)
+                wrong_po_dict = identify_config_error_po(df_3a4,config_func)
                 qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
                     df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
 
@@ -392,8 +390,8 @@ def backlog_ranking():
 
     return render_template('backlog_ranking.html', form=form,user=login_name,subtitle='- Backlog Ranking')
 
-@app.route('/config_rules_incl_excl_bupf',methods=['GET','POST'])
-def config_rules_incl_excl_bupf_based():
+@app.route('/config_rules_generic',methods=['GET','POST'])
+def config_rules_generic():
     form=ConfigRulesInclExclBuPfBased()
 
     login_user = request.headers.get('Oidc-Claim-Sub')
@@ -404,26 +402,38 @@ def config_rules_incl_excl_bupf_based():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_rule=read_table('general_config_rule_bu_pf')
+    df_rule=read_table('general_config_rule')
 
     if form.validate_on_submit():
-        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        exception_main_pid=form.exception_main_pid.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
+        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        exception_main_pid=form.exception_main_pid.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        pid_b_operator=form.pid_b_operator.data
+        try:
+            pid_b_qty=int(form.pid_b_qty.data)
+        except:
+            msg='The qty field needs to be a number!'
+            flash(msg,'warning')
+            return render_template('config_rules_inclusion_exclusion_general.html',
+                           form=form,user=login_name,subtitle='- Config Rules',
+                           login_user=login_user,
+                           df_rule_header=df_rule.columns,
+                           df_rule_data=df_rule.values,
+                           )
         remark=form.remark.data.strip()
 
-        add_incl_excl_rule_bupf(org,bu,pf, exception_main_pid, pid_a, pid_b, remark, login_user)
+        add_incl_excl_rule(org,bu,pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, remark, login_user)
 
-        df_rule=read_table('general_config_rule_bu_pf')
+        df_rule=read_table('general_config_rule')
 
         msg = 'New general rule has been added'
         flash(msg, 'success')
-        return redirect(url_for('config_rules_incl_excl_bupf_based'))
+        return redirect(url_for('config_rules_generic'))
 
-    return render_template('config_rules_inclusion_exclusion_bupf_based.html',
+    return render_template('config_rules_inclusion_exclusion_general.html',
                            form=form,user=login_name,subtitle='- Config Rules',
                            login_user=login_user,
                            df_rule_header=df_rule.columns,
@@ -1575,7 +1585,7 @@ def delete_general_config_rule_pid_record(login_user,added_by,record_id):
     return redirect(url_for("config_rules_incl_excl_pid_based", _external=True, _scheme=http_scheme, viewarg1=1))
 
 @app.route('/bupf/<login_user>/<added_by>/<record_id>',methods=['GET'])
-def delete_general_config_rule_bupf_record(login_user,added_by,record_id):
+def delete_general_config_rule_record(login_user,added_by,record_id):
     if login_user == 'unknown':
         http_scheme = 'http'
     else:
@@ -1583,14 +1593,14 @@ def delete_general_config_rule_bupf_record(login_user,added_by,record_id):
 
     if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('general_config_rule_bu_pf', id_list)
+        delete_record('general_config_rule', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:
         msg = 'You can only delete record created by you!'
         flash(msg,'warning')
 
-    return redirect(url_for("config_rules_incl_excl_bupf_based", _external=True, _scheme=http_scheme, viewarg1=1))
+    return redirect(url_for("config_rules_generic", _external=True, _scheme=http_scheme, viewarg1=1))
 
 
 if __name__ == '__main__':

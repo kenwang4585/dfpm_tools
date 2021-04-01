@@ -90,17 +90,19 @@ def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,remark,login_user):
     db.session.commit()
     #print('User log added')
 
-def add_incl_excl_rule_bupf(org, bu, pf, exception_main_pid_bupf_rule, pid_a, pid_b, remark, login_user):
+def add_incl_excl_rule(org, bu, pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, remark, login_user):
     '''
     Add the general rule data to db
     '''
 
-    record = GeneralConfigRuleBuPf( ORG=org,
+    record = GeneralConfigRule( ORG=org,
                                     BU=bu,
                                     PF=pf,
-                                    EXCEPTION_MAIN_PID=exception_main_pid_bupf_rule,
+                                    EXCEPTION_MAIN_PID=exception_main_pid,
                                     PID_A=pid_a,
                                     PID_B=pid_b,
+                                    PID_B_OPERATOR=pid_b_operator,
+                                    PID_B_QTY=pid_b_qty,
                                     REMARK=remark,
                                     Added_by=login_user,
                                     Added_on=pd.Timestamp.now().date(),)

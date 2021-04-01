@@ -16,9 +16,10 @@ def config_func_mapping():
     config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict)',
                     'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)',
                     'find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict)',
-                    'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)',
-                    'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)',
+                    #'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)',
+                    #'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)',
                     'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)',
+                   'find_config_error_per_generic_rule(dfx,wrong_po_dict)'
                     ]
 
     return config_func
@@ -755,6 +756,68 @@ def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_
     return wrong_po_dict
 
 
+
+def find_config_error_per_generic_rule(dfx,wrong_po_dict):
+    '''
+    Using generic rules to identify errors
+    :return error order dict
+    '''
+    df_rule = read_table('general_config_rule')
+
+    for row in df_rule.itertuples():
+        id=row.id
+        org=row.ORG.split(';')
+        bu=row.BU.split(';')
+        pf=row.PF.split(';')
+        exception_main_pid=row.EXCEPTION_MAIN_PID.split(';')
+        pid_a=row.PID_A.split(';')
+        pid_b=row.PID_B.split(';')
+        pid_b_operator=row.PID_B_OPERATOR
+        pid_b_qty=row.PID_B_QTY
+        remark=row.REMARK
+
+        dfy=dfx[(dfx.ORGANIZATION_CODE.isin(org))&(dfx.main_bu.isin(bu))].copy()
+        if pf!=['']:
+            dfy = dfy[dfy.main_pf.isin(pf)].copy()
+        if exception_main_pid!=['']:
+            dfy.loc[:,'exception']=np.where(dfy.PRODUCT_ID.isin(exception_main_pid), # Note: assuming it's main PID so not specifically check if it's main PID
+                                            'YES',
+                                            'NO')
+            exception_po=dfy[dfy.exception=='YES'].PO_NUMBER
+            dfy=dfy[~dfy.PO_NUMBER.isin(exception_po)].copy()
+        if pid_a!=['']:
+            dfy.loc[:, 'eligible_pid'] = np.where(dfy.PRODUCT_ID.isin(pid_a),
+                                               'YES',
+                                               'NO')
+            eligible_po = dfy[dfy.eligible_pid == 'YES'].PO_NUMBER
+
+            dfy = dfy[dfy.PO_NUMBER.isin(eligible_po)].copy()
+
+        po_list = dfy.PO_NUMBER.unique()
+
+        # check po
+        for po in po_list:
+            pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.values
+
+            # make the criteria
+            if pid_b_operator == '=':
+                pid_b_operator = '=='
+
+            criteria_qty = pid_b_operator + str(pid_b_qty)
+
+            for pid in pid_a:
+                if pid in pid_list:
+                    dfz=dfy[(dfy.PO_NUMBER == po) & (dfy.PRODUCT_ID.isin(pid_b))]
+                    if dfz.shape[0]>0: # include PID_B
+                        pid_b_actual_qty = dfz.ORDERED_QUANTITY.sum()
+
+                        if not eval('pid_b_actual_qty' + criteria_qty):
+                            wrong_po_dict[po] = 'Rule#'+ str(id) + ':' +remark
+                            break
+
+    return wrong_po_dict
+
+
 def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wrong_po_dict,save_to_tracker):
     """
     Create the df output for error config based on check result. and save tracker.
@@ -864,7 +927,9 @@ def scale_down_po_to_one_set(df):
 
     return df
 
-def identify_config_error_po(df_3a4,df_bupf_rule,df_pid_rule,config_func):
+def identify_config_error_po(df_3a4,config_func):
+    df_pid_rule = read_table('general_config_rule_pid')
+
     wrong_po_dict = {}
 
     # pick out ATO PO

@@ -1,0 +1,89 @@
+
+<!-- Ken wang, Jan, 2020 -->
+
+{% extends 'base.html' %}
+
+
+{% block content %}
+        <br>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <table style="border-collapse:collapse"  cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="10%"><h4><a href="{{ url_for("config_rules_main") }}">BACK</a> </h4></td>
+            </tr>
+        </table>
+
+        <h2 align="center">Generic inclusion and exclusion rule</h2>
+        <h5   style="color: #005cbf" align="center">
+            Definition: PO for related Org, BU, PF, PID_A, the PID_B in the PO must follow the specified rule.
+        </h5>
+        <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="50%">
+            <tr align="center">
+                <td>
+                    {{ form.org.label }} <br> {{ form.org }} <br>
+                    {{ form.bu.label }} <br> {{ form.bu }} <br>
+                    {{ form.pf.label }} <br> {{ form.pf }} <br>
+                    {{ form.exception_main_pid.label }} <br> {{ form.exception_main_pid }} <br>
+                    {{ form.pid_a.label }} <br> {{ form.pid_a }}
+                </td>
+                <td>&emsp;&emsp;</td>
+                <td>
+                    {{ form.pid_b.label }} <br> {{ form.pid_b }}
+                </td>
+                <td>{{ form.pid_b_operator.label }} <br>{{ form.pid_b_operator }}</td>
+                <td>{{ form.pid_b_qty.label }} <br> {{ form.pid_b_qty }}</td>
+                <td>{{ form.remark.label }} <br> {{ form.remark }}</td>
+                <td valign="middle"><br>{{ form.submit }}</td>
+            </tr>
+        </table>
+        <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="50%">
+            <tr align="center">
+                <td align="left">
+                    Note:
+                    <li>* items are mandatory</li>
+                    <li>Pls input FULL PID name</li>
+                    <li>Multiple value inputs allowed for Org/BU/PF/PID (separated by ';')</li>
+                    <li>If multiple input,e.g. "XYZ;ABC", if for PID_A, it means the PO should either includes "XYZ" OR "ABC"; if for PID_B, it means "XYZ" AND "ABC" together in the PO should meet the criteria.</li>
+                </td>
+            </tr>
+        </table>
+
+        <table  style="border-collapse:collapse" border="0" cellspacing="0px" align="center" width="100%">
+            <tr> <!-- For viewing the details -->
+                <td width="95%">
+                    <br>
+                    {% if df_rule_data|length>0 %}
+                        <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
+                            <tr>
+                                {% for col in df_rule_header %}
+                                    <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                {% endfor %}
+                                <td>Remove</td>
+                            </tr>
+
+                            {% for row in df_rule_data %}
+                                <tr>
+                                    {% for col in row %}
+                                        <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
+                                    {% endfor %}
+                                    <td align="center">
+                                        <a href="{{ url_for('delete_general_config_rule_record',login_user=login_user,added_by=row[10],record_id=row[0]) }}">D</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+</form>
+{% endblock %}
+
+
+{% block empty_space %}
+    <br><br><br><br><br><br><br><br><br><br><br><br>
+{% endblock %}

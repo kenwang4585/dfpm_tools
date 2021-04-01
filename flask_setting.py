@@ -2,7 +2,7 @@ from flask import Flask
 from flask_wtf.file import FileField, FileRequired
 from flask_wtf import FlaskForm
 from wtforms.validators import Email, DataRequired,input_required
-from wtforms import SubmitField, BooleanField, StringField,RadioField,SelectField,PasswordField,TextAreaField,SelectMultipleField
+from wtforms import SubmitField, BooleanField, StringField,RadioField,SelectField,PasswordField,TextAreaField,IntegerField
 import os
 from flask_sqlalchemy import SQLAlchemy
 
@@ -159,13 +159,21 @@ class ConfigRulesInclExclPidBased(FlaskForm):
     submit=SubmitField('Add rule')
 
 class ConfigRulesInclExclBuPfBased(FlaskForm):
-    org = StringField('ORG*:')
-    bu = StringField('BU:')
+    org = StringField('ORG*:',validators=[DataRequired()])
+    bu = StringField('BU*:',validators=[DataRequired()])
     pf = TextAreaField("PF:")
     exception_main_pid = TextAreaField('EXCEPTION_MAIN_PID:')
-    pid_a = StringField('PID_A:')
-    pid_b = StringField('PID_B:')
-    remark = TextAreaField('Remark:')
+    pid_a = StringField('PID_A:') # PID a PO must include
+    pid_b = StringField('PID_B*:',validators=[DataRequired()]) # criteria against this PID
+    pid_b_operator = SelectField('Operator',
+                                 choices=[('=','='),
+                                          ('>=','>='),
+                                          ('>','>'),
+                                          ('<','<'),
+                                          ('<=','<=')],
+                                 validators=[DataRequired()])
+    pid_b_qty = StringField('Quantity*:',validators=[DataRequired()]) # Pid_b qty
+    remark = TextAreaField('Remark*:',validators=[DataRequired()])
     submit = SubmitField('Add rule')
 
 
@@ -225,7 +233,7 @@ class GeneralConfigRulePid(db.Model):
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
 
-class GeneralConfigRuleBuPf(db.Model):
+class GeneralConfigRule(db.Model):
     '''
     BU/PF based inclusion/exclusion rules db table
     '''
@@ -236,9 +244,14 @@ class GeneralConfigRuleBuPf(db.Model):
     EXCEPTION_MAIN_PID =db.Column(db.String(100))
     PID_A = db.Column(db.String(30))
     PID_B = db.Column(db.String(30))
+    PID_B_OPERATOR=db.Column(db.String(4))
+    PID_B_QTY=db.Column(db.Integer)
     REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
+
+
+
 
 class HistoryNewErrorConfigRecord(db.Model):
     '''
