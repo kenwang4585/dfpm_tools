@@ -161,7 +161,7 @@ class ConfigRulesInclExclPidBased(FlaskForm):
 class ConfigRulesInclExclBuPfBased(FlaskForm):
     org = StringField('ORG*:',validators=[DataRequired()])
     bu = StringField('BU*:',validators=[DataRequired()])
-    pf = TextAreaField("PF:")
+    pf = TextAreaField("PF*:",validators=[DataRequired()])
     exception_main_pid = TextAreaField('EXCEPTION_MAIN_PID:')
     pid_a = StringField('PID_A:') # PID a PO must include
     pid_b = StringField('PID_B*:',validators=[DataRequired()]) # criteria against this PID

@@ -5,6 +5,7 @@ from blg_settings import *
 from blg_functions import commonize_and_create_main_item
 from db_read import read_table
 from db_add import add_error_config_data
+import time
 
 def config_func_mapping():
     """
@@ -16,10 +17,9 @@ def config_func_mapping():
     config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict)',
                     'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)',
                     'find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict)',
-                    #'find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx, df_bupf_rule,wrong_po_dict)',
-                    #'find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict)',
                     'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)',
-                   'find_config_error_per_generic_rule(dfx,wrong_po_dict)'
+                   'find_config_error_per_generic_rule(dfx,wrong_po_dict)',
+                   #'find_config_error_per_generic_rule_alternative_way(dfx, wrong_po_dict)'
                     ]
 
     return config_func
@@ -764,7 +764,11 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
     '''
     df_rule = read_table('general_config_rule')
 
+    #df_rule=pd.read_excel(os.path.join(base_dir_tracker,'General rule.xlsx'))
+    #print(df_rule)
+
     for row in df_rule.itertuples():
+        single_rule_start=time.time()
         id=row.id
         org=row.ORG.split(';')
         bu=row.BU.split(';')
@@ -777,6 +781,7 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
         remark=row.REMARK
 
         dfy=dfx[(dfx.ORGANIZATION_CODE.isin(org))&(dfx.main_bu.isin(bu))].copy()
+
         if pf!=['']:
             dfy = dfy[dfy.main_pf.isin(pf)].copy()
         if exception_main_pid!=['']:
@@ -785,19 +790,18 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
                                             'NO')
             exception_po=dfy[dfy.exception=='YES'].PO_NUMBER
             dfy=dfy[~dfy.PO_NUMBER.isin(exception_po)].copy()
+
         if pid_a!=['']:
             dfy.loc[:, 'eligible_pid'] = np.where(dfy.PRODUCT_ID.isin(pid_a),
                                                'YES',
                                                'NO')
-            eligible_po = dfy[dfy.eligible_pid == 'YES'].PO_NUMBER
-
-            dfy = dfy[dfy.PO_NUMBER.isin(eligible_po)].copy()
-
-        po_list = dfy.PO_NUMBER.unique()
+            po_list = dfy[dfy.eligible_pid == 'YES'].PO_NUMBER.unique()
+        else:
+            po_list = dfy.PO_NUMBER.unique()
 
         # check po
         for po in po_list:
-            pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.values
+            pid_list = dfy[dfy.PO_NUMBER == po].PRODUCT_ID.values
 
             # make the criteria
             if pid_b_operator == '=':
@@ -805,17 +809,105 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
 
             criteria_qty = pid_b_operator + str(pid_b_qty)
 
-            for pid in pid_a:
-                if pid in pid_list:
-                    dfz=dfy[(dfy.PO_NUMBER == po) & (dfy.PRODUCT_ID.isin(pid_b))]
-                    if dfz.shape[0]>0: # include PID_B
+            dfz=dfy[(dfy.PO_NUMBER == po) & (dfy.PRODUCT_ID.isin(pid_b))]
+            if dfz.shape[0]>0: # include PID_B
+                pid_b_actual_qty = dfz.ORDERED_QUANTITY.sum()
+            else:
+                pid_b_actual_qty=0
+
+            if not eval('pid_b_actual_qty' + criteria_qty):
+                wrong_po_dict[po] = 'Rule#'+ str(id) + ':' +remark
+        single_rule_finish = time.time()
+        single_rule_time=int(single_rule_finish-single_rule_start)
+        print('Rule id#{} spend time: {}'.format(id,single_rule_time))
+
+    return wrong_po_dict
+
+
+
+def find_config_error_per_generic_rule_alternative_way(dfx,wrong_po_dict):
+    '''
+    Using generic rules to identify errors;
+    Get a full order list, then iter each order, and each rule under each order
+    (performance is lower thus not used)
+    :return error order dict
+    '''
+    df_rule = read_table('general_config_rule')
+    orgs=df_rule.ORG.unique()
+    bus=df_rule.BU.unique()
+    pfs = df_rule.PF.unique()
+    #exception_main_pid=df_rule.EXCEPTION_MAIN_PID.unique()
+
+    org_list=[]
+    for org in orgs:
+        sub_org_list=org.split(';')
+        org_list=org_list+sub_org_list
+    org_list=set(org_list)
+
+    bu_list = []
+    for bu in bus:
+        sub_bu_list = bu.split(';')
+        bu_list = bu_list + sub_bu_list
+    bu_list = set(bu_list)
+
+    pf_list = []
+    for pf in pfs:
+        sub_pf_list = pf.split(';')
+        pf_list = pf_list + sub_pf_list
+    pf_list = set(pf_list)
+
+    dfx = dfx[(dfx.ORGANIZATION_CODE.isin(org_list)) & (dfx.main_bu.isin(bu_list)) & (dfx.main_pf.isin(pf_list))].copy()
+
+    po_list=[]
+    dfy=dfx[dfx.OPTION_NUMBER==0]
+    for org,bu,pf,po in zip(dfy.ORGANIZATION_CODE,dfy.main_bu,dfy.main_pf,dfy.PO_NUMBER):
+        po_list.append((org,bu,pf,po))
+
+    for item in po_list:
+        org=item[0]
+        bu=item[1]
+        pf=item[2]
+        po=item[3]
+        pid_list = dfx[dfx.PO_NUMBER == po].PRODUCT_ID.values
+
+        for row in df_rule.itertuples():
+            id=row.id
+            rule_org=row.ORG.split(';')
+            rule_bu=row.BU.split(';')
+            rule_pf=row.PF.split(';')
+            rule_exception_pid=row.EXCEPTION_MAIN_PID.split(';')
+            pid_a=row.PID_A.split(';')
+            pid_b=row.PID_B.split(';')
+            pid_b_operator=row.PID_B_OPERATOR
+            pid_b_qty=row.PID_B_QTY
+            remark=row.REMARK
+
+            if org in rule_org and bu in rule_bu and pf in rule_pf:
+                if np.in1d(rule_exception_pid,pid_list).sum()==0:
+                    # make the criteria
+                    if pid_b_operator == '=':
+                        pid_b_operator = '=='
+
+                    criteria_qty = pid_b_operator + str(pid_b_qty)
+
+                    if pid_a != ['']:
+                        for pid in pid_a:
+                            if pid in pid_list:
+                                dfz = dfy[(dfy.PO_NUMBER == po) & (dfy.PRODUCT_ID.isin(pid_b))]
+                                break
+                            else:
+                                dfz = pd.DataFrame()
+                    else:
+                        dfz = dfy[(dfy.PO_NUMBER == po) & (dfy.PRODUCT_ID.isin(pid_b))]
+
+                    if dfz.shape[0] > 0:  # include PID_B
                         pid_b_actual_qty = dfz.ORDERED_QUANTITY.sum()
 
                         if not eval('pid_b_actual_qty' + criteria_qty):
-                            wrong_po_dict[po] = 'Rule#'+ str(id) + ':' +remark
-                            break
+                            wrong_po_dict[po] = 'Rule#' + str(id) + ':' + remark
 
     return wrong_po_dict
+
 
 
 def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wrong_po_dict,save_to_tracker):

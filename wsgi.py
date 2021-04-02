@@ -405,13 +405,15 @@ def config_rules_generic():
     df_rule=read_table('general_config_rule')
 
     if form.validate_on_submit():
-        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
-        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
-        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
-        exception_main_pid=form.exception_main_pid.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
-        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
-        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '').replace('\t','')
+        org = ''.join(form.org.data.upper().split())
+        bu = ''.join(form.bu.data.upper().split())
+        pf = ''.join(form.pf.data.upper().split())
+        exception_main_pid = ''.join(form.exception_main_pid.data.upper().split())
+        pid_a = ''.join(form.pid_a.data.upper().split())
+        pid_b = ''.join(form.pid_b.data.upper().split())
+
         pid_b_operator=form.pid_b_operator.data
+
         try:
             pid_b_qty=int(form.pid_b_qty.data)
         except:
@@ -428,6 +430,8 @@ def config_rules_generic():
         add_incl_excl_rule(org,bu,pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, remark, login_user)
 
         df_rule=read_table('general_config_rule')
+        for row in df_rule.itertuples():
+            print(row)
 
         msg = 'New general rule has been added'
         flash(msg, 'success')
@@ -1500,7 +1504,7 @@ def admin():
         login_user = 'unknown'
         login_title = 'unknown'
 
-    if login_user not in [super_user]:
+    if login_user not in [super_user] + ['unknown']:
         raise ValueError
         add_user_log(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
