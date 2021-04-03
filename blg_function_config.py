@@ -126,7 +126,7 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
                     wrong_pid_slot = False
 
                 if wrong_pid_slot==True:
-                    wrong_po_dict[po]=remark
+                    wrong_po_dict[po]='(cagong)' + remark
 
     # inclusion rules
     for row in df_rule_inclusion.itertuples():
@@ -163,7 +163,7 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
                     missing_pid = True
 
                 if missing_pid==True:
-                    wrong_po_dict[po]=remark
+                    wrong_po_dict[po]='(cagong)' + remark
 
     # No support rules
     for row in df_rule_no_support.itertuples():
@@ -198,7 +198,7 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
                 extra_wrong_pid = False
 
             if extra_wrong_pid==True:
-                wrong_po_dict[po]=remark
+                wrong_po_dict[po]='(cagong)' + remark
 
     return wrong_po_dict
 
@@ -280,7 +280,7 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,chec
                         wrong_pid_slot = False
 
                     if wrong_pid_slot==True:
-                        wrong_po_dict[po]=remark
+                        wrong_po_dict[po]='(cagong)' + remark
                         break # if already fine one error, skip with other rule for this order
 
         for row in df_rule_inclusion.itertuples():
@@ -298,7 +298,7 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,chec
                         missing_pid = True
 
                     if missing_pid == True:
-                        wrong_po_dict[po] = remark
+                        wrong_po_dict[po] = '(cagong)' + remark
                         break  # if already fine one error, skip with other rule for this order
 
         for row in df_rule_no_support.itertuples():
@@ -314,7 +314,7 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,chec
                     extra_wrong_pid = False
 
                 if extra_wrong_pid == True:
-                    wrong_po_dict[po] = remark
+                    wrong_po_dict[po] = '(cagong)' + remark
                     break  # if already fine one error, skip with other rule for this order
 
     time_finish = time.time()
@@ -323,125 +323,6 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,chec
 
     return wrong_po_dict, checking_time
 
-
-def find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
-    '''
-    Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
-    '''
-    for row in df_bupf_rule.itertuples():
-        id=row.id
-        org=row.ORG.split(';')
-        bu = row.BU.split(';')
-        pf=row.PF.split(';')
-        exception_main_pid=row.EXCEPTION_MAIN_PID.split(';')
-        pid_a=row.PID_A.split(';')
-        pid_b=row.PID_B.split(';')
-        remark=row.REMARK
-
-        # limit the df based on org/bu/pf
-        dfy=dfx.copy()
-        if org!=['']:
-            dfy=dfy[dfy.ORGANIZATION_CODE.isin(org)].copy()
-        if bu!=['']:
-            dfy = dfy[dfy.main_bu.isin(bu)].copy()
-        if pf!=['']:
-            dfy = dfy[dfy.main_pf.isin(pf)].copy()
-
-        dfy_main= dfy[(dfy.OPTION_NUMBER == 0)]
-        main_po_pid=zip(dfy_main.PO_NUMBER,dfy_main.PRODUCT_ID)
-        po_list=[]
-        for po,pid in main_po_pid:
-            if '=' not in pid and 'MISC' not in pid:
-                if pid not in exception_main_pid:
-                    po_list.append(po)
-
-        for po in po_list:
-            pid_list=dfy[dfy.PO_NUMBER==po].PRODUCT_ID.unique()
-
-            missing_pid_a = True
-            if pid_a!=['']:
-                for including_pid_keyword in pid_a:
-                    for pid in pid_list:
-                        if including_pid_keyword in pid:
-                            missing_pid_a = False
-                            break
-                    if missing_pid_a==False:
-                        break
-                if missing_pid_a==True:
-                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
-
-            extra_pid_b = False
-            if missing_pid_a==False and pid_b!=['']:
-                for pid in pid_list:
-                    for extra_pid in pid_b:
-                        if extra_pid in pid:
-                            extra_pid_b = True
-                            break
-                if extra_pid_b:
-                    wrong_po_dict[po] = 'BU/PF rule #{}:{}'.format(id,remark)
-
-    return wrong_po_dict
-
-
-
-def find_missing_or_extra_pid_base_on_incl_excl_config_rule_pid(dfx,df_pid_rule,wrong_po_dict):
-    '''
-    Check if any PO if missing pid_a or wrongly include pid_b based on BU/PF general rules.
-    '''
-    for row in df_pid_rule.itertuples():
-        id=row.id
-        org=row.ORG.split(';')
-        bu = row.BU.split(';')
-        pf=row.PF.split(';')
-        pid_a = row.PID_A.split(';')
-        #pid_a_exception=row.PID_A_EXCEPTION.split(';')
-        pid_b = row.PID_B.split(';')
-        #pid_b_exception = row.PID_B_EXCEPTION.split(';')
-        pid_c = row.PID_C.split(';')
-        #pid_c_exception = row.PID_C_EXCEPTION.split(';')
-        remark=row.REMARK
-
-        # limit the df based on org/bu/pf
-        dfy=dfx.copy()
-        if org!=['']:
-            dfy=dfy[dfy.ORGANIZATION_CODE.isin(org)].copy()
-        if bu!=['']:
-            dfy = dfy[dfy.main_bu.isin(bu)].copy()
-        if pf!=['']:
-            dfy = dfy[dfy.main_pf.isin(pf)].copy()
-
-        #Identify the elible order that includes pid_a (pid_a is list of full pid names)
-        dfy.loc[:,'eligible']=np.where(dfy.PRODUCT_ID.isin(pid_a),
-                                       'YES',
-                                       'NO')
-        dfy_eligible_pid=dfy[dfy.eligible=='YES']
-        po_list=dfy_eligible_pid.PO_NUMBER.values
-        dfy_eligible=dfy[dfy.PO_NUMBER.isin(po_list)]
-
-        for po in po_list:
-            pid_list=dfy_eligible[dfy_eligible.PO_NUMBER==po].PRODUCT_ID.unique()
-
-            missing_pid_b = True
-            extra_pid_c = False
-            if pid_b!=['']:
-                for including_pid in pid_b:
-                    if including_pid in pid_list:
-                        missing_pid_b = False
-                        break
-
-                if missing_pid_b==True:
-                    wrong_po_dict[po] = 'PID rule #{}:{}(missing)'.format(id,remark)
-
-            if pid_c!=[''] and missing_pid_b==False:
-                for extra_pid in pid_c:
-                    if extra_pid in pid_list:
-                        extra_pid_c = True
-                        break
-
-                if extra_pid_c==True:
-                    wrong_po_dict[po] = 'PID rule #{}:{}(extra)'.format(id,remark)
-
-    return wrong_po_dict
 
 
 def isr43xx_vg450_rules_sm_nim(pid_qty, nim_pid_slots_dict, sm_pid_slots_dict, adapter_pid_slot_dict,wrong_po_dict, po, sm_criteria, nim_criteria):
@@ -462,13 +343,13 @@ def isr43xx_vg450_rules_sm_nim(pid_qty, nim_pid_slots_dict, sm_pid_slots_dict, a
     # check the qty combinations: if SM correct then check NIM; if SM wrong, then no need to check NIM
     if sm_qty +  adapter_qty> sm_criteria:
         #wrong_po_dict.append(po)
-        wrong_po_dict[po]='SM slot over used'
+        wrong_po_dict[po]='(rachzhan)SM slot over used'
     elif sm_qty +  adapter_qty< sm_criteria:
-        wrong_po_dict[po]='SM slot under used'
+        wrong_po_dict[po]='(rachzhan)SM slot under used'
     elif nim_qty < nim_criteria:  #(means adapter may or may not carry a NIM card)
-        wrong_po_dict[po]='NIM slot under used'
+        wrong_po_dict[po]='(rachzhan)NIM slot under used'
     elif nim_qty > nim_criteria + adapter_qty:
-        wrong_po_dict[po] = 'NIM/ADPTR slot over used'
+        wrong_po_dict[po] = '(rachzhan)NIM/ADPTR slot over used'
 
     return wrong_po_dict
 
@@ -764,7 +645,7 @@ def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_
 
                     if eval('pid_a_qty' + a_criteria_qty):
                         if not eval('pid_b_qty' + b_criteria_qty):
-                            wrong_po_dict[po] = remark
+                            wrong_po_dict[po] = '(gsolisgo)' + remark
 
     time_finish=time.time()
     total_time=int(time_finish-time_start)
@@ -795,6 +676,7 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
         pid_b_operator=row.PID_B_OPERATOR
         pid_b_qty=row.PID_B_QTY
         remark=row.REMARK
+        added_by=row.Added_by
 
         dfy=dfx[(dfx.ORGANIZATION_CODE.isin(org))&(dfx.main_bu.isin(bu))].copy()
 
@@ -832,7 +714,7 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
                 pid_b_actual_qty=0
 
             if not eval('pid_b_actual_qty' + criteria_qty):
-                wrong_po_dict[po] = 'Rule#'+ str(id) + ':' +remark
+                wrong_po_dict[po] = 'Rule#'+ str(id) + '('+added_by+'):' +remark
         rule_finish = time.time()
         rule_time=int(rule_finish-rule_start)
         checking_time['#'+str(id)]=rule_time
