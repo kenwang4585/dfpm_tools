@@ -2355,7 +2355,7 @@ def create_and_send_wnbu_compliance(wnbu_compliance_hold_emails, df_compliance_r
 
     msg,size_over_limit = send_attachment_and_embded_image(to_address, subject, html_template,
                                                            sender=sender,
-                                                           bcc=[super_user + '@cisco.com'],
+                                                           bcc=None,
                                                            ok_release_header=df_compliance_release.columns,
                                                            ok_release_data=df_compliance_release.values,
                                                            keep_on_hold_header=df_compliance_hold.columns,
