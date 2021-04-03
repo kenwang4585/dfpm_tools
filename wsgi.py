@@ -248,12 +248,13 @@ def global_app():
 
             # write program log to log file
             if config_check:
-                summary='Processing time: {}min; parameters: {}; Config checking time: {}'.format(processing_time,'/'.join(user_selection),checking_time)
+                summary='Processing time: {}min; parameters: {}; New config errors: {}; Config checking time: {}'.format(processing_time,'/'.join(user_selection),qty_new_error,checking_time)
             else:
                 summary = 'Processing time: {}min; parameters: {}'.format(processing_time,'/'.join(user_selection))
             add_user_log(user=login_user, location='Home', user_action='Run', summary=summary)
 
-            return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            #return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            return redirect(url_for('global_app'))
 
         except Exception as e:
             try:
@@ -448,46 +449,6 @@ def config_rules_generic():
                            df_rule_data=df_rule.values,
                            )
 
-@app.route('/config_rules_incl_excl_pid',methods=['GET','POST'])
-def config_rules_incl_excl_pid_based():
-    form=ConfigRulesInclExclPidBased()
-
-    login_user = request.headers.get('Oidc-Claim-Sub')
-    login_name = request.headers.get('Oidc-Claim-Fullname')
-    login_title = request.headers.get('Oidc-Claim-Title')
-
-    if login_user == None:
-        login_user = 'unknown'
-        login_name = 'unknown'
-
-    df_rule=read_table('general_config_rule_pid')
-
-    if form.validate_on_submit():
-        org=form.org.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        bu = form.bu.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pf=form.pf.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_a=form.pid_a.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_b=form.pid_b.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        pid_c=form.pid_c.data.upper().replace(' ', '').replace('\n', '').replace('\r', '')
-        #pid_a_exception = form.pid_a_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
-        #pid_b_exception = form.pid_b_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
-        #pid_c_exception = form.pid_c_exception.data.replace(' ', '').replace('\n', '').replace('\r', '')
-        remark=form.remark.data.strip()
-
-        add_incl_excl_rule_pid(org,bu,pf, pid_a, pid_b, pid_c, remark, login_user)
-
-        df_rule=read_table('general_config_rule_pid')
-
-        msg = 'New inclusion/exclusion rule has been added'
-        flash(msg, 'success')
-        return redirect(url_for('config_rules_incl_excl_pid_based'))
-
-    return render_template('config_rules_inclusion_exclusion_pid_based.html',
-                           form=form,user=login_name,subtitle='- Config Rules',
-                           login_user=login_user,
-                           df_rule_header=df_rule.columns,
-                           df_rule_data=df_rule.values,
-                           )
 
 @app.route('/config_rules_complex',methods=['GET','POST'])
 def config_rules_complex():
@@ -658,6 +619,7 @@ def config_rules_main():
 
     df_error_db = read_table('history_new_error_config_record')
     df_rsp_slot = read_table('rsp_slot')
+    print(df_error_db)
 
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
@@ -782,7 +744,7 @@ def config_rules_main():
             return redirect(url_for("config_rules_main"))
 
 
-    df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
+    df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT','Added_by'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
     df_error_db_summary.rename(columns={'PO_NUMBER':'No. of error configs'},inplace=True)
 
     return render_template('config_rules_main.html',

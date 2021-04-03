@@ -9,13 +9,14 @@
 
 <br>
 <p style="color: #983d00">
-    Note: Error configs identified below are based on predefined rules and user uploaded historical configs.
+    Note: Error configs identified below are based on predefined rules and/or user uploaded historical configs.
     Pls actively manage them through <a href="http://10.123.219.115/config_rules_main" target="_blank">HERE!</a>
-    <li>For new config errors not identified here, pls report/upload them timely - same error will be captured afterwards!</li>
-    <li>In case of wrong alert: Pls review/fix the rules; or remove this config from the historical error database.</li>
+    <li>Add or remove the rules whenever you need to!</li>
+    <li>For new type of config errors not identified here, pls report/upload them timely - same error will be captured afterwards!</li>
+    <li>In case of wrong alert: Pls review and fix the rules - if it's based on rule; or remove this order/config from the historical error database - if it's based on error mapping.</li>
 </p>
 
-<h2>Error config orders - new errors:</h2>
+<h2>Error config orders - new errors ({{ new_error_data|length }}):</h2>
 <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
     <tr>
         {% for col in new_error_header %}
@@ -33,7 +34,7 @@
 
 <br><br>
 
-<h2>Error config orders - previously identified errors still in 3a4:</h2>
+<h2>Error config orders - previously identified errors still in 3a4 ({{ old_error_data|length }}):</h2>
 <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
     <tr>
         {% for col in old_error_header %}
