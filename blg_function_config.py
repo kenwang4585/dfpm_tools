@@ -14,12 +14,12 @@ def config_func_mapping():
     """
     #[[exclusion org],[PF],rule_function]
     # the restrction criteria here [org][pf] are disabled!! followed in the template - C9400 need further update
-    config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict)',
-                    'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict)',
-                    'find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict)',
-                    'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict)',
-                   'find_config_error_per_generic_rule(dfx,wrong_po_dict)',
-                   #'find_config_error_per_generic_rule_alternative_way(dfx, wrong_po_dict)'
+    config_func = ['find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict,checking_time)',
+                    'find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict,checking_time)',
+                    'find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,checking_time)',
+                    'find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict,checking_time)',
+                   'find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time)',
+                   #'find_config_error_per_generic_rule_alternative_way(dfx, wrong_po_dict,checking_time)'
                     ]
 
     return config_func
@@ -203,7 +203,7 @@ def find_pabu_wrong_slot_combination(dfx,wrong_po_dict):
     return wrong_po_dict
 
 
-def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict):
+def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict,checking_time):
     """
     Check related PABU product if the cards are using right slot or if necessary PIDs are included.
     Three types are checked:
@@ -211,6 +211,8 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict):
     2) Inclusion:
     3) No support:
     """
+    time_start=time.time()
+
     fname_config=os.path.join(base_dir_tracker,'PABU slot config rules.xlsx')
     df_rule_exclusion=pd.read_excel(fname_config, sheet_name='EXCLUSION')
     df_rule_exclusion.loc[:,'PID_SLOT_A']=df_rule_exclusion.PID_A.str.strip() + '_' + df_rule_exclusion.SLOT_A.str.strip()
@@ -315,7 +317,11 @@ def find_pabu_wrong_slot_combination_alternative_solution(dfx,wrong_po_dict):
                     wrong_po_dict[po] = remark
                     break  # if already fine one error, skip with other rule for this order
 
-    return wrong_po_dict
+    time_finish = time.time()
+    total_time = int(time_finish - time_start)
+    checking_time['ASR903 Slot'] = total_time
+
+    return wrong_po_dict, checking_time
 
 
 def find_missing_or_extra_pid_base_on_incl_excl_config_rule_bupf(dfx,df_bupf_rule,wrong_po_dict):
@@ -467,12 +473,14 @@ def isr43xx_vg450_rules_sm_nim(pid_qty, nim_pid_slots_dict, sm_pid_slots_dict, a
     return wrong_po_dict
 
 
-def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict):
+def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict,checking_time):
     '''
     Check if any PO in SRG ISR43xx having wrong config based on SM-NIM rules
     :param dfx: df filtered by PF that need to check with
     :return error order dict
     '''
+    time_start=time.time()
+
     fname_rule=os.path.join(base_dir_tracker,'SRGBU SM_NIM config rules.xlsx')
     df_pid_slots=pd.read_excel(fname_rule,sheet_name='SM_NIM')
     df_scope=pd.read_excel(fname_rule,sheet_name='APPLICABLE_SCOPE')
@@ -546,7 +554,11 @@ def find_config_error_per_isr43xx_vg450_rules_sm_nim(dfx,wrong_po_dict):
             wrong_po_dict = isr43xx_vg450_rules_sm_nim(pid_qty_list, nim_pid_slots_dict,sm_pid_slots_dict, adapter_pid_slot_dict,wrong_po_dict, po,
                                          sm_criteria, nim_criteria)
 
-    return wrong_po_dict
+    time_finish = time.time()
+    total_time = int(time_finish - time_start)
+    checking_time['SRG NIM_SM'] = total_time
+
+    return wrong_po_dict, checking_time
 
 
 
@@ -684,12 +696,13 @@ def find_config_error_per_c9400_rules_pwr_sup_lc(dfx,wrong_po_dict):
 
     return wrong_po_dict
 
-def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict):
+def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_po_dict,checking_time):
     '''
     Check if any PO in UAG C9400 having wrong config based on Chassis-PWR-PSU-LC rules
     :param dfx: df filtered by PF that need to check with
     :return error order dict
     '''
+    time_start=time.time()
     fname_rule = os.path.join(base_dir_tracker, 'UABU C9400 PWR_LC_SUP combination rule.xlsx')
     df_rule = pd.read_excel(fname_rule, sheet_name='RULE')
     df_scope = pd.read_excel(fname_rule, sheet_name='APPLICABLE_SCOPE')
@@ -753,11 +766,15 @@ def find_config_error_per_c9400_rules_pwr_sup_lc_alternative_solution(dfx,wrong_
                         if not eval('pid_b_qty' + b_criteria_qty):
                             wrong_po_dict[po] = remark
 
-    return wrong_po_dict
+    time_finish=time.time()
+    total_time=int(time_finish-time_start)
+    checking_time['C9400']=total_time
+
+    return wrong_po_dict,checking_time
 
 
 
-def find_config_error_per_generic_rule(dfx,wrong_po_dict):
+def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
     '''
     Using generic rules to identify errors
     :return error order dict
@@ -766,9 +783,8 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
 
     #df_rule=pd.read_excel(os.path.join(base_dir_tracker,'General rule.xlsx'))
     #print(df_rule)
-
     for row in df_rule.itertuples():
-        single_rule_start=time.time()
+        rule_start=time.time()
         id=row.id
         org=row.ORG.split(';')
         bu=row.BU.split(';')
@@ -817,11 +833,11 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict):
 
             if not eval('pid_b_actual_qty' + criteria_qty):
                 wrong_po_dict[po] = 'Rule#'+ str(id) + ':' +remark
-        single_rule_finish = time.time()
-        single_rule_time=int(single_rule_finish-single_rule_start)
-        print('Rule id#{} spend time: {}'.format(id,single_rule_time))
+        rule_finish = time.time()
+        rule_time=int(rule_finish-rule_start)
+        checking_time['#'+str(id)]=rule_time
 
-    return wrong_po_dict
+    return wrong_po_dict,checking_time
 
 
 
@@ -1019,8 +1035,7 @@ def scale_down_po_to_one_set(df):
 
     return df
 
-def identify_config_error_po(df_3a4,config_func):
-    df_pid_rule = read_table('general_config_rule_pid')
+def identify_config_error_po(df_3a4,config_func,checking_time):
 
     wrong_po_dict = {}
 
@@ -1039,9 +1054,9 @@ def identify_config_error_po(df_3a4,config_func):
         """
 
         if dfx.shape[0] > 0:
-            wrong_po_dict = eval(org_pf_func)
+            wrong_po_dict,checking_time = eval(org_pf_func)
 
-    return wrong_po_dict
+    return wrong_po_dict,checking_time
 
 
 
@@ -1139,12 +1154,13 @@ def fill_up_remark(df):
 
     return df
 
-def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
+def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict,checking_time):
     '''
     做config对比，找出相同的error config订单。
     :param dfx: new order df to find error with
     :param wrong_po_dict: {PO:error_message}
     '''
+    time_start=time.time()
 
     # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
     df_history_error=read_table('history_new_error_config_record')
@@ -1159,7 +1175,11 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict):
         if po not in wrong_po_dict.keys():
             wrong_po_dict[po]='Same error as {}:({}){}'.format(info[0],info[1],info[2])
 
-    return wrong_po_dict
+    time_finish = time.time()
+    total_time = int(time_finish - time_start)
+    checking_time['Error comparison'] = total_time
+
+    return wrong_po_dict, checking_time
 
 
 class FindSameConfig():

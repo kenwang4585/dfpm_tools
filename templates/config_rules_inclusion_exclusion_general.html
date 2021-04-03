@@ -18,7 +18,7 @@
 
         <h2 align="center">Generic inclusion and exclusion rule</h2>
         <h5   style="color: #005cbf" align="center">
-            Definition: PO for related Org, BU, PF, PID_A, the PID_B in the PO must follow the specified rule.
+            <strong>Definition:</strong> PO for related Org, BU, PF, and/or with PID_A, then PID_B in the PO must follow the specified rule.
         </h5>
         <table style="border-collapse:collapse"border="0" cellspacing="0px" align="center" width="50%">
             <tr align="center">
@@ -47,6 +47,7 @@
                     <li>Pls input FULL PID name</li>
                     <li>Multiple value inputs allowed for Org/BU/PF/PID (separated by ';')</li>
                     <li>If multiple input,e.g. "XYZ;ABC", if for PID_A, it means the PO should either includes "XYZ" OR "ABC"; if for PID_B, it means "XYZ" AND "ABC" together in the PO should meet the criteria.</li>
+                    <li>Combine rules together where possible!</li>
                 </td>
             </tr>
         </table>
@@ -58,10 +59,20 @@
                     {% if df_rule_data|length>0 %}
                         <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="center">
                             <tr>
-                                {% for col in df_rule_header %}
-                                    <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
-                                {% endfor %}
-                                <td>Remove</td>
+
+                                <td width="2%" align="center">ID</td>
+                                <td width="5%" align="center">ORG</td>
+                                <td width="5%" align="center">BU</td>
+                                <td width="10%" align="center">PF</td>
+                                <td width="10%" align="center">Exception_PID</td>
+                                <td width="8%" align="center">PID_A</td>
+                                <td width="17%" align="center">PID_B</td>
+                                <td width="%" align="center">Operator</td>
+                                <td width="6%" align="center">PID_B_qty</td>
+                                <td width="15%" align="center">REMARK</td>
+                                <td width="6%" align="center">Added_by</td>
+                                <td width="6%" align="center">Added_on</td>
+                                <td width="5%" align="center">Remove</td>
                             </tr>
 
                             {% for row in df_rule_data %}

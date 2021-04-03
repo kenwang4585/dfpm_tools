@@ -184,21 +184,21 @@ def global_app():
                 flash(msg, 'success')
 
             if config_check:
+                checking_time={}
                 config_func = config_func_mapping()
                 # combine pid and slot when applicable and use that to replace PID
                 time1=time.time()
                 df_3a4=combine_pid_and_slot(df_3a4)
                 time2 = time.time()
-                print('Combine pid and slot:', time2-time1)
+                checking_time['Combine pid_slot']=int(time2-time1)
                 df_3a4 = scale_down_po_to_one_set(df_3a4)
-                time3 = time.time()
-                print('Scale down to 1 set:', time3-time2)
+
                 if running_option == 'formal':
                     save_to_tracker = True
                 else:
                     save_to_tracker = False
 
-                wrong_po_dict = identify_config_error_po(df_3a4,config_func)
+                wrong_po_dict,checking_time = identify_config_error_po(df_3a4,config_func,checking_time)
                 qty_new_error, df_error_new, df_error_old, fname_new_error = make_error_config_df_output_and_save_tracker(
                     df_3a4, region, login_user, wrong_po_dict, save_to_tracker)
 
@@ -247,7 +247,11 @@ def global_app():
             processing_time = round((time_stamp - start_time_).total_seconds() / 60, 1)
 
             # write program log to log file
-            add_user_log(user=login_user, location='Home', user_action='Run', summary='Processing time: ' + str(processing_time) + 'min; parameters: ' + '/'.join(user_selection))
+            if config_check:
+                summary='Processing time: {}min; parameters: {}; Config checking time: {}'.format(processing_time,'/'.join(user_selection),checking_time)
+            else:
+                summary = 'Processing time: {}min; parameters: {}'.format(processing_time,'/'.join(user_selection))
+            add_user_log(user=login_user, location='Home', user_action='Run', summary=summary)
 
             return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
