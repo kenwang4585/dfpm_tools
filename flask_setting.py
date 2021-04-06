@@ -128,6 +128,9 @@ class ConfigRulesMain(FlaskForm):
     rsp_keyword=StringField('RSP keyword:')
     submit_add_slot=SubmitField('ADD')
 
+    remove_tracker=TextAreaField('List of PO to remove:',validators=[DataRequired()])
+    submit_remove_tracker=SubmitField('REMOVE')
+
 class ConfigRulesComplex(FlaskForm):
     submit_download_calina = SubmitField('Download rule file')
     file_calina = FileField('Select rule file:')
@@ -145,20 +148,8 @@ class ConfigRulesComplex(FlaskForm):
     submit_upload_alex = SubmitField('Upload new rule')
 
 
-class ConfigRulesInclExclPidBased(FlaskForm):
-    org=StringField('ORG*:')
-    bu=StringField('BU:')
-    pf=StringField("PF:")
-    pid_a=StringField('PID_A*:')
-    pid_b=StringField('PID_B:')
-    pid_c=StringField('PID_C:')
-    #pid_a_exception = TextAreaField('PID_A_EXCEPTION:')
-    #pid_b_exception = TextAreaField('PID_B_EXCEPTION:')
-    #pid_c_exception = TextAreaField('PID_C_EXCEPTION:')
-    remark=StringField('Remark:')
-    submit=SubmitField('Add rule')
 
-class ConfigRulesInclExclBuPfBased(FlaskForm):
+class ConfigRulesGeneric(FlaskForm):
     org = StringField('ORG*:',validators=[DataRequired()])
     bu = StringField('BU*:',validators=[DataRequired()])
     pf = TextAreaField("PF*:",validators=[DataRequired()])

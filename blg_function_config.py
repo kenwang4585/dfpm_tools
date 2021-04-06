@@ -925,6 +925,7 @@ def identify_config_error_po(df_3a4,config_func,checking_time):
     df_pivot=df_3a4.pivot_table(index='PO_NUMBER',values='OPTION_NUMBER',aggfunc=sum)
     ato_po=df_pivot[df_pivot.OPTION_NUMBER>0].index
     df_ato=df_3a4[df_3a4.PO_NUMBER.isin(ato_po)].copy()
+    df_ato=df_ato[df_ato.ADDRESSABLE_FLAG!='PO_CANCELLED']
 
     for org_pf_func in config_func:
         dfx=df_ato.copy() # make a copy of original each time

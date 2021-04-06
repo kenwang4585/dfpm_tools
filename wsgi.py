@@ -397,7 +397,7 @@ def backlog_ranking():
 
 @app.route('/config_rules_generic',methods=['GET','POST'])
 def config_rules_generic():
-    form=ConfigRulesInclExclBuPfBased()
+    form=ConfigRulesGeneric()
 
     login_user = request.headers.get('Oidc-Claim-Sub')
     login_name = request.headers.get('Oidc-Claim-Fullname')
@@ -619,13 +619,13 @@ def config_rules_main():
 
     df_error_db = read_table('history_new_error_config_record')
     df_rsp_slot = read_table('rsp_slot')
-    print(df_error_db)
 
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
         submit_upload=form.submit_upload_error.data
-        submit_remove=form.submit_remove_error.data
+        submit_remove_config=form.submit_remove_error.data
         submit_add_slot=form.submit_add_slot.data
+        submit_remove_tracker=form.submit_remove_tracker.data
 
         if submit_upload:
             file_upload_error=form.file_upload_error.data
@@ -675,7 +675,7 @@ def config_rules_main():
                              summary='Uploaded PO saved to tracker: {}; new configs saved to db: {}'.format(report_po_qty, new_config_po_qty))
 
             return redirect(url_for("config_rules_main"))
-        elif submit_remove:
+        elif submit_remove_config:
             file_remove_error=form.file_remove_error.data
 
             if not file_remove_error:
@@ -742,7 +742,24 @@ def config_rules_main():
             df_rsp_slot = read_table('rsp_slot')
 
             return redirect(url_for("config_rules_main"))
+        elif submit_remove_tracker:
+            po_str=form.remove_tracker.data
+            regex = re.compile(r'\d{9,10}-\d{1,2}')
+            po_list = regex.findall(po_str)
 
+            df_tracker=pd.read_excel(os.path.join(base_dir_tracker,'config_error_tracker.xlsx'))
+            df_tracker=df_tracker[~df_tracker.PO_NUMBER.isin(po_list)]
+            df_tracker.set_index('ORGANIZATION_CODE',inplace=True)
+            df_tracker.to_excel(os.path.join(base_dir_tracker,'config_error_tracker.xlsx'))
+
+            msg='Following PO have been removed from the tracker file: {}'.format(','.join(po_list))
+            flash(msg, 'success')
+
+            # write program log to log file
+            add_user_log(user=login_user, location='Manage config', user_action='Remove PO from tracker',
+                         summary='No. of PO removed from tracker: {}'.format(len(po_list)))
+
+            return redirect(url_for("config_rules_main"))
 
     df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT','Added_by'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
     df_error_db_summary.rename(columns={'PO_NUMBER':'No. of error configs'},inplace=True)
