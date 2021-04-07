@@ -2269,6 +2269,9 @@ def basic_data_processing_global(df_3a4,region,org_name_global):
     # Create PO/SS revenue col
     #df_3a4 = create_po_ss_rev_rank(df_3a4)
 
+    # Redefine the addressable flag, add in MFG_HOLD, and split out wk+1, wk+2 for outside_window portion
+    df_3a4 = redefine_addressable_flag_new(df_3a4, mfg_holds)
+
     return df_3a4
 
 

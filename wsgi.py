@@ -212,9 +212,6 @@ def global_app():
                                                     login_user,config_check_emails, sender)
 
             if backlog_summary:
-                # Redefine the addressable flag, add in MFG_HOLD, and split out wk+1, wk+2 for outside_window portion
-                df_3a4 = redefine_addressable_flag_new(df_3a4, mfg_holds)
-
                 # addressable data to tracker.
                 addr_df_summary, addr_df_dict = create_addressable_summary_and_comb_addressable_history(df_3a4,
                                                                                                            org_name_region,
