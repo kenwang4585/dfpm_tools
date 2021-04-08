@@ -6,6 +6,7 @@ from blg_functions import commonize_and_create_main_item
 from db_read import read_table
 from db_add import add_error_config_data
 import time
+from datetime import datetime
 
 def config_func_mapping():
     """
@@ -675,10 +676,15 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
         pid_b=row.PID_B.split(';')
         pid_b_operator=row.PID_B_OPERATOR
         pid_b_qty=row.PID_B_QTY
+        effective_date=row.EFFECTIVE_DATE
         remark=row.REMARK
         added_by=row.Added_by
 
         dfy=dfx[(dfx.ORGANIZATION_CODE.isin(org))&(dfx.main_bu.isin(bu))].copy()
+
+        if effective_date != '':
+            effective_date = datetime.strptime(effective_date, '%Y-%m-%d')
+            dfy=dfy[dfy.LINE_CREATION_DATE>=effective_date].copy()
 
         if pf!=['']:
             dfy = dfy[dfy.main_pf.isin(pf)].copy()
@@ -882,8 +888,17 @@ def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_er
     """
     if df_error_new.shape[0]>0:
         att_file = [(base_dir_output, fname_new_error)]  # List of tuples (path, file_name)
+        new_error_summary=df_error_new.pivot_table(index='ORGANIZATION_CODE',values='PO_NUMBER',aggfunc=len).to_dict()
+        new_error_summary=list(new_error_summary.values())[0]
     else:
         att_file = None
+        new_error_summary=0
+
+    if df_error_old.shape[0]>0:
+        old_error_summary = df_error_old.pivot_table(index='ORGANIZATION_CODE', values='PO_NUMBER', aggfunc=len).to_dict()
+        old_error_summary = list(old_error_summary.values())[0]
+    else:
+        old_error_summary=0
 
     subject = org + ' config error check summary (sent by: '+login_user +')'
     html = 'config_check_result_email.html'
@@ -892,6 +907,8 @@ def send_config_error_data_by_email(org, df_error_new, df_error_old,fname_new_er
                                      sender=sender,
                                      att_filenames=att_file,
                                      bcc=[super_user + '@cisco.com'],
+                                     new_error_summary=new_error_summary,
+                                     old_error_summary=old_error_summary,
                                      new_error_header=df_error_new.columns,
                                      new_error_data=df_error_new.values,
                                      old_error_header=df_error_old.columns,

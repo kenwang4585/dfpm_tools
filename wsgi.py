@@ -10,11 +10,12 @@ matplotlib.use('Agg')
 
 from werkzeug.utils import secure_filename
 from flask import flash,send_from_directory,render_template,request, redirect, url_for
+from datetime import datetime
 from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription, add_incl_excl_rule_pid,add_incl_excl_rule,add_slot_and_rsp_keyword  # remove db and use above instead
+from db_add import add_user_log,add_dfpm_mapping_data, add_subscription,add_incl_excl_rule,add_slot_and_rsp_keyword  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -117,7 +118,7 @@ def global_app():
         # 正式开始程序; start processing the data and create summaries
         try:
             # read whole 3a4 without parsing dates
-            df_3a4 = read_3a4(file_path_3a4)
+            df_3a4 = read_3a4_parse_dates(file_path_3a4,['LINE_CREATION_DATE'])
 
             # check the format: col and org based on tasks
 
@@ -415,7 +416,11 @@ def config_rules_generic():
         pid_b = ''.join(form.pid_b.data.upper().split())
 
         pid_b_operator=form.pid_b_operator.data
+        pid_b_qty = int(form.pid_b_qty.data)
+        effective_date=form.effective_date.data
+        remark=form.remark.data.strip()
 
+        """
         try:
             pid_b_qty=int(form.pid_b_qty.data)
         except:
@@ -427,9 +432,9 @@ def config_rules_generic():
                            df_rule_header=df_rule.columns,
                            df_rule_data=df_rule.values,
                            )
-        remark=form.remark.data.strip()
+        """
 
-        add_incl_excl_rule(org,bu,pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, remark, login_user)
+        add_incl_excl_rule(org,bu,pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, effective_date ,remark, login_user)
 
         df_rule=read_table('general_config_rule')
         for row in df_rule.itertuples():

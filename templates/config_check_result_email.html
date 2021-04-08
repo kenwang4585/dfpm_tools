@@ -16,7 +16,7 @@
     <li>In case of wrong alert: Pls review and fix the rules - if it's based on rule; or remove this order/config from the historical error database - if it's based on error mapping.</li>
 </p>
 
-<h2>Error config orders - new errors ({{ new_error_data|length }}):</h2>
+<h2>Error config orders - new errors ({{ new_error_summary }}):</h2>
 <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
     <tr>
         {% for col in new_error_header %}
@@ -34,7 +34,7 @@
 
 <br><br>
 
-<h2>Error config orders - previously identified errors still in 3a4 ({{ old_error_data|length }}):</h2>
+<h2>Error config orders - previously identified errors still in 3a4 ({{ old_error_summary }}):</h2>
 <table style="border-collapse:collapse" border="1" cellspacing="0px" align="center" width="90%">
     <tr>
         {% for col in old_error_header %}

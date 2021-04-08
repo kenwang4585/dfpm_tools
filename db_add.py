@@ -90,7 +90,7 @@ def add_incl_excl_rule_pid(org,bu,pf,pid_a,pid_b,pid_c,remark,login_user):
     db.session.commit()
     #print('User log added')
 
-def add_incl_excl_rule(org, bu, pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, remark, login_user):
+def add_incl_excl_rule(org, bu, pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, effective_date,remark, login_user):
     '''
     Add the general rule data to db
     '''
@@ -103,6 +103,7 @@ def add_incl_excl_rule(org, bu, pf, exception_main_pid, pid_a, pid_b,pid_b_opera
                                     PID_B=pid_b,
                                     PID_B_OPERATOR=pid_b_operator,
                                     PID_B_QTY=pid_b_qty,
+                                    EFFECTIVE_DATE=effective_date,
                                     REMARK=remark,
                                     Added_by=login_user,
                                     Added_on=pd.Timestamp.now().date(),)

@@ -2,7 +2,7 @@ from flask import Flask
 from flask_wtf.file import FileField, FileRequired
 from flask_wtf import FlaskForm
 from wtforms.validators import Email, DataRequired,input_required
-from wtforms import SubmitField, BooleanField, StringField,RadioField,SelectField,PasswordField,TextAreaField,IntegerField
+from wtforms import SubmitField, BooleanField, StringField,SelectField,IntegerField,TextAreaField,DateField
 import os
 from flask_sqlalchemy import SQLAlchemy
 
@@ -81,37 +81,6 @@ class BacklogRankingForm(FlaskForm):
                                default='to_all')
     submit = SubmitField('EXECUTE')
 
-class TableDataForm(FlaskForm):
-    # Read data from table and delete records
-    table_name=SelectField('Select table:',
-                           choices=[('',''),
-                                    ('user_log','user_log'),
-                                    ('error_log','error_log'),
-                                    ],
-                           default='user_log',
-                            validators = [DataRequired()],
-                           )
-    password=PasswordField('Password: ',validators=[DataRequired()])
-    criteria=TextAreaField('Searching criteria (optional): ')
-    max_records=StringField('Max records to show (optional): ',default=5)
-    show_last=BooleanField('Show the last records',default=True)
-    submit_query=SubmitField('EXECUTE QUERY')
-    submit_download=SubmitField('DOWNLOAD')
-    id=TextAreaField('Input ID to delete(sep by , or ~)')
-    submit_delete=SubmitField('DELETE ID')
-
-class FileDownloadForm(FlaskForm):
-    # download the 3a4 spreadsheet by DFPM id
-    fname=StringField('Input file name to download:',validators=[DataRequired()])
-    submit_download=SubmitField('DOWNLOAD')
-    download_data=SelectField('Select data to download:',
-                              choices=[('created_3a4','created_3a4'),
-                                       ('uploaded_3a4','uploaded_3a4'),
-                                       ('tracker','tracker')],
-                              default='created_3a4',
-                              validators=[DataRequired()])
-
-
 
 class AdminForm(FlaskForm):
     file_name=StringField(validators=[DataRequired()])
@@ -163,11 +132,10 @@ class ConfigRulesGeneric(FlaskForm):
                                           ('<','<'),
                                           ('<=','<=')],
                                  validators=[DataRequired()])
-    pid_b_qty = StringField('Quantity*:',validators=[DataRequired()]) # Pid_b qty
+    pid_b_qty = StringField('Quantity*:') # Pid_b qty
+    effective_date=StringField('Effective date:',render_kw={'placeholder':'2000-1-31'})
     remark = TextAreaField('Remark*:',validators=[DataRequired()])
     submit = SubmitField('Add rule')
-
-
 
 # Database tables
 
@@ -206,24 +174,6 @@ class Subscription(db.Model):
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
 
-class GeneralConfigRulePid(db.Model):
-    '''
-    PID based inclusion/exclusion rules db table
-    '''
-    id=db.Column(db.Integer,primary_key=True)
-    ORG = db.Column(db.String(20))
-    BU = db.Column(db.String(15))
-    PF=db.Column(db.String(60))
-    PID_A=db.Column(db.String(30))
-    PID_B = db.Column(db.String(30))
-    PID_C = db.Column(db.String(30))
-    #PID_A_EXCEPTION = db.Column(db.String(100))
-    #PID_B_EXCEPTION = db.Column(db.String(100))
-    #PID_C_EXCEPTION = db.Column(db.String(100))
-    REMARK = db.Column(db.String(100))
-    Added_by = db.Column(db.String(10))
-    Added_on = db.Column(db.Date)
-
 class GeneralConfigRule(db.Model):
     '''
     BU/PF based inclusion/exclusion rules db table
@@ -237,6 +187,7 @@ class GeneralConfigRule(db.Model):
     PID_B = db.Column(db.String(30))
     PID_B_OPERATOR=db.Column(db.String(4))
     PID_B_QTY=db.Column(db.Integer)
+    EFFECTIVE_DATE=db.Column(db.String(10))
     REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
