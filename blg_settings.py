@@ -5,7 +5,7 @@ import getpass
 #fname_3a4 = '/users/wangken/downloads/backlog3a4-detail - 2019-09-17T082650.347.csv'
 
 # Quarter end cutoff - currently not used
-qend_list=['2020-7-26','2020-10-24','2021-1-23','2021-5-1','2021-7-31']
+qend_list=['2020-7-26','2020-10-24','2021-1-23','2021-5-1','2021-7-31',]
 
 super_user='kwang2'
 

@@ -250,8 +250,8 @@ def global_app():
             if top_booking:
                 # TODO: change over to po_rev later
                 threshold=5 # M$
-                booking_days=6
-                top_po_num=10
+                booking_days=10
+                top_po_num=20
 
                 top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num)
 

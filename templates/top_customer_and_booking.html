@@ -6,26 +6,36 @@
 </head>
 
 <body>
-    <h1 align="center">Top customers and bookings summary (backlog>={{ threshold }}m$)</h1>
+    <h1 align="center">Top customers and bookings summary (backlog>=${{ threshold }}m)</h1>
     <br>
     {%  for data_org in data %}
-        <table style="border-collapse:collapse; border-color: #c5c5c5" border="1" cellspacing="0px" align="center" width="90%">
+        <table style="border-color: #999999" border="1" cellspacing="0px" align="center" width="90%">
             <tr>
-                <td width="5%"><strong>{{ data_org[0][0] }}</strong></td>
-                <td width="17%"><strong>{{ data_org[0][1] }}</strong></td>
+                <td width="3%"><strong>{{ data_org[0][0] }}</strong></td>
+                <td width="16%"><strong>{{ data_org[0][1] }}</strong></td>
                 {% for col in data_org[0][2:-1] %}
-                    <td width="4%"><strong>{{col}}</strong></td>
+                    <td width="3%" align="center"><strong>{{col}}</strong></td>
                 {% endfor %}
-                <td><strong>{{ data_org[0][-1] }}</strong></td>
+                <td width="8%" align="center"><strong>{{ data_org[0][-1] }}</strong></td>
             </tr>
 
             {% for row in data_org[1] %}
                 <tr>
-                    {% for col in row %}
+                    {% for col in row[:2] %}
                         <td>{{col}}</td>
                     {% endfor %}
+                    {% for col in row[2:-1] %}
+                        <td align="center">{{col}}</td>
+                    {% endfor %}
+                    <td align="center">
+                        <details>
+                            <summary>Click</summary>
+                            <p>{{ row[-1] }}</p>
+                        </details>
+                    </td>
                 </tr>
             {% endfor %}
+
         </table>
         <br><br>
     {% endfor %}

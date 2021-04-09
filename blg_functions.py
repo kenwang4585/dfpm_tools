@@ -2489,7 +2489,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
                     top_po_list.append(
                         row.PO_NUMBER + '(' + str(round(row.po_rev_unstg / 1000000, 1)) + 'm)')
 
-                dfp_org.loc[(org, customer), 'Top$ PO'] = '; '.join(top_po_list)
+                dfp_org.loc[(org, customer), 'Top revenue PO'] = '; '.join(top_po_list)
 
             dfp_org.reset_index(inplace=True)
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
