@@ -50,6 +50,7 @@ def global_app():
         f = form.file.data
         region=form.region.data
         backlog_summary = form.backlog_summary.data
+        top_booking = form.top_customer_booking.data
         wnbu_compliance = form.wnbu_compliance.data
         config_check = form.config_check.data
         running_option=form.running_option.data
@@ -59,6 +60,8 @@ def global_app():
 
         if backlog_summary:
             user_selection.append(form.backlog_summary.label.text)
+        if top_booking:
+            user_selection.append(form.top_customer_booking.label.text)
         if wnbu_compliance:
             user_selection.append(form.wnbu_compliance.label.text)
         if config_check:
@@ -101,16 +104,19 @@ def global_app():
             # read email from the subscription DB
             backlog_dashboard_emails_global,wnbu_compliance_check_emails_global,config_check_emails_global= read_subscription_by_region()
             backlog_dashboard_emails=backlog_dashboard_emails_global[region]
+            top_customer_booking_emails=backlog_dashboard_emails # same email as backlog dashboard
             wnbu_compliance_emails=wnbu_compliance_check_emails_global[region]
             config_check_emails = config_check_emails_global[region]
             if len(backlog_dashboard_emails)==0:
                 backlog_dashboard_emails = [login_user + '@cisco.com']
+                top_customer_booking_emails = [login_user + '@cisco.com']
             if len(wnbu_compliance_emails)==0:
                 wnbu_compliance_emails = [login_user + '@cisco.com']
             if len(config_check_emails)==0:
                 config_check_emails = [login_user + '@cisco.com']
         else:
             backlog_dashboard_emails = [login_user + '@cisco.com']
+            top_customer_booking_emails = [login_user + '@cisco.com']
             wnbu_compliance_emails = [login_user + '@cisco.com']
             config_check_emails = [login_user + '@cisco.com']
 
@@ -122,7 +128,7 @@ def global_app():
 
             # check the format: col and org based on tasks
 
-            if backlog_summary:
+            if backlog_summary or top_booking:
                 # org check
                 if not np.all(np.in1d(org_name_global[region][region], df_3a4.ORGANIZATION_CODE.unique())):
                     flash('The 3a4 you uploaded does not contain all orgs from {}!'.format(region), 'warning')
@@ -131,7 +137,7 @@ def global_app():
                 # col check
                 if not np.all(np.in1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns)):
                     flash('File format error! Following required \
-                                                columns for regional backlog summary not found in 3a4 data: {}'.format(
+                                                columns for backlog summary not found in 3a4 data: {}'.format(
                         str(np.setdiff1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns))),'warning')
                     return render_template('global_app.html', form=form,user=login_name,subtitle='')
 
@@ -164,6 +170,11 @@ def global_app():
 
             # initial basic data processing
             df_3a4=basic_data_processing_global(df_3a4,region,org_name_global)
+            # DF_3a4_main used by WNBU compliane , backlog dashboard and TOP customer bookings
+            if 'OPTION_NUMBER' in df_3a4.columns:
+                df_3a4_main=df_3a4[df_3a4.OPTION_NUMBER==0].copy()
+            else:
+                df_3a4_main=df_3a4.copy()
 
             if df_3a4.shape[0]==0:
                 msg = 'Empty data to process based on the file you uploaded and region you selected!'
@@ -172,8 +183,8 @@ def global_app():
 
             # below execute each task
             if wnbu_compliance:
-                df_compliance_table, no_ship = read_compliance_from_smartsheet(df_3a4)
-                df_compliance_release, df_compliance_hold, df_country_missing = check_compliance_for_wnbu(df_3a4,no_ship)
+                df_compliance_table, no_ship = read_compliance_from_smartsheet(df_3a4_main)
+                df_compliance_release, df_compliance_hold, df_country_missing = check_compliance_for_wnbu(df_3a4_main,no_ship)
                 create_and_send_wnbu_compliance(wnbu_compliance_emails,
                                                 df_compliance_release,
                                                 df_compliance_hold,
@@ -214,7 +225,7 @@ def global_app():
 
             if backlog_summary:
                 # addressable data to tracker.
-                addr_df_summary, addr_df_dict = create_addressable_summary_and_comb_addressable_history(df_3a4,
+                addr_df_summary, addr_df_dict = create_addressable_summary_and_comb_addressable_history(df_3a4_main,
                                                                                                            org_name_region,
                                                                                                            region,
                                                                                                            addr_history_fname)
@@ -225,7 +236,7 @@ def global_app():
 
                 if running_option == 'formal':
                     # save new addressable data to tracker
-                    save_addr_tracker(df_3a4, addr_df_dict, region, org_name_region, addr_history_fname)
+                    save_addr_tracker(df_3a4_main, addr_df_dict, region, org_name_region, addr_history_fname)
 
                     # send trackers to ken as backup
                     if region == 'APJC':
@@ -236,8 +247,21 @@ def global_app():
                         backup_day = 'Friday'
                     download_and_send_tracker_as_backup(backup_day,login_user)
 
+            if top_booking:
+                # TODO: change over to po_rev later
+                threshold=5 # M$
+                booking_days=6
+                top_po_num=10
+
+                top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num)
+
+                send_top_customer_booking_by_email(region, top_customer_booking_summary, threshold, login_user, top_customer_booking_emails, sender)
+
+                msg = 'Top customers and bookings summary created and sent for {}'.format(region)
+                flash(msg, 'success')
+
             # Release the memories
-            del df_3a4
+            del df_3a4, df_3a4_main
             gc.collect()
 
             # summarize time
@@ -256,7 +280,7 @@ def global_app():
 
         except Exception as e:
             try:
-                del df_3a4
+                del df_3a4, df_3a4_main
                 gc.collect()
             except:
                 pass

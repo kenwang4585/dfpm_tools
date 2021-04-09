@@ -166,7 +166,7 @@ col_3a4_must_have_global_config_check=['ORGANIZATION_CODE','BUSINESS_UNIT','PROD
 # Col required for dfpm_app
 col_3a4_must_have_dfpm=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT_FAMILY','OPTION_NUMBER', 'SO_SS','FINAL_ACTION_SUMMARY','SECONDARY_PRIORITY',
                    'BUP_RANK','PO_NUMBER', 'PRODUCT_ID', 'MFG_HOLD', 'ORDER_HOLDS','ADDRESSABLE_FLAG',
-                       'PACKOUT_QUANTITY','ORDERED_QUANTITY', 'C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS', 'SOL_REVENUE',
+                       'PACKOUT_QUANTITY','ORDERED_QUANTITY', 'C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS',
                        'BOOKED_DATE', 'LINE_CREATION_DATE','LT_TARGET_FCD', 'TARGET_SSD','CURRENT_FCD_NBD_DATE',
                         'ORIGINAL_FCD_NBD_DATE','CUSTOMER_REQUEST_DATE','ASN_CREATION_DATE','OTM_SHIPPING_ROUTE_CODE',
                         'SHIP_TO_COUNTRY','END_TO_COUNTRY','COMMENTS','MCD','SALES_ORDER_OPERATING_UNIT']
@@ -191,7 +191,7 @@ col_3a4_cm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PRODUCT_FA
 
 col_3a4_dfpm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','OPTION_NUMBER','BUSINESS_UNIT', 'main_bu','main_pf','PRODUCT_FAMILY','PRODUCT_ID','TAN',
         'ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD','ORDER_HOLDS',
-              'ORDERED_QUANTITY','C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS','po_rev','ss_unstg_rev','ss_rev_rank','BUP_RANK','PROGRAM','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE',
+              'ORDERED_QUANTITY','C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS','po_rev_unstg','ss_unstg_rev','ss_rev_rank','BUP_RANK','PROGRAM','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE',
               'FINAL_ACTION_SUMMARY','TIED_SHIP_SET','ASN_CREATION_DATE','ORDERED_DATE','BOOKED_DATE','LINE_CREATION_DATE',
               'LT_TARGET_FCD','TARGET_SSD','CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CUSTOMER_REQUEST_DATE',
               'CUSTOMER_REQUESTED_SHIP_DATE','ORIGINAL_PROMISE_DATE','CURRENT_PROMISE_DATE','EAD','ORDER_AGING_BUCKET',
@@ -202,7 +202,7 @@ col_3a4_dfpm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','OPTION_NUMBER','BUSINESS_
 
 col_3a4_regional=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PRODUCT_FAMILY','PRODUCT_ID','TAN',
         'ADDRESSABLE_FLAG','ORDER_HOLDS','priority_cat','priority_rank','ss_overall_rank','riso_ranking',
-              'ORDERED_QUANTITY','C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS','po_rev','ss_unstg_rev','ss_rev_rank','BUP_RANK','PROGRAM','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE',
+              'ORDERED_QUANTITY','C_UNSTAGED_QTY','C_UNSTAGED_DOLLARS','po_rev_unstg','ss_unstg_rev','ss_rev_rank','BUP_RANK','PROGRAM','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE',
               'FINAL_ACTION_SUMMARY','TIED_SHIP_SET','ASN_CREATION_DATE','ORDERED_DATE','BOOKED_DATE','LINE_CREATION_DATE',
               'LT_TARGET_FCD','TARGET_SSD','CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CUSTOMER_REQUEST_DATE',
               'CUSTOMER_REQUESTED_SHIP_DATE','ORIGINAL_PROMISE_DATE','CURRENT_PROMISE_DATE','EAD','ORDER_AGING_BUCKET',
@@ -213,7 +213,7 @@ col_3a4_regional=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PROD
 
 
 # Col about revenue
-rev_col = ['ss_rev', 'po_rev','po_unstaged_rev','po_rev_unit','SOL_REVENUE', 'C_UNSTAGED_DOLLARS','C_STAGED_DOLLARS']
+rev_col = ['ss_rev', 'po_rev_unstg','po_rev_unit', 'C_UNSTAGED_DOLLARS','C_STAGED_DOLLARS']
 
 # other col to remove while generating 3a4
 #other_removal_col=['GLOBAL_RANK','BUP_RANK','CONSOLIDATED_ALLOCATION_PRIORITY','REVENUE_NON_REVENUE','ROW_NUM','category_comments','priority_rank']
@@ -221,15 +221,15 @@ rev_col = ['ss_rev', 'po_rev','po_unstaged_rev','po_rev_unit','SOL_REVENUE', 'C_
 # outlier columns to place in front
 col_outlier={
         'df_not_booked':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER', 'entered_not_booked', 'ORDER_HOLDS', 'COMMENTS',
-                        'exception_highlight','po_rev'],
+                        'exception_highlight','po_rev_unstg'],
         'df_not_scheduled':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER', 'booked_not_scheduled', 'ORDER_HOLDS','COMMENTS',
-                        'exception_highlight','po_rev'],
+                        'exception_highlight','po_rev_unstg'],
         'df_not_packed':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER', 'missed_ossd', 'ORDER_HOLDS', 'COMMENTS',
-                        'exception_highlight','po_rev','C_UNSTAGED_DOLLARS'],
+                        'exception_highlight','po_rev_unstg','C_UNSTAGED_DOLLARS'],
         'df_aging_cancel':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER', 'C_STAGED_QTY','cancel_aging_days',
-                        'category_comments','COMMENTS','exception_highlight','po_rev','C_UNSTAGED_DOLLARS'],
+                        'category_comments','COMMENTS','exception_highlight','po_rev_unstg','C_UNSTAGED_DOLLARS'],
         'df_partial_staged':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'SO_SS', 'ss_partial_staged_days', 'ORDER_HOLDS',
-                        'partial_comments','po_rev','C_UNSTAGED_DOLLARS'],
+                        'partial_comments','po_rev_unstg','C_UNSTAGED_DOLLARS'],
         'df_missed_recommit':['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER', 'missed_recommit', 'ORDER_HOLDS',
                         'COMMENTS']
         }

@@ -1,0 +1,33 @@
+<!-- saved from url=(0057)file:///Users/wangken/py/html/templates/config_result.htm -->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title></title>
+</head>
+
+<body>
+    <h1 align="center">Top customers and bookings summary (backlog>={{ threshold }}m$)</h1>
+    <br>
+    {%  for data_org in data %}
+        <table style="border-collapse:collapse; border-color: #c5c5c5" border="1" cellspacing="0px" align="center" width="90%">
+            <tr>
+                <td width="5%"><strong>{{ data_org[0][0] }}</strong></td>
+                <td width="15%"><strong>{{ data_org[0][1] }}</strong></td>
+                {% for col in data_org[0][2:-1] %}
+                    <td width="4%"><strong>{{col}}</strong></td>
+                {% endfor %}
+                <td><strong>{{ data_org[0][-1] }}</strong></td>
+            </tr>
+
+            {% for row in data_org[1] %}
+                <tr>
+                    {% for col in row %}
+                        <td>{{col}}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        <br><br>
+    {% endfor %}
+</body>
+</html>

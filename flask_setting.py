@@ -21,6 +21,7 @@ class GlobalAppForm(FlaskForm):
                       choices=[('APJC','APJC'),('EMEA','EMEA'),('Americas','Americas')],
                       default='APJC')
     backlog_summary = BooleanField('Regional backlog dashboard')
+    top_customer_booking = BooleanField('Top customers and bookings')
     wnbu_compliance = BooleanField('WNBU PO Compliance check')
     config_check = BooleanField('ATO PO configuration check')
     running_option=SelectField('Option: ',

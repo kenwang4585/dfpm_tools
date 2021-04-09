@@ -132,7 +132,7 @@ def add_partial_staged_col(df):
     # print(partial_po)
 
     # below based on partial_po to to calculate min_date of ASN under each partial staged SS:
-    zip_data = zip(df.SO_SS, df.PO_NUMBER, df.ASN_CREATION_DATE, df.SOL_REVENUE, df.BUSINESS_UNIT,
+    zip_data = zip(df.SO_SS, df.PO_NUMBER, df.ASN_CREATION_DATE, df.C_UNSTAGED_DOLLARS, df.BUSINESS_UNIT,
                    df.COMMENTS)
     d = [[x, y, z, w, p, q] for x, y, z, w, p, q in zip_data]
 
@@ -334,18 +334,18 @@ def decide_qend_date(qend_list):
 
     return qend
 
-def create_po_rev_col(df_3a4):
+def create_po_rev_unstg_col(df_3a4):
     """
     Create po rev col for 3a4 with option items
     :param df_3a4:
     :return:
     """
     ### Step0: 计算po_rev - not used in ranking but other calculations
-    po_rev = {}
-    df_rev = df_3a4.pivot_table(index='PO_NUMBER', values='SOL_REVENUE', aggfunc=sum)
+    po_rev_unstg = {}
+    df_rev = df_3a4.pivot_table(index='PO_NUMBER', values='C_UNSTAGED_DOLLARS', aggfunc=sum)
     for po, rev in zip(df_rev.index, df_rev.values):
-        po_rev[po] = rev[0]
-    df_3a4.loc[:, 'po_rev'] = df_3a4.PO_NUMBER.map(lambda x: po_rev[x])
+        po_rev_unstg[po] = rev[0]
+    df_3a4.loc[:, 'po_rev_unstg'] = df_3a4.PO_NUMBER.map(lambda x: po_rev_unstg[x])
 
     return df_3a4
 
@@ -606,6 +606,102 @@ def ss_ranking_overall_new_december(df_3a4,ss_exceptional_priority,ranking_col, 
 
     return df_3a4
 
+
+
+def create_dfpm_3a4(dfpm_mapping,dfpm_3a4_option,df_3a4,df_asp,addr_ctb_by_org_bu, addr_ctb_by_org_bu_pf, ctb_summary_for_material,login_user):
+    '''
+    Create 3a4 file for DFPM
+    '''
+
+    """
+    # By Org: 生成backlog distribution summary based on date labels (CRD, target LT FCD, current FCD,OSSD)
+    df_backlog_distribution_qty_org = create_backlog_distribution_summary_by_org_new(df_3a4,
+                                                                                     backlog_distribution_date_labels,
+                                                                                     data_col='C_UNSTAGED_QTY',
+                                                                                     func='SUM', by='PO_NUMBER',
+                                                                                     excl_packed=True)
+    df_backlog_distribution_amt_org = create_backlog_distribution_summary_by_org_new(df_3a4,
+                                                                                     backlog_distribution_date_labels,
+                                                                                     data_col='po_unstaged_rev',
+                                                                                     func='SUM', by='PO_NUMBER',
+                                                                                     excl_packed=True)
+    df_backlog_distribution_po_count_org = create_backlog_distribution_summary_by_org_new(df_3a4,
+                                                                                          backlog_distribution_date_labels,
+                                                                                          data_col='PO_NUMBER',
+                                                                                          func='COUNT',
+                                                                                          by='PO_NUMBER',
+                                                                                          excl_packed=True)
+    df_backlog_distribution_ss_count_org = create_backlog_distribution_summary_by_org_new(df_3a4,
+                                                                                          backlog_distribution_date_labels,
+                                                                                          data_col='SO_SS',
+                                                                                          func='COUNT',
+                                                                                          by='SO_SS',
+                                                                                          excl_packed=True)
+    """
+
+
+    df_dict={}
+    df_3a4=df_3a4[col_3a4_dfpm]
+    df_3a4.set_index('ORGANIZATION_CODE', inplace=True)
+    dfpm_3a4_created=[]
+
+    #
+    file_path = base_dir_output
+    df_dict['addr_ctb_bu'] = addr_ctb_by_org_bu
+    df_dict['addr_ctb_pf'] = addr_ctb_by_org_bu_pf
+    df_dict['ctb_material'] = ctb_summary_for_material
+    df_dict['asp'] = df_asp
+
+    if dfpm_3a4_option=='by_dfpm':
+        #create total 3a4 with option==0 only
+        dfy=df_3a4[df_3a4.OPTION_NUMBER == 0].copy()
+        dfy.drop(['C_UNSTAGED_DOLLARS'],axis=1,inplace=True)
+        df_dict['3a4'] = dfy
+        fname = 'Site 3a4 for main PID (created by ' + login_user + ') ' + pd.Timestamp.now().strftime(
+            '%m-%d %H:%M') + '.xlsx'
+        full_path = os.path.join(file_path, fname)
+        write_excel_file(full_path, df_dict)
+        dfpm_3a4_created.append('site level')
+
+        # create file by DFPM
+        for dfpm,coverage in dfpm_mapping.items():
+            df_dfpm=pd.DataFrame()
+            for org,contents in coverage.items():
+                if org in df_3a4.index:
+                    dfy=df_3a4.loc[org].copy()
+                    dfy=dfy[((dfy.main_bu.isin(contents[0])&(~dfy.main_pf.isin(contents[2])))|(dfy.main_pf.isin(contents[1])))].copy()
+                    if dfy.shape[0]>0:
+                        df_dfpm=pd.concat([df_dfpm,dfy],sort=False)
+
+                    del dfy
+
+            if df_dfpm.shape[0]>0:
+                df_dict['3a4'] = df_dfpm
+
+                fname = dfpm + ' 3a4 (created by ' + login_user + ') ' + pd.Timestamp.now().strftime('%m-%d %H:%M') +'.xlsx'
+                full_path = os.path.join(file_path, fname)
+                write_excel_file(full_path, df_dict)
+                dfpm_3a4_created.append(dfpm)
+
+                to_address = [dfpm + '@cisco.com']
+                subject = '3a4 summary for {}'.format(dfpm)
+                html = 'dfpm_3a4.html'
+
+                msg, size_over_limit = send_attachment_and_embded_image(to_address, subject, html,
+                                                                    att_filenames=None,
+                                                                    file_3a4=fname)
+
+        del df_dfpm
+        gc.collect()
+    else:
+        df_dict['3a4'] = df_3a4
+        fname = '3a4 (created by ' + login_user + ') ' + pd.Timestamp.now().strftime('%m-%d %H:%M') + '.xlsx'
+        full_path = os.path.join(file_path, fname)
+        write_excel_file(full_path, df_dict)
+        dfpm_3a4_created.append(login_user)
+
+    return dfpm_3a4_created
+
 # newly introduced in Jan 2021 to add riso_ranking
 def ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ranking_col_dic, lowest_priority_cat,order_col='SO_SS',with_dollar=True):
     """
@@ -728,7 +824,7 @@ def create_addr_summary(df, org_name_region):
     for name,orgs in org_name_region.items():
         dfx = df[df.ORGANIZATION_CODE.isin(orgs)].pivot_table(index='main_bu',
                                                                   columns=['ADDRESSABLE_FLAG'],
-                                                                  values='C_UNSTAGED_DOLLARS', aggfunc=sum)
+                                                                  values='po_rev_unstg', aggfunc=sum)
 
         dfx.loc[:, 'Total'] = dfx.sum(axis=1)
         dfx.loc[name] = dfx.sum(axis=0)
@@ -2266,8 +2362,8 @@ def basic_data_processing_global(df_3a4,region,org_name_global):
     # update CRBU name: main_bu changed to "CRBU-NG" or "CRBU-other"
     df_3a4 = update_crbu_bu_name(df_3a4)
 
-    # Create PO/SS revenue col
-    #df_3a4 = create_po_ss_rev_rank(df_3a4)
+    # create po_rev column - this is must since po_rev_unstg is used in other sub programs
+    df_3a4 = create_po_rev_unstg_col(df_3a4)
 
     # Redefine the addressable flag, add in MFG_HOLD, and split out wk+1, wk+2 for outside_window portion
     df_3a4 = redefine_addressable_flag_new(df_3a4, mfg_holds)
@@ -2300,7 +2396,7 @@ def basic_data_processin_dfpm_app(df_3a4):
     df_3a4 = exception_check_and_recommendation(df_3a4)
 
     # create po_rev column
-    df_3a4=create_po_rev_col(df_3a4)
+    df_3a4=create_po_rev_unstg_col(df_3a4)
 
     return df_3a4
 
@@ -2346,8 +2442,60 @@ def create_rtv_config_col(df_3a4):
 
     return df_3a4
 
+def send_top_customer_booking_by_email(region, data,threshold,login_user,to_address,sender):
+    """
+    Send the result by email
+    """
+    subject = region + ' top customers and bookings summary (sent by: '+login_user +')'
+    html = 'top_customer_and_booking.html'
+
+    send_attachment_and_embded_image(to_address, subject, html,
+                                     sender=sender,
+                                     att_filenames=None,
+                                     bcc=[super_user + '@cisco.com'],
+                                     data=data,
+                                     threshold=threshold)
 
 
+def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num):
+    """
+    Create summary for the top$ backlog customers and recent bookings for them
+    """
+    dfp = df_3a4_main.pivot_table(index=['ORGANIZATION_CODE', 'END_CUSTOMER_NAME'], columns='LINE_CREATION_DATE',
+                                  values='po_rev_unstg', aggfunc=sum) / 1000000
+    dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
+    dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1)
+    dfp = dfp.iloc[:, -booking_days:].copy()
+
+    top_customer_booking_summary = []
+    for org in org_name_global[region][region]:
+        dfp_org = dfp.loc[(org, slice(None)), :].copy()
+        dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
+        dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
+        dfp_org = dfp_org[dfp_org['Total backlog'] >= threshold]
+        dfp_org = dfp_org.applymap(lambda x: round(x, 1))
+        dfp_org.fillna('', inplace=True)
+
+        # find the top PO
+        if dfp_org.shape[0] > 1:  # more than the total record
+            customer_list = [x[1] for x in dfp_org.index]
+            for customer in customer_list:
+                dfp_org_cus = df_3a4_main[
+                    (df_3a4_main.ORGANIZATION_CODE == org) & (df_3a4_main.END_CUSTOMER_NAME == customer)].copy()
+                dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
+
+                top_po_list = []
+                for row in dfp_org_cus[:top_po_num].itertuples():
+                    top_po_list.append(
+                        row.PO_NUMBER + '(' + str(round(row.po_rev_unstg / 1000000, 1)) + 'm)')
+
+                dfp_org.loc[(org, customer), 'Top$ PO'] = '; '.join(top_po_list)
+
+            dfp_org.reset_index(inplace=True)
+            dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
+            top_customer_booking_summary.append((dfp_org.columns, dfp_org.values))
+
+    return top_customer_booking_summary
 
 def create_and_send_wnbu_compliance(wnbu_compliance_hold_emails, df_compliance_release, df_compliance_hold,
                                     df_country_missing, df_compliance_table, login_user,sender):
@@ -2785,100 +2933,6 @@ def generate_dfpm_mapping_dict(df_dfpm_mapping):
 
     return dfpm_mapping
 
-def create_dfpm_3a4(dfpm_mapping,dfpm_3a4_option,df_3a4,df_asp,addr_ctb_by_org_bu, addr_ctb_by_org_bu_pf, ctb_summary_for_material,login_user):
-    '''
-    Create 3a4 file for DFPM
-    '''
-
-    """
-    # By Org: 生成backlog distribution summary based on date labels (CRD, target LT FCD, current FCD,OSSD)
-    df_backlog_distribution_qty_org = create_backlog_distribution_summary_by_org_new(df_3a4,
-                                                                                     backlog_distribution_date_labels,
-                                                                                     data_col='C_UNSTAGED_QTY',
-                                                                                     func='SUM', by='PO_NUMBER',
-                                                                                     excl_packed=True)
-    df_backlog_distribution_amt_org = create_backlog_distribution_summary_by_org_new(df_3a4,
-                                                                                     backlog_distribution_date_labels,
-                                                                                     data_col='po_unstaged_rev',
-                                                                                     func='SUM', by='PO_NUMBER',
-                                                                                     excl_packed=True)
-    df_backlog_distribution_po_count_org = create_backlog_distribution_summary_by_org_new(df_3a4,
-                                                                                          backlog_distribution_date_labels,
-                                                                                          data_col='PO_NUMBER',
-                                                                                          func='COUNT',
-                                                                                          by='PO_NUMBER',
-                                                                                          excl_packed=True)
-    df_backlog_distribution_ss_count_org = create_backlog_distribution_summary_by_org_new(df_3a4,
-                                                                                          backlog_distribution_date_labels,
-                                                                                          data_col='SO_SS',
-                                                                                          func='COUNT',
-                                                                                          by='SO_SS',
-                                                                                          excl_packed=True)
-    """
-
-
-    df_dict={}
-    df_3a4=df_3a4[col_3a4_dfpm]
-    df_3a4.set_index('ORGANIZATION_CODE', inplace=True)
-    dfpm_3a4_created=[]
-
-    #
-    file_path = base_dir_output
-    df_dict['addr_ctb_bu'] = addr_ctb_by_org_bu
-    df_dict['addr_ctb_pf'] = addr_ctb_by_org_bu_pf
-    df_dict['ctb_material'] = ctb_summary_for_material
-    df_dict['asp'] = df_asp
-
-    if dfpm_3a4_option=='by_dfpm':
-        #create total 3a4 with option==0 only
-        dfy=df_3a4[df_3a4.OPTION_NUMBER == 0].copy()
-        dfy.drop(['C_UNSTAGED_DOLLARS'],axis=1,inplace=True)
-        df_dict['3a4'] = dfy
-        fname = 'Site 3a4 for main PID (created by ' + login_user + ') ' + pd.Timestamp.now().strftime(
-            '%m-%d %H:%M') + '.xlsx'
-        full_path = os.path.join(file_path, fname)
-        write_excel_file(full_path, df_dict)
-        dfpm_3a4_created.append('site level')
-
-        # create file by DFPM
-        for dfpm,coverage in dfpm_mapping.items():
-            df_dfpm=pd.DataFrame()
-            for org,contents in coverage.items():
-                if org in df_3a4.index:
-                    dfy=df_3a4.loc[org].copy()
-                    dfy=dfy[((dfy.main_bu.isin(contents[0])&(~dfy.main_pf.isin(contents[2])))|(dfy.main_pf.isin(contents[1])))].copy()
-                    if dfy.shape[0]>0:
-                        df_dfpm=pd.concat([df_dfpm,dfy],sort=False)
-
-                    del dfy
-
-            if df_dfpm.shape[0]>0:
-                df_dict['3a4'] = df_dfpm
-
-                fname = dfpm + ' 3a4 (created by ' + login_user + ') ' + pd.Timestamp.now().strftime('%m-%d %H:%M') +'.xlsx'
-                full_path = os.path.join(file_path, fname)
-                write_excel_file(full_path, df_dict)
-                dfpm_3a4_created.append(dfpm)
-
-                to_address = [dfpm + '@cisco.com']
-                subject = '3a4 summary for {}'.format(dfpm)
-                html = 'dfpm_3a4.html'
-
-                msg, size_over_limit = send_attachment_and_embded_image(to_address, subject, html,
-                                                                    att_filenames=None,
-                                                                    file_3a4=fname)
-
-        del df_dfpm
-        gc.collect()
-    else:
-        df_dict['3a4'] = df_3a4
-        fname = '3a4 (created by ' + login_user + ') ' + pd.Timestamp.now().strftime('%m-%d %H:%M') + '.xlsx'
-        full_path = os.path.join(file_path, fname)
-        write_excel_file(full_path, df_dict)
-        dfpm_3a4_created.append(login_user)
-
-    return dfpm_3a4_created
-
 
 def reformat_and_keep_latest_3a4_comment(df_3a4):
     '''
@@ -3076,11 +3130,11 @@ def create_tan_asp(df_3a4):
     :param df_3a4:
     :return: pivoted df
     """
-    df_asp=df_3a4.pivot_table(index=['ORGANIZATION_CODE','TAN'],values=['SOL_REVENUE','ORDERED_QUANTITY'],aggfunc=sum)
+    df_asp=df_3a4.pivot_table(index=['ORGANIZATION_CODE','TAN'],values=['C_UNSTAGED_DOLLARS','C_UNSTAGED_QTY'],aggfunc=sum)
     #TODO: if same TAN appear multiple time in one PO above code may result in duplidate po_rev being added - need enhance
 
-    df_asp.loc[:,'ASP']=df_asp.SOL_REVENUE/df_asp.ORDERED_QUANTITY
-    df_asp.columns=['Total_tan_quantity','Total_po_revenue','TAN_ASP']
+    df_asp.loc[:,'ASP']=df_asp.C_UNSTAGED_DOLLARS/df_asp.C_UNSTAGED_QTY
+    df_asp.columns=['Total_tan_unstg_qty','Total_po_rev_unstg','TAN_ASP']
     df_asp=df_asp.applymap(float)
 
     df_asp.sort_values(by=['ORGANIZATION_CODE','TAN_ASP'],ascending=False,inplace=True)
