@@ -2486,6 +2486,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
 
                 top_po_list = []
                 for row in dfp_org_cus[:top_po_num].itertuples():
+                    bu=row.BUSINESS_UNIT
                     rev=str(round(row.po_rev_unstg / 1000000, 1))
                     try:
                         create_date=pd.to_datetime(row.LINE_CREATION_DATE).strftime('%m-%d')
@@ -2497,7 +2498,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
                         fcd='N/A'
 
                     top_po_list.append(
-                        row.PO_NUMBER + '(' + rev + 'm, Enter date:' + create_date + ', FCD:' + fcd + ')')
+                        row.PO_NUMBER + '(' + bu + ', ' + rev + 'm, Enter date:' + create_date + ', FCD:' + fcd + ')')
 
                 dfp_org.loc[(org, customer), 'Top revenue PO'] = '  '.join(top_po_list)
 
