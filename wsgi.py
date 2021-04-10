@@ -255,6 +255,10 @@ def global_app():
 
                 top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num)
 
+                #return render_template('top_customer_and_booking.html',data=top_customer_booking_summary,
+                #                     threshold=threshold)
+
+
                 send_top_customer_booking_by_email(region, top_customer_booking_summary, threshold, login_user, top_customer_booking_emails, sender)
 
                 msg = 'Top customers and bookings summary created and sent for {}'.format(region)

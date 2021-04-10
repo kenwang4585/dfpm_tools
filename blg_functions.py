@@ -2486,10 +2486,20 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
 
                 top_po_list = []
                 for row in dfp_org_cus[:top_po_num].itertuples():
-                    top_po_list.append(
-                        row.PO_NUMBER + '(' + str(round(row.po_rev_unstg / 1000000, 1)) + 'm)')
+                    rev=str(round(row.po_rev_unstg / 1000000, 1))
+                    try:
+                        create_date=pd.to_datetime(row.LINE_CREATION_DATE).strftime('%m-%d')
+                    except:
+                        create_date='N/A'
+                    try:
+                        fcd=pd.to_datetime(row.CURRENT_FCD_NBD_DATE).strftime('%m-%d')
+                    except:
+                        fcd='N/A'
 
-                dfp_org.loc[(org, customer), 'Top revenue PO'] = '; '.join(top_po_list)
+                    top_po_list.append(
+                        row.PO_NUMBER + '(' + rev + 'm, Enter date:' + create_date + ', FCD:' + fcd + ')')
+
+                dfp_org.loc[(org, customer), 'Top revenue PO'] = '  '.join(top_po_list)
 
             dfp_org.reset_index(inplace=True)
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
