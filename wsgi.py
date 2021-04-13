@@ -319,6 +319,10 @@ def top_customers_bookings_apjc():
     if '[C]' in login_title: # for c-workers
         return 'Sorry, you are not authorized to access this.'
 
+    if login_user != 'kwang2':
+        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+                     summary='')
+
     file_name = os.path.join(base_dir_tracker, 'APJC top customers and bookings.npy')
     try:
         data=np.load(file_name, allow_pickle=True)
@@ -344,6 +348,10 @@ def top_customers_bookings_americas():
 
     if '[C]' in login_title: # for c-workers
         return 'Sorry, you are not authorized to access this.'
+
+    if login_user != 'kwang2':
+        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+                     summary='')
 
     file_name = os.path.join(base_dir_tracker, 'Americas top customers and bookings.npy')
     try:
@@ -371,6 +379,10 @@ def top_customers_bookings_emea():
 
     if '[C]' in login_title: # for c-workers
         return 'Sorry, you are not authorized to access this.'
+
+    if login_user != 'kwang2':
+        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+                     summary='')
 
     file_name = os.path.join(base_dir_tracker, 'EMEA top customers and bookings.npy')
     try:
