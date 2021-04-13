@@ -2447,7 +2447,7 @@ def send_top_customer_booking_by_email(region, data,threshold,login_user,to_addr
     Send the result by email
     """
     subject = region + ' top customers and bookings summary (sent by: '+login_user +')'
-    html = 'top_customer_and_booking.html'
+    html = 'top_customer_and_booking_email.html'
 
     send_attachment_and_embded_image(to_address, subject, html,
                                      sender=sender,
@@ -2457,7 +2457,7 @@ def send_top_customer_booking_by_email(region, data,threshold,login_user,to_addr
                                      threshold=threshold)
 
 
-def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num):
+def create_top_customer_and_booking_summary(df_3a4_main,region):
     """
     Create summary for the top$ backlog customers and recent bookings for them
     """
@@ -2465,14 +2465,14 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
                                   values='po_rev_unstg', aggfunc=sum) / 1000000
     dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
     dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1)
-    dfp = dfp.iloc[:, -booking_days:].copy()
+    dfp = dfp.iloc[:, -top_customers_bookings_history_days:].copy()
 
     top_customer_booking_summary = []
     for org in org_name_global[region][region]:
         dfp_org = dfp.loc[(org, slice(None)), :].copy()
         dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
         dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
-        dfp_org = dfp_org[dfp_org['Total backlog'] >= threshold]
+        dfp_org = dfp_org[dfp_org['Total backlog'] >= top_customers_bookings_threshold]
         dfp_org = dfp_org.applymap(lambda x: round(x, 1))
         dfp_org.fillna('', inplace=True)
 
@@ -2485,7 +2485,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
                 dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
 
                 top_po_list = []
-                for row in dfp_org_cus[:top_po_num].itertuples():
+                for row in dfp_org_cus.itertuples():
                     bu=row.BUSINESS_UNIT
                     rev=str(round(row.po_rev_unstg / 1000000, 1))
                     try:
@@ -2500,11 +2500,15 @@ def create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking
                     top_po_list.append(
                         row.PO_NUMBER + '(' + bu + ', ' + rev + 'm, Enter date:' + create_date + ', FCD:' + fcd + ')')
 
-                dfp_org.loc[(org, customer), 'Top revenue PO'] = '  '.join(top_po_list)
+                dfp_org.loc[(org, customer), 'PO Details'] = '  '.join(top_po_list)
 
             dfp_org.reset_index(inplace=True)
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
             top_customer_booking_summary.append((dfp_org.columns, dfp_org.values))
+
+            # save to npy file
+            file_name=os.path.join(base_dir_tracker,region + ' top customers and bookings.npy')
+            np.save(file_name,top_customer_booking_summary)
 
     return top_customer_booking_summary
 

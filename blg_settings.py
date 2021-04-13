@@ -9,6 +9,8 @@ qend_list=['2020-7-26','2020-10-24','2021-1-23','2021-5-1','2021-7-31',]
 
 super_user='kwang2'
 
+top_customers_bookings_threshold=5 # M$
+top_customers_bookings_history_days=10
 
 org_name_global = {'APJC': {'APJC':['FOC', 'FDO', 'JPE', 'SHK','NCB'],
                             'FOC': ['FOC'],

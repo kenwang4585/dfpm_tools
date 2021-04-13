@@ -26,12 +26,12 @@
                 <td width="45%">
                     <span style="font-size: large;"> <strong>Select region:</strong></span>
                         {{ form.region  (class='form-control')}}
+                    <br>
                     <span style="font-size: large;"> <strong>Running options:</strong></span>
                         {{ form.running_option (class='form-control') }}
                     <br>
                     <span style="font-size: large;"> <strong>Select tasks:</strong></span><br>
                         {{ form.backlog_summary }}&nbsp;{{ form.backlog_summary.label }}<br>
-                        {{ form.top_customer_booking }}&nbsp;{{ form.top_customer_booking.label }}<br>
                         {{ form.wnbu_compliance }}&nbsp;{{ form.wnbu_compliance.label }}<br>
                         {{ form.config_check }} &nbsp;{{ form.config_check.label }} &nbsp;(<a href="{{ url_for('config_rules_main') }}" target="">Manage</a>)<br>
 
@@ -56,5 +56,5 @@
 {% endblock %}
 
 {% block empty_space %}
-    <br><br><br><br><br><br><br><br>
+    <br><br><br><br><br><br><br><br><br><br>
 {% endblock %}

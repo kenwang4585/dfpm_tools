@@ -71,13 +71,13 @@ def global_app():
             print('Start to create below selected reports: {}'.format('/'.join(user_selection)))
         else:
             flash('You should at least select one task to do!', 'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
         user_selection.append('Running option: {}'.format(running_option))
 
         if f==None:
             flash('Pls upload 3a4 file!', 'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
         # 上传的文件名称并判断文件类型
         filename_3a4 = secure_filename(f.filename)
@@ -90,7 +90,7 @@ def global_app():
         else:
             flash('3A4 file type error: Only csv or xlsx file accepted! File you were trying to upload: {}'.format(
                     f.filename),'warning')
-            return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
         # 存储文件
         f.save(file_path_3a4)
@@ -131,15 +131,15 @@ def global_app():
             if backlog_summary or top_booking:
                 # org check
                 if not np.all(np.in1d(org_name_global[region][region], df_3a4.ORGANIZATION_CODE.unique())):
-                    flash('The 3a4 you uploaded does not contain all orgs from {}!'.format(region), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
+                    flash('The 3a4 you uploaded contains {} and missing some orgs for {}!'.format(df_3a4.ORGANIZATION_CODE.unique(),region), 'warning')
+                    return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
                 # col check
                 if not np.all(np.in1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns)):
                     flash('File format error! Following required \
                                                 columns for backlog summary not found in 3a4 data: {}'.format(
                         str(np.setdiff1d(col_3a4_must_have_global_backlog_summary, df_3a4.columns))),'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
+                    return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
             if wnbu_compliance:
                 # col check
@@ -147,7 +147,7 @@ def global_app():
                     flash('File format error! Following required \
                                                             columns for WNBU compliance check not found in 3a4 data: {}'.format(
                         str(np.setdiff1d(col_3a4_must_have_global_wnbu_compliance, df_3a4.columns))), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
+                    return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
             if config_check:
                 # col check
@@ -155,7 +155,7 @@ def global_app():
                     flash('File format error! Following required \
                                                                 columns for config check not found in 3a4 data: {}'.format(
                             str(np.setdiff1d(col_3a4_must_have_global_config_check, df_3a4.columns))), 'warning')
-                    return render_template('global_app.html', form=form,user=login_name,subtitle='')
+                    return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
             if running_option=='test':
                 if backlog_summary and config_check:
@@ -179,7 +179,7 @@ def global_app():
             if df_3a4.shape[0]==0:
                 msg = 'Empty data to process based on the file you uploaded and region you selected!'
                 flash(msg, 'warning')
-                return render_template('global_app.html', form=form, user=login_name, subtitle='')
+                return render_template('global_app.html', form=form, user=login_user, subtitle='')
 
             # below execute each task
             if wnbu_compliance:
@@ -229,6 +229,9 @@ def global_app():
                                                                                                            org_name_region,
                                                                                                            region,
                                                                                                            addr_history_fname)
+                # below data is saved to tracker
+                top_customer_booking_summary = create_top_customer_and_booking_summary(df_3a4_main, region)
+
                 create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_name_region,
                                                       backlog_dashboard_emails,region, sender,login_user)
                 msg = 'Backlog summary created and sent for {}.'.format(region)
@@ -249,17 +252,15 @@ def global_app():
 
             if top_booking:
                 # TODO: change over to po_rev later
-                threshold=5 # M$
-                booking_days=10
                 top_po_num=20
 
-                top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,threshold,booking_days,top_po_num)
+                top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,top_po_num)
 
                 #return render_template('top_customer_and_booking.html',data=top_customer_booking_summary,
                 #                     threshold=threshold)
 
 
-                send_top_customer_booking_by_email(region, top_customer_booking_summary, threshold, login_user, top_customer_booking_emails, sender)
+                #send_top_customer_booking_by_email(region, top_customer_booking_summary, threshold, login_user, top_customer_booking_emails, sender)
 
                 msg = 'Top customers and bookings summary created and sent for {}'.format(region)
                 flash(msg, 'success')
@@ -279,7 +280,7 @@ def global_app():
                 summary = 'Processing time: {}min; parameters: {}'.format(processing_time,'/'.join(user_selection))
             add_user_log(user=login_user, location='Home', user_action='Run', summary=summary)
 
-            #return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            #return render_template('global_app.html', form=form,user=login_user,subtitle='')
             return redirect(url_for('global_app'))
 
         except Exception as e:
@@ -299,10 +300,89 @@ def global_app():
                 file_object.write(error_msg)
             traceback.print_exc(file=open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+'))
 
-            return render_template('global_app.html', form=form,user=login_name,subtitle='')
+            return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
-    return render_template('global_app.html', form=form,user=login_name,subtitle='')
+    return render_template('global_app.html', form=form,user=login_user,subtitle='')
 
+
+@app.route('/top_customers_bookings_apjc',methods=['GET'])
+def top_customers_bookings_apjc():
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
+        login_title = 'unknown'
+
+    if '[C]' in login_title: # for c-workers
+        return 'Sorry, you are not authorized to access this.'
+
+    file_name = os.path.join(base_dir_tracker, 'APJC top customers and bookings.npy')
+    try:
+        data=np.load(file_name, allow_pickle=True)
+    except:
+        data=[]
+
+    return render_template('top_customers_bookings_details_apjc.html',
+                           user=login_user,
+                           data=data,
+                           threshold=top_customers_bookings_threshold,
+                           subtitle=' - Top Customers and Bookings Summary')
+
+@app.route('/top_customers_bookings_americas',methods=['GET'])
+def top_customers_bookings_americas():
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
+        login_title = 'unknown'
+
+    if '[C]' in login_title: # for c-workers
+        return 'Sorry, you are not authorized to access this.'
+
+    file_name = os.path.join(base_dir_tracker, 'Americas top customers and bookings.npy')
+    try:
+        data=np.load(file_name, allow_pickle=True)
+    except:
+        data=[]
+
+    return render_template('top_customers_bookings_details_americas.html',
+                           user=login_user,
+                           data=data,
+                           threshold=top_customers_bookings_threshold,
+                           subtitle=' - Top Customers and Bookings Summary')
+
+
+@app.route('/top_customers_bookings_emea',methods=['GET'])
+def top_customers_bookings_emea():
+    login_user = request.headers.get('Oidc-Claim-Sub')
+    login_name = request.headers.get('Oidc-Claim-Fullname')
+    login_title = request.headers.get('Oidc-Claim-Title')
+
+    if login_user == None:
+        login_user = 'unknown'
+        login_name = 'unknown'
+        login_title = 'unknown'
+
+    if '[C]' in login_title: # for c-workers
+        return 'Sorry, you are not authorized to access this.'
+
+    file_name = os.path.join(base_dir_tracker, 'EMEA top customers and bookings.npy')
+    try:
+        data=np.load(file_name, allow_pickle=True)
+    except:
+        data=[]
+
+    return render_template('top_customers_bookings_details_emea.html',
+                           user=login_user,
+                           data=data,
+                           threshold=top_customers_bookings_threshold,
+                           subtitle=' - Top Customers and Bookings Summary')
 
 @app.route('/ranking', methods=['GET', 'POST'])
 def backlog_ranking():
@@ -419,7 +499,7 @@ def backlog_ranking():
 
             return redirect(url_for('backlog_ranking'))
 
-    return render_template('backlog_ranking.html', form=form,user=login_name,subtitle='- Backlog Ranking')
+    return render_template('backlog_ranking.html', form=form,user=login_user,subtitle='- Backlog Ranking')
 
 @app.route('/config_rules_generic',methods=['GET','POST'])
 def config_rules_generic():
@@ -455,7 +535,7 @@ def config_rules_generic():
             msg='The qty field needs to be a number!'
             flash(msg,'warning')
             return render_template('config_rules_inclusion_exclusion_general.html',
-                           form=form,user=login_name,subtitle='- Config Rules',
+                           form=form,user=login_user,subtitle='- Config Rules',
                            login_user=login_user,
                            df_rule_header=df_rule.columns,
                            df_rule_data=df_rule.values,
@@ -473,7 +553,7 @@ def config_rules_generic():
         return redirect(url_for('config_rules_generic'))
 
     return render_template('config_rules_inclusion_exclusion_general.html',
-                           form=form,user=login_name,subtitle='- Config Rules',
+                           form=form,user=login_user,subtitle='- Config Rules',
                            login_user=login_user,
                            df_rule_header=df_rule.columns,
                            df_rule_data=df_rule.values,
@@ -544,7 +624,7 @@ def config_rules_complex():
             if not confirm_calina:
                 msg = 'Select the upload and replace checkbox to confirm proceeding!'
                 flash(msg, 'warning')
-                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
+                return render_template('config_rules_complex.html', form=form,user=login_user,subtitle='- Config Rules')
 
             # 存储文件
             fname_calina.save(file_path_calina)
@@ -575,7 +655,7 @@ def config_rules_complex():
             if not confirm_rachel:
                 msg = 'Select the upload and replace checkbox to confirm proceeding!'
                 flash(msg, 'warning')
-                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
+                return render_template('config_rules_complex.html', form=form,user=login_user,subtitle='- Config Rules')
 
             # 存储文件
             fname_rachel.save(file_path_rachel)
@@ -606,7 +686,7 @@ def config_rules_complex():
             if not confirm_alex:
                 msg = 'Select the upload and replace checkbox to confirm proceeding!'
                 flash(msg, 'warning')
-                return render_template('config_rules_complex.html', form=form,user=login_name,subtitle='- Config Rules')
+                return render_template('config_rules_complex.html', form=form,user=login_user,subtitle='- Config Rules')
 
             # 存储文件
             fname_alex.save(file_path_alex)
@@ -619,7 +699,7 @@ def config_rules_complex():
             return redirect(url_for('config_rules_complex'))
 
     return render_template('config_rules_complex.html',
-                           form=form,user=login_name,subtitle='- Config Rules',
+                           form=form,user=login_user,subtitle='- Config Rules',
                            login_user=login_user,
                            org_calina=org_calina,
                            org_rachel=org_rachel,
@@ -796,7 +876,7 @@ def config_rules_main():
 
     return render_template('config_rules_main.html',
                             form=form,
-                            user=login_name, subtitle='- Config Rules',
+                            user=login_user, subtitle='- Config Rules',
                             login_user=login_user,
                            df_error_db_summary_header=df_error_db_summary.columns,
                            df_error_db_summary_data=df_error_db_summary.values,
@@ -1004,7 +1084,7 @@ def dfpm_app():
             return redirect(url_for('dfpm_app'))
 
 
-    return render_template('dfpm_app.html', form=form,user=login_name,subtitle='- DFPM 3A4',
+    return render_template('dfpm_app.html', form=form,user=login_user,subtitle='- DFPM 3A4',
                            df_dfpm_mapping_header=df_dfpm_mapping.columns,
                            df_dfpm_mapping_data=df_dfpm_mapping.values,)
 
@@ -1033,7 +1113,7 @@ def documents():
                            table_header_1=df1.columns,
                            table_data_2=df2.values,
                            table_header_2=df2.columns,
-                           user=login_name,
+                           user=login_user,
                            subtitle=' - Documentation')
 
 @app.route('/backlog',methods=['GET'])
@@ -1154,7 +1234,7 @@ def backlog():
                            fjz_data=df_fjz.values,
                            tsp_header=df_tsp.columns,
                            tsp_data=df_tsp.values,
-                           user=login_name
+                           user=login_user
                            )
 
 @app.route('/file_download',methods=['GET','POST'])
@@ -1180,7 +1260,7 @@ def file_download():
     return render_template('file_download.html',
                            files_dfpm_3a4=df_dfpm_3a4.values,
                            files_uploaded=df_upload.values,
-                           user=login_name,
+                           user=login_user,
                            subtitle=' - File download')
 
 @app.route('/o/<filename>',methods=['GET'])
@@ -1270,7 +1350,7 @@ def subscribe():
             else:
                 msg = 'Select the checkbox to proceed - Related emails will be totally removed.'
                 flash(msg, 'warning')
-                return render_template('subscription.html', form=form, user=login_name,
+                return render_template('subscription.html', form=form, user=login_user,
                                        subtitle=' - Report Subscription',
                                        df_subscription_header=df_subscription.columns,
                                        df_subscription_data=df_subscription.values)
@@ -1298,7 +1378,7 @@ def subscribe():
             if backlog==False and wnbu_compliance==False and config==False and ranking==False:
                 msg = "Pls select at least a report to subscribe!"
                 flash(msg,'warning')
-                return render_template('subscription.html', form=form, user=login_name,
+                return render_template('subscription.html', form=form, user=login_user,
                                        subtitle=' - Report Subscription',
                                df_subscription_header=df_subscription.columns,
                                df_subscription_data=df_subscription.values)
@@ -1307,7 +1387,7 @@ def subscribe():
                 if ',' in email or '/' in email:
                     msg="Pls separate multiple emails with ';' instead!"
                     flash(msg,'warning')
-                    return render_template('subscription.html', form=form, user=login_name,
+                    return render_template('subscription.html', form=form, user=login_user,
                                            subtitle=' - Report Subscription',
                                df_subscription_header=df_subscription.columns,
                                df_subscription_data=df_subscription.values)
@@ -1320,7 +1400,7 @@ def subscribe():
                     msg='Pls select region for Backlog report!'
                     flash(msg,'warning')
                     #return redirect(url_for('subscribe'))
-                    return render_template('subscription.html', form=form,user=login_name,subtitle=' - Report Subscription',
+                    return render_template('subscription.html', form=form,user=login_user,subtitle=' - Report Subscription',
                                df_subscription_header=df_subscription.columns,
                                df_subscription_data=df_subscription.values)
                 else:
@@ -1338,7 +1418,7 @@ def subscribe():
                     msg = 'Pls select region for WNBU compliance report!'
                     flash(msg, 'warning')
                     # return redirect(url_for('subscribe'))
-                    return render_template('subscription.html', form=form, user=login_name,subtitle=' - Report Subscription',
+                    return render_template('subscription.html', form=form, user=login_user,subtitle=' - Report Subscription',
                                df_subscription_header=df_subscription.columns,
                                df_subscription_data=df_subscription.values)
                 else:
@@ -1356,7 +1436,7 @@ def subscribe():
                     msg = 'Pls select region for Config report!'
                     flash(msg, 'warning')
                     # return redirect(url_for('subscribe'))
-                    return render_template('subscription.html', form=form, user=login_name,
+                    return render_template('subscription.html', form=form, user=login_user,
                                                subtitle=' - Report Subscription',
                                df_subscription_header=df_subscription.columns,
                                df_subscription_data=df_subscription.values)
@@ -1379,7 +1459,7 @@ def subscribe():
                 if len(ranking_org_list)==0 or len(wrong_org_list)>0:
                     msg='You have either put in NO org name or wrong org name for ranking report!'
                     flash(msg,'warning')
-                    return render_template('subscription.html', form=form, user=login_name,
+                    return render_template('subscription.html', form=form, user=login_user,
                                            subtitle=' - Report Subscription',
                                            df_subscription_header=df_subscription.columns,
                                            df_subscription_data=df_subscription.values)
@@ -1405,7 +1485,7 @@ def subscribe():
                             msg = 'You selected the Backlog dashboard which is for Cisco only! Pls exclude non-Cisco users and resubmit.'
                             flash(msg, 'warning')
                             return render_template('subscription.html', form=form,
-                                                   user=login_name,
+                                                   user=login_user,
                                                    subtitle=' - Report Subscription',
                                                    df_subscription_header=df_subscription.columns,
                                                    df_subscription_data=df_subscription.values)
@@ -1421,7 +1501,7 @@ def subscribe():
                                 msg = 'Non-Cisco users can only subscribe to belonged org!'
                                 flash(msg, 'warning')
                                 return render_template('subscription.html', form=form,
-                                                       user=login_name,
+                                                       user=login_user,
                                                        subtitle=' - Report Subscription',
                                                        df_subscription_header=df_subscription.columns,
                                                        df_subscription_data=df_subscription.values)
@@ -1432,7 +1512,7 @@ def subscribe():
                     msg = 'None email is correct to be added, stop!'
                     flash(msg, 'warning')
                     return render_template('subscription.html', form=form,
-                                           user=login_name,
+                                           user=login_user,
                                            subtitle=' - Report Subscription',
                                            df_subscription_header=df_subscription.columns,
                                            df_subscription_data=df_subscription.values)
@@ -1441,7 +1521,7 @@ def subscribe():
                     msg = 'None email is correct to be added, stop!'
                     flash(msg, 'warning')
                     return render_template('subscription.html', form=form,
-                                           user=login_name,
+                                           user=login_user,
                                            subtitle=' - Report Subscription',
                                            df_subscription_header=df_subscription.columns,
                                            df_subscription_data=df_subscription.values)
@@ -1493,13 +1573,13 @@ def subscribe():
         df_subscription = read_table('subscription')
 
         return render_template('subscription.html', form=form,
-                           user=login_name,
+                           user=login_user,
                            subtitle=' - Report Subscription',
                            df_subscription_header=df_subscription.columns,
                            df_subscription_data=df_subscription.values)
 
     return render_template('subscription.html', form=form,
-                           user=login_name,
+                           user=login_user,
                            subtitle=' - Report Subscription',
                            df_subscription_header=df_subscription.columns,
                            df_subscription_data=df_subscription.values)
@@ -1560,7 +1640,7 @@ def admin():
                            files_tracker=df_tracker.values,
                            files_logs=df_logs.values,
                            log_details=df_log_detail.values,
-                           user=login_name,
+                           user=login_user,
                            subtitle=' - Admin')
 
 

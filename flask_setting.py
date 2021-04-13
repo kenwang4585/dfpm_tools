@@ -50,7 +50,7 @@ class Summary3a4Form(FlaskForm):
     submit_add_update = SubmitField('ADD/UPDATE')
 
 class SubscriptionForm(FlaskForm):
-    sub_backlog=BooleanField('Backlog summary dashboard/Top customers&bookings')
+    sub_backlog=BooleanField('Backlog summary dashboard')
     sub_wnbu_compliance = BooleanField('WNBU Compliance hold release report')
     sub_config = BooleanField('Config check result')
     backlog_apjc = BooleanField('APJC')

@@ -1,0 +1,55 @@
+
+<!-- Ken wang, Apr, 2021 -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+    <br>
+    <table width="92%" align="center">
+        <tr>
+            <td>
+                <ul class="nav nav-tabs">
+                    <li style="font-size: large"><a href="{{ url_for('top_customers_bookings_apjc')}}"><strong>APJC</strong></a></li>
+                    <li style="font-size: large"><a href="{{ url_for('top_customers_bookings_americas')}}"><strong>Americas</strong></a></li>
+                    <li class="active" style="font-size: large"><a href="{{ url_for('top_customers_bookings_emea')}}"><strong>EMEA</strong></a></li>
+                </ul>
+            </td>
+        </tr>
+    </table>
+    <br>
+    {%  for data_org in data %}
+            <table style="border-color: #999999; font-size: small" border="1" cellspacing="0px" align="center" width="90%">
+                <tr>
+                    <th width="3%" align="center">{{ data_org[0][0] }}</th>
+                    <th width="16%">&nbsp;{{ data_org[0][1] }}</th>
+                    {% for col in data_org[0][2:-1] %}
+                        <th width="3%" align="center">{{col}}</th>
+                    {% endfor %}
+                    <th width="20%" align="center">{{ data_org[0][-1] }}</th>
+                </tr>
+
+                {% for row in data_org[1] %}
+                    <tr>
+                        {% for col in row[:2] %}
+                            <td>&nbsp;{{col}}</td>
+                        {% endfor %}
+                        {% for col in row[2:-1] %}
+                            <td align="center">{{col}}</td>
+                        {% endfor %}
+                        <td align="left">
+                            <details>
+                                <summary>&nbsp;Click for details</summary>
+                                <p>{{ row[-1] }}</p>
+                            </details>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <br>
+    {% endfor %}
+{% endblock %}
+
+
+{% block empty_space %}
+    <br><br><br><br><br><br><br><br><br><br>
+{% endblock %}
