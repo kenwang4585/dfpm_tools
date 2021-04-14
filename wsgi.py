@@ -1610,7 +1610,7 @@ def admin():
         login_title = 'unknown'
 
     if login_user not in [super_user]:# + ['unknown']:
-        raise ValueError
+        #raise ValueError
         add_user_log(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
 
