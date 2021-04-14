@@ -320,7 +320,7 @@ def top_customers_bookings_apjc():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+        add_user_log(user=login_user, location='Top_customer-APJC', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'APJC top customers and bookings.npy')
@@ -350,7 +350,7 @@ def top_customers_bookings_americas():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+        add_user_log(user=login_user, location='Top_customer-Americas', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'Americas top customers and bookings.npy')
@@ -381,7 +381,7 @@ def top_customers_bookings_emea():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+        add_user_log(user=login_user, location='Top_customer-EMEA', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'EMEA top customers and bookings.npy')
