@@ -2469,6 +2469,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
 
     top_customer_booking_summary = []
     for org in org_name_global[region][region]:
+        print(org)
         dfp_org = dfp.loc[(org, slice(None)), :].copy()
         dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
         dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
@@ -2476,6 +2477,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
         dfp_org = dfp_org.applymap(lambda x: round(x, 1))
         dfp_org.fillna('', inplace=True)
 
+        print(org,dfp_org.shape[0])
         # find the top PO
         if dfp_org.shape[0] > 1:  # more than the total record
             customer_list = [x[1] for x in dfp_org.index]
@@ -2484,8 +2486,11 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
                     (df_3a4_main.ORGANIZATION_CODE == org) & (df_3a4_main.END_CUSTOMER_NAME == customer)].copy()
                 dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
 
+                #print(org,customer)
+                #print(dfp_org_cus.shape)
+
                 top_po_list = []
-                for row in dfp_org_cus.itertuples():
+                for row in dfp_org_cus[:1].itertuples():
                     bu=row.BUSINESS_UNIT
                     rev=str(round(row.po_rev_unstg / 1000000, 1))
                     try:
@@ -2506,9 +2511,9 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
             top_customer_booking_summary.append((dfp_org.columns, dfp_org.values))
 
-            # save to npy file
-            file_name=os.path.join(base_dir_tracker,region + ' top customers and bookings.npy')
-            np.save(file_name,top_customer_booking_summary)
+    # save to npy file
+    file_name=os.path.join(base_dir_tracker,region + ' top customers and bookings.npy')
+    np.save(file_name,top_customer_booking_summary)
 
     return top_customer_booking_summary
 
