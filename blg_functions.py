@@ -2490,7 +2490,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
                 #print(dfp_org_cus.shape)
 
                 top_po_list = []
-                for row in dfp_org_cus[:1].itertuples():
+                for row in dfp_org_cus.itertuples():
                     bu=row.BUSINESS_UNIT
                     rev=str(round(row.po_rev_unstg / 1000000, 1))
                     try:
@@ -2511,9 +2511,6 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
             top_customer_booking_summary.append((dfp_org.columns, dfp_org.values))
 
-    # save to npy file
-    file_name=os.path.join(base_dir_tracker,region + ' top customers and bookings.npy')
-    np.save(file_name,top_customer_booking_summary)
 
     return top_customer_booking_summary
 

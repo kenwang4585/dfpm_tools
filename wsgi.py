@@ -241,6 +241,10 @@ def global_app():
                     # save new addressable data to tracker
                     save_addr_tracker(df_3a4_main, addr_df_dict, region, org_name_region, addr_history_fname)
 
+                    # save top_customer_booking_summary to npy file
+                    file_name = os.path.join(base_dir_tracker, region + ' top customers and bookings.npy')
+                    np.save(file_name, top_customer_booking_summary)
+
                     # send trackers to ken as backup
                     if region == 'APJC':
                         backup_day = 'Monday'
