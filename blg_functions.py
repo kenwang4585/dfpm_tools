@@ -2477,7 +2477,6 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
         dfp_org = dfp_org.applymap(lambda x: round(x, 1))
         dfp_org.fillna('', inplace=True)
 
-        print(org,dfp_org.shape[0])
         # find the top PO
         if dfp_org.shape[0] > 1:  # more than the total record
             customer_list = [x[1] for x in dfp_org.index]
