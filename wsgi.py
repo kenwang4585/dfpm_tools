@@ -104,19 +104,16 @@ def global_app():
             # read email from the subscription DB
             backlog_dashboard_emails_global,wnbu_compliance_check_emails_global,config_check_emails_global= read_subscription_by_region()
             backlog_dashboard_emails=backlog_dashboard_emails_global[region]
-            top_customer_booking_emails=backlog_dashboard_emails # same email as backlog dashboard
             wnbu_compliance_emails=wnbu_compliance_check_emails_global[region]
             config_check_emails = config_check_emails_global[region]
             if len(backlog_dashboard_emails)==0:
                 backlog_dashboard_emails = [login_user + '@cisco.com']
-                top_customer_booking_emails = [login_user + '@cisco.com']
             if len(wnbu_compliance_emails)==0:
                 wnbu_compliance_emails = [login_user + '@cisco.com']
             if len(config_check_emails)==0:
                 config_check_emails = [login_user + '@cisco.com']
         else:
             backlog_dashboard_emails = [login_user + '@cisco.com']
-            top_customer_booking_emails = [login_user + '@cisco.com']
             wnbu_compliance_emails = [login_user + '@cisco.com']
             config_check_emails = [login_user + '@cisco.com']
 
@@ -230,9 +227,11 @@ def global_app():
                                                                                                            region,
                                                                                                            addr_history_fname)
                 # below data is saved to tracker
-                top_customer_booking_summary = create_top_customer_and_booking_summary(df_3a4_main, region)
+                top_booking_customer_summary,top_backlog_customer_summary = create_top_customer_and_booking_summary(df_3a4_main, region)
 
-                create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_name_region,
+
+
+                create_and_send_addressable_summaries(top_booking_customer_summary,top_customers_bookings_history_days,top_customers_bookings_threshold,addr_df_summary, addr_df_dict, org_name_region,
                                                       backlog_dashboard_emails,region, sender,login_user)
                 msg = 'Backlog summary created and sent for {}.'.format(region)
                 flash(msg, 'success')
@@ -243,7 +242,7 @@ def global_app():
 
                     # save top_customer_booking_summary to npy file
                     file_name = os.path.join(base_dir_tracker, region + ' top customers and bookings.npy')
-                    np.save(file_name, top_customer_booking_summary)
+                    np.save(file_name, top_backlog_customer_summary)
 
                     # send trackers to ken as backup
                     if region == 'APJC':
@@ -253,21 +252,6 @@ def global_app():
                     else:
                         backup_day = 'Friday'
                     download_and_send_tracker_as_backup(backup_day,login_user)
-
-            if top_booking:
-                # TODO: change over to po_rev later
-                top_po_num=20
-
-                top_customer_booking_summary=create_top_customer_and_booking_summary(df_3a4_main,region,top_po_num)
-
-                #return render_template('top_customer_and_booking.html',data=top_customer_booking_summary,
-                #                     threshold=threshold)
-
-
-                #send_top_customer_booking_by_email(region, top_customer_booking_summary, threshold, login_user, top_customer_booking_emails, sender)
-
-                msg = 'Top customers and bookings summary created and sent for {}'.format(region)
-                flash(msg, 'success')
 
             # Release the memories
             del df_3a4, df_3a4_main
@@ -337,7 +321,7 @@ def top_customers_bookings_apjc():
                            user=login_user,
                            data=data,
                            threshold=top_customers_bookings_threshold,
-                           subtitle=' - Top Customers and Bookings Summary')
+                           subtitle=' - Top Backlog/booking by customers')
 
 @app.route('/top_customers_bookings_americas',methods=['GET'])
 def top_customers_bookings_americas():
@@ -1651,8 +1635,6 @@ def admin():
             return redirect(url_for('admin',_external=True,_scheme='http',viewarg1=1))
 
     return render_template('admin.html',form=form,
-                           files_dfpm_3a4=df_dfpm_3a4.values,
-                           files_uploaded=df_upload.values,
                            files_tracker=df_tracker.values,
                            files_logs=df_logs.values,
                            log_details=df_log_detail.values,

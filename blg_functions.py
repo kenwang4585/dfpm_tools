@@ -2456,7 +2456,6 @@ def send_top_customer_booking_by_email(region, data,threshold,login_user,to_addr
                                      data=data,
                                      threshold=threshold)
 
-
 def create_top_customer_and_booking_summary(df_3a4_main,region):
     """
     Create summary for the top$ backlog customers and recent bookings for them
@@ -2465,11 +2464,28 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
                                   values='po_rev_unstg', aggfunc=sum) / 1000000
     dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
     dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1)
-    dfp = dfp.iloc[:, -top_customers_bookings_history_days:].copy()
+    dfp = dfp.iloc[:, -(top_customers_bookings_history_days+1):].copy()
 
-    top_customer_booking_summary = []
+    dfp.loc[:, 'Total booking']=dfp.sum(axis=1)
+    dfp.loc[:, 'Total booking']=dfp['Total booking']-dfp['Total backlog'] # above sum also incldued the totla backlog, thus deduct it\
+
+    # collect the top bookings customers
+    top_booking_customer_summary = [] # sort by total booking in the past x days
+
+    dfp.sort_values(by='Total booking', ascending=False, inplace=True)
+    dfp_booking = dfp[dfp['Total booking'] >= top_customers_bookings_threshold].copy()
+    #dfp_booking.drop('Total booking', axis=1, inplace=True)
+    dfp_booking = dfp_booking.applymap(lambda x: round(x, 1))
+    dfp_booking.fillna('', inplace=True)
+    dfp_booking.reset_index(inplace=True)
+    dfp_booking.rename(columns={'ORGANIZATION_CODE': 'Org code'}, inplace=True)
+    top_booking_customer_summary.append((dfp_booking.columns, dfp_booking.values))
+
+    # collect top backlog customers by org
+    dfp.drop('Total booking', axis=1, inplace=True)
+    top_backlog_customer_summary = []  # sort by total backlog
+
     for org in org_name_global[region][region]:
-        print(org)
         dfp_org = dfp.loc[(org, slice(None)), :].copy()
         dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
         dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
@@ -2477,16 +2493,14 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
         dfp_org = dfp_org.applymap(lambda x: round(x, 1))
         dfp_org.fillna('', inplace=True)
 
-        # find the top PO
+        # find the top PO and put into the last PO detail col
         if dfp_org.shape[0] > 1:  # more than the total record
             customer_list = [x[1] for x in dfp_org.index]
             for customer in customer_list:
                 dfp_org_cus = df_3a4_main[
                     (df_3a4_main.ORGANIZATION_CODE == org) & (df_3a4_main.END_CUSTOMER_NAME == customer)].copy()
-                dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
-
-                #print(org,customer)
-                #print(dfp_org_cus.shape)
+                #dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
+                dfp_org_cus.sort_values(by='LINE_CREATION_DATE', ascending=False, inplace=True)
 
                 top_po_list = []
                 for row in dfp_org_cus.itertuples():
@@ -2508,10 +2522,11 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
 
             dfp_org.reset_index(inplace=True)
             dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
-            top_customer_booking_summary.append((dfp_org.columns, dfp_org.values))
+            top_backlog_customer_summary.append((dfp_org.columns, dfp_org.values))
+
+    return top_booking_customer_summary,top_backlog_customer_summary
 
 
-    return top_customer_booking_summary
 
 def create_and_send_wnbu_compliance(wnbu_compliance_hold_emails, df_compliance_release, df_compliance_hold,
                                     df_country_missing, df_compliance_table, login_user,sender):
@@ -2652,8 +2667,8 @@ def save_addr_tracker(df_3a4,addr_df_dict, region, org_name,addr_fname):
 
 
 
-def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_name_region, backlog_dashboard_emails,
-                                          region,sender, login_user):
+def create_and_send_addressable_summaries(top_booking_customer_summary,top_customers_bookings_history_days,top_customers_bookings_threshold,addr_df_summary,
+                                          addr_df_dict, org_name_region, backlog_dashboard_emails,region,sender, login_user):
     '''
     Create the addressable tracker,snapshot chart, trending chart, and send by email.
     '''
@@ -2689,23 +2704,27 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
         html = 'apjc_backlog_summary.html'
 
         msg,size_over_limit = send_attachment_and_embded_image(to_address, subject, html, att_filenames=None,
-                                                sender=sender,
-                                                bcc=[super_user + '@cisco.com'],
-                                                embeded_filenames=backlog_chart_global[region],
-                                                banner_addr='cid:banner_addr',
-                                                apjc_add_summary='cid:apjc_add_summary',
-                                                foc_add_summary='cid:foc_add_summary',
-                                                fdo_add_summary='cid:fdo_add_summary',
-                                                jpe_add_summary='cid:jpe_add_summary',
-                                                shk_add_summary='cid:shk_add_summary',
-                                                ncb_add_summary='cid:ncb_add_summary',
-                                                apjc_add_trending='cid:apjc_add_trending',
-                                                foc_add_trending='cid:foc_add_trending',
-                                                fdo_add_trending='cid:fdo_add_trending',
-                                                jpe_add_trending='cid:jpe_add_trending',
-                                                shk_add_trending='cid:shk_add_trending',
-                                                ncb_add_trending='cid:ncb_add_trending',
-                                           )
+                                                                sender=sender,
+                                                                bcc=[super_user + '@cisco.com'],
+                                                                embeded_filenames=backlog_chart_global[region],
+                                                                banner_addr='cid:banner_addr',
+                                                                apjc_add_summary='cid:apjc_add_summary',
+                                                                foc_add_summary='cid:foc_add_summary',
+                                                                fdo_add_summary='cid:fdo_add_summary',
+                                                                jpe_add_summary='cid:jpe_add_summary',
+                                                                shk_add_summary='cid:shk_add_summary',
+                                                                ncb_add_summary='cid:ncb_add_summary',
+                                                                apjc_add_trending='cid:apjc_add_trending',
+                                                                foc_add_trending='cid:foc_add_trending',
+                                                                fdo_add_trending='cid:fdo_add_trending',
+                                                                jpe_add_trending='cid:jpe_add_trending',
+                                                                shk_add_trending='cid:shk_add_trending',
+                                                                ncb_add_trending='cid:ncb_add_trending',
+                                                               top_booking_customer_summary=top_booking_customer_summary,
+                                                               top_customers_bookings_history_days=top_customers_bookings_history_days,
+                                                               threshold=top_customers_bookings_threshold,
+                                                            )
+
     elif region=='EMEA':
         html = 'emea_backlog_summary.html'
 
@@ -2720,6 +2739,9 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
                                                                 emea_add_trending='cid:emea_add_trending',
                                                                 fcz_add_trending='cid:fcz_add_trending',
                                                                 fve_add_trending='cid:fve_add_trending',
+                                                                top_booking_customer_summary=top_booking_customer_summary,
+                                                                top_customers_bookings_history_days=top_customers_bookings_history_days,
+                                                                threshold = top_customers_bookings_threshold,
                                                                 )
     elif region=='Americas':
         html = 'americas_backlog_summary.html'
@@ -2745,6 +2767,9 @@ def create_and_send_addressable_summaries(addr_df_summary, addr_df_dict, org_nam
                                                                 jmx_add_trending='cid:jmx_add_trending',
                                                                 fjz_add_trending='cid:fjz_add_trending',
                                                                 tsp_add_trending='cid:tsp_add_trending',
+                                                                top_booking_customer_summary=top_booking_customer_summary,
+                                                                top_customers_bookings_history_days=top_customers_bookings_history_days,
+                                                                threshold=top_customers_bookings_threshold,
                                                                 )
 
 

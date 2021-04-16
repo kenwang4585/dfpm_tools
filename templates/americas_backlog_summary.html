@@ -9,23 +9,57 @@
     <img alt='image: Addressable/ Not addressable backlog summary' src="{{ banner_addr }}" width="1000">
     -->
     <table>
-        <tbody>
         <tr>
             <td width="1000" bgcolor="#4682b4" style="font-size: xx-large; color: #f8f9fa;" align="center">
                 Regional Backlog Dashboard
             </td>
         </tr>
-        </tbody>
     </table>
 
     <p>
         <a href="http://10.123.219.115/backlog" target="_blank">Addressable backlog details</a> <br>
-        <a href="http://10.123.219.115/top_customers_bookings_americas" target="_blank">Top customers and Bookings Summary</a>
+        <a href="http://10.123.219.115/top_customers_bookings_americas" target="_blank">Top backlog/booking by customer details</a>
     </p>
 
-<table>
-    <tbody>
-        <tr> <img alt='image: addr_summary'  src="{{ americas_add_summary }}" width="1000"></tr>
+    <table>
+        <tr>
+            <table>
+                <tr>
+                    <td width="1000" align="center">
+                        <h3>Top booking customers summary (>=${{ threshold }}m)</h3>
+                    </td>
+                </tr>
+            </table>
+
+            {%  for data_org in top_booking_customer_summary %}
+                <table style="border-color: #999999; font-size: small" border="1" cellspacing="0px" align="left" width="1000">
+                    <tr>
+                        <th width="3%" align="center">{{ data_org[0][0] }}</th>
+                        <th width="16%">&nbsp;{{ data_org[0][1] }}</th>
+                        {% for col in data_org[0][2:-2] %}
+                            <th width="3%" align="center">{{col}}</th>
+                        {% endfor %}
+                        <th width="4%" align="center">Total backlog</th>
+                        <th width="4%" align="center">Total booking (past {{ top_customers_bookings_history_days }} days)</th>
+
+                    </tr>
+
+                    {% for row in data_org[1] %}
+                        <tr>
+                            {% for col in row[:2] %}
+                                <td>&nbsp;{{col}}</td>
+                            {% endfor %}
+                            {% for col in row[2:] %}
+                                <td align="center">{{col}}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+                <br>
+            {% endfor %}
+        </tr>
+
+        <tr><td align="center"> <img alt='image: addr_summary'  src="{{ americas_add_summary }}" width="1000"></td></tr>
         <tr> <img alt='image: addr_trending' src="{{ americas_add_trending }}" width="1000"></tr>
         <tr> <img alt='image: addr_ftx'      src="{{ ftx_add_summary }}" width="1000"> </tr>
         <tr> <img alt='image: ftx_trending'  src="{{ ftx_add_trending }}" width="1000"></tr>
@@ -41,8 +75,8 @@
         <tr> <img alt='image: fjz_trending'  src="{{ fjz_add_trending }}" width="1000"></tr>
         <tr> <img alt='image: addr_tsp'      src="{{ tsp_add_summary }}" width="1000"> </tr>
         <tr> <img alt='image: tsp_trending'  src="{{ tsp_add_trending }}" width="1000"></tr>
-    </tbody>
-</table>
+
+    </table>
 
 <!--
 <img alt='image: Backlog summary by CRD, Target FCD and Current FCD' src="{{ banner_by_label }}" width="1000">
