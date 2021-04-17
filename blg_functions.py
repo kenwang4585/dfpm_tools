@@ -1487,12 +1487,12 @@ def create_addr_charts(df_list, item_list, fname, region, org=None):
     else:
         df.plot(ax=ax, kind='bar', stacked=True, rot=0, fontsize=5)
 
-    ax.set_ylabel('Backlog Snapshot - M$', fontsize=5)
+    ax.set_ylabel('(M$)', fontsize=5)
     if df.columns.name == None:
-        title = region
+        title = region + ' Backlog'
         value_size=4
     else:
-        title = df.columns.name
+        title = df.columns.name + ' Backlog'
         value_size=5
 
     ax.set_title(title, fontsize=7)
@@ -2095,11 +2095,11 @@ def create_addr_trending_chart(df_dict,backlog_chart):
         ax.grid(linestyle='-', linewidth=0.2)
         #print(df)
         #print(df.index)
-        ax.set_ylabel('Addressable backlog - M$', fontsize=5)
+        ax.set_ylabel('(M$)', fontsize=5)
         if org=='APJC' or org=='EMEA' or org=='Americas':
-            ax.set_title(org + ' Trending', fontsize=7)
+            ax.set_title(org + ' Addressable trending', fontsize=7)
         else:
-            ax.set_title(org + ' Trending (top BU)', fontsize=7)
+            ax.set_title(org + ' Addressable trending (top BU)', fontsize=7)
 
         # ax.set_xticks(range(len(df.index)))
         # ax.set_xticklabels(df.index.strftime('%m-%d'),fontsize=5)
@@ -2456,20 +2456,91 @@ def send_top_customer_booking_by_email(region, data,threshold,login_user,to_addr
                                      data=data,
                                      threshold=threshold)
 
-def create_top_customer_and_booking_summary(df_3a4_main,region):
+def create_booking_and_backlog_customer_summary(df_3a4_main,region):
     """
     Create summary for the top$ backlog customers and recent bookings for them
     """
+    # bookings by site
+    site_booking_summary=[]
+    dfp=df_3a4_main.pivot_table(index=['ORGANIZATION_CODE'], columns='LINE_CREATION_DATE',
+                                  values='po_rev_unstg', aggfunc=sum) / 1000000
+    dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
+    dfp.loc[:, 'Total booking'] = dfp.iloc[:,-top_customers_bookings_history_days:].sum(axis=1)
+    dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1) - dfp['Total booking']
+    dfp = dfp.iloc[:, -(top_customers_bookings_history_days + 2):].copy()
+    dfp.sort_values(by='Total booking',ascending=False,inplace=True)
+    dfp.loc['Total', :] = dfp.sum(axis=0)
+    dfp.fillna(0, inplace=True)
+    dfp = dfp.applymap(lambda x: round(x))
+    dfp.reset_index(inplace=True)
+    dfp.rename(columns={'ORGANIZATION_CODE': 'Org code'}, inplace=True)
+    site_booking_summary.append((dfp.columns, dfp.values))
+
+    # collect top backlog customers by org - sort by total backlog and PO detail sort by creationg date
+    top_backlog_customer_summary = []  #
     dfp = df_3a4_main.pivot_table(index=['ORGANIZATION_CODE', 'END_CUSTOMER_NAME'], columns='LINE_CREATION_DATE',
                                   values='po_rev_unstg', aggfunc=sum) / 1000000
     dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
     dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1)
     dfp = dfp.iloc[:, -(top_customers_bookings_history_days+1):].copy()
 
+    for org in org_name_global[region][region]:
+        dfp_org = dfp.loc[(org, slice(None)), :].copy()
+        dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
+        dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
+        dfp_org = dfp_org[dfp_org['Total backlog'] >= top_customers_bookings_threshold]
+        dfp_org = dfp_org.applymap(lambda x: round(x, 1))
+        dfp_org.fillna('', inplace=True)
+
+        # find the top PO and put into the last PO detail col
+        if dfp_org.shape[0] > 1:  # more than the total record
+            customer_list = [x[1] for x in dfp_org.index]
+            for customer in customer_list:
+                dfp_org_cus = df_3a4_main[
+                    (df_3a4_main.ORGANIZATION_CODE == org) & (df_3a4_main.END_CUSTOMER_NAME == customer)].copy()
+                #dfp_org_cus.sort_values(by='po_rev_unstg', ascending=False, inplace=True)
+                dfp_org_cus.sort_values(by='LINE_CREATION_DATE', ascending=False, inplace=True)
+
+                top_po_list = []
+                for row in dfp_org_cus.itertuples():
+                    bu=row.BUSINESS_UNIT
+                    rev=str(round(row.po_rev_unstg / 1000000, 1))
+                    try:
+                        create_date=pd.to_datetime(row.LINE_CREATION_DATE).strftime('%m-%d')
+                    except:
+                        create_date='N/A'
+                    try:
+                        fcd=pd.to_datetime(row.CURRENT_FCD_NBD_DATE).strftime('%m-%d')
+                    except:
+                        fcd='N/A'
+
+                    top_po_list.append(
+                        row.PO_NUMBER + '(' + bu + ', ' + rev + 'm, Enter date:' + create_date + ', FCD:' + fcd + ')')
+
+                dfp_org.loc[(org, customer), 'PO Details'] = '  '.join(top_po_list)
+
+            dfp_org.reset_index(inplace=True)
+            dfp_org.rename(columns={'ORGANIZATION_CODE': 'Org Code'}, inplace=True)
+            top_backlog_customer_summary.append((dfp_org.columns, dfp_org.values))
+
+    return site_booking_summary,top_backlog_customer_summary
+
+def create_top_customer_and_booking_summary(df_3a4_main,region):
+    """
+    Create summary for the top$ backlog customers and recent bookings for them
+    """
+
+    # top bookings by customers
+    dfp = df_3a4_main.pivot_table(index=['ORGANIZATION_CODE', 'END_CUSTOMER_NAME'], columns='LINE_CREATION_DATE',
+                                  values='po_rev_unstg', aggfunc=sum) / 1000000
+    dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
+    dfp.loc[:, 'Total backlog'] = dfp.sum(axis=1)
+    dfp = dfp.iloc[:, -(top_customers_bookings_history_days+1):].copy()
+
+    # collect the top bookings customers
     dfp.loc[:, 'Total booking']=dfp.sum(axis=1)
     dfp.loc[:, 'Total booking']=dfp['Total booking']-dfp['Total backlog'] # above sum also incldued the totla backlog, thus deduct it\
 
-    # collect the top bookings customers
     top_booking_customer_summary = [] # sort by total booking in the past x days
 
     dfp.sort_values(by='Total booking', ascending=False, inplace=True)
@@ -2480,6 +2551,7 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
     dfp_booking.reset_index(inplace=True)
     dfp_booking.rename(columns={'ORGANIZATION_CODE': 'Org code'}, inplace=True)
     top_booking_customer_summary.append((dfp_booking.columns, dfp_booking.values))
+
 
     # collect top backlog customers by org
     dfp.drop('Total booking', axis=1, inplace=True)
@@ -2525,8 +2597,6 @@ def create_top_customer_and_booking_summary(df_3a4_main,region):
             top_backlog_customer_summary.append((dfp_org.columns, dfp_org.values))
 
     return top_booking_customer_summary,top_backlog_customer_summary
-
-
 
 def create_and_send_wnbu_compliance(wnbu_compliance_hold_emails, df_compliance_release, df_compliance_hold,
                                     df_country_missing, df_compliance_table, login_user,sender):

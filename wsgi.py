@@ -227,11 +227,12 @@ def global_app():
                                                                                                            region,
                                                                                                            addr_history_fname)
                 # below data is saved to tracker
-                top_booking_customer_summary,top_backlog_customer_summary = create_top_customer_and_booking_summary(df_3a4_main, region)
+                #top_booking_customer_summary,top_backlog_customer_summary = create_top_customer_and_booking_summary(df_3a4_main, region)
 
+                site_booking_summary, top_backlog_customer_summary = create_booking_and_backlog_customer_summary(
+                    df_3a4_main, region)
 
-
-                create_and_send_addressable_summaries(top_booking_customer_summary,top_customers_bookings_history_days,top_customers_bookings_threshold,addr_df_summary, addr_df_dict, org_name_region,
+                create_and_send_addressable_summaries(site_booking_summary,top_customers_bookings_history_days,top_customers_bookings_threshold,addr_df_summary, addr_df_dict, org_name_region,
                                                       backlog_dashboard_emails,region, sender,login_user)
                 msg = 'Backlog summary created and sent for {}.'.format(region)
                 flash(msg, 'success')

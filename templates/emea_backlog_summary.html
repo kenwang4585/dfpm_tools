@@ -28,7 +28,7 @@
             <table>
                 <tr>
                     <td width="1000" align="center">
-                        <h3>Top booking customers summary (>=${{ threshold }}m)</h3>
+                        <h3>Booking summary</h3>
                     </td>
                 </tr>
             </table>
@@ -36,28 +36,22 @@
             {%  for data_org in top_booking_customer_summary %}
                 <table style="border-color: #999999; font-size: small" border="1" cellspacing="0px" align="left" width="1000">
                     <tr>
-                        <th width="3%" align="center">{{ data_org[0][0] }}</th>
-                        <th width="16%">&nbsp;{{ data_org[0][1] }}</th>
-                        {% for col in data_org[0][2:-2] %}
+
+                        {% for col in data_org[0][:-2] %}
                             <th width="3%" align="center">{{col}}</th>
                         {% endfor %}
-                        <th width="4%" align="center">Total backlog</th>
                         <th width="4%" align="center">Total booking (past {{ top_customers_bookings_history_days }} days)</th>
-
+                        <th width="4%" align="center">Total backlog</th>
                     </tr>
 
                     {% for row in data_org[1] %}
                         <tr>
-                            {% for col in row[:2] %}
-                                <td>&nbsp;{{col}}</td>
-                            {% endfor %}
-                            {% for col in row[2:] %}
+                            {% for col in row %}
                                 <td align="center">{{col}}</td>
                             {% endfor %}
                         </tr>
                     {% endfor %}
                 </table>
-                <br>
             {% endfor %}
         </tr>
 
