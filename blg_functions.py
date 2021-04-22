@@ -2470,14 +2470,21 @@ def create_booking_and_backlog_customer_summary(df_3a4_main,region):
     dfp = dfp.iloc[:, -(top_customers_bookings_history_days + 2):].copy()
     dfp.sort_values(by='Total booking',ascending=False,inplace=True)
     dfp.loc['Total', :] = dfp.sum(axis=0)
+    print(dfp)
+
+
     dfp.fillna(0, inplace=True)
     dfp = dfp.applymap(lambda x: round(x))
     dfp.reset_index(inplace=True)
     dfp.rename(columns={'ORGANIZATION_CODE': 'Org code'}, inplace=True)
     site_booking_summary.append((dfp.columns, dfp.values))
 
+
     # collect top backlog customers by org - sort by total backlog and PO detail sort by creationg date
     top_backlog_customer_summary = []  #
+    df_3a4_main.loc[:, 'END_CUSTOMER_NAME'] = np.where(df_3a4_main.END_CUSTOMER_NAME.isnull(),
+                                                       'dummy',
+                                                       df_3a4_main.END_CUSTOMER_NAME)
     dfp = df_3a4_main.pivot_table(index=['ORGANIZATION_CODE', 'END_CUSTOMER_NAME'], columns='LINE_CREATION_DATE',
                                   values='po_rev_unstg', aggfunc=sum) / 1000000
     dfp.columns = dfp.columns.map(lambda x: x.strftime('%m-%d'))
@@ -2488,7 +2495,9 @@ def create_booking_and_backlog_customer_summary(df_3a4_main,region):
         dfp_org = dfp.loc[(org, slice(None)), :].copy()
         dfp_org.sort_values(by='Total backlog', ascending=False, inplace=True)
         dfp_org.loc[(org, 'Total'), :] = dfp_org.sum(axis=0)
-        dfp_org = dfp_org[dfp_org['Total backlog'] >= top_customers_bookings_threshold]
+        dfp_org.reset_index(inplace=True)
+        dfp_org=dfp_org[(dfp_org.END_CUSTOMER_NAME!='dummy')&(dfp_org['Total backlog'] >= top_customers_bookings_threshold)].copy()
+        dfp_org.set_index(['ORGANIZATION_CODE', 'END_CUSTOMER_NAME'],inplace=True)
         dfp_org = dfp_org.applymap(lambda x: round(x, 1))
         dfp_org.fillna('', inplace=True)
 
