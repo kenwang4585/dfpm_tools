@@ -237,11 +237,6 @@ def global_app():
                 msg = 'Backlog summary created and sent for {}.'.format(region)
                 flash(msg, 'success')
 
-
-                # save top_customer_booking_summary to npy file
-                file_name = os.path.join(base_dir_tracker, region + ' top customers and bookings.npy')
-                np.save(file_name, top_backlog_customer_summary)
-
                 if running_option == 'formal':
                     # save new addressable data to tracker
                     save_addr_tracker(df_3a4_main, addr_df_dict, region, org_name_region, addr_history_fname)
