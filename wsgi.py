@@ -731,6 +731,10 @@ def config_rules_main():
     df_error_db = read_table('history_new_error_config_record')
     df_rsp_slot = read_table('rsp_slot')
 
+    if login_user!='kwang2':
+        add_user_log(user=login_user, location='Config main', user_action='visit',
+                     summary='')
+
     if form.validate_on_submit():
         start_time=pd.Timestamp.now()
         submit_upload=form.submit_upload_error.data
