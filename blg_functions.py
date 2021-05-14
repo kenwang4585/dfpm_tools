@@ -1752,7 +1752,7 @@ def read_ctb_from_smartsheet():
 
         file_uploaded_by = attachment_sheet_df.loc[row, 'UPLOADED_BY']
         file_org = attachment_sheet_df.loc[row, 'CM']
-        file_upload_date = attachment_sheet_df.loc[row, 'UPLOAD_DATE']
+        file_upload_date = attachment_sheet_df.loc[row, 'Created']
 
         missing_col = np.setdiff1d(temp_col, att_df_new.columns.values)
 
