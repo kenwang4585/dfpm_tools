@@ -576,7 +576,7 @@ def ss_ranking_overall_new_december(df_3a4,ss_exceptional_priority,ranking_col, 
                                               df_3a4.priority_rank_top,
                                               df_3a4.priority_rank_mid)
 
-
+    
     ##### Step3: Give revenue/non-revenue a rank
     df_3a4.loc[:,'rev_non_rev_rank']=np.where(df_3a4.REVENUE_NON_REVENUE=='YES', 0, 1)
 

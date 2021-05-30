@@ -84,8 +84,11 @@ class BacklogRankingForm(FlaskForm):
 
 
 class AdminForm(FlaskForm):
-    file_name=StringField(validators=[DataRequired()])
+    file_name=StringField()
     submit_delete=SubmitField('Delete')
+
+    file_name_upload=FileField('Upload file to tracker folder to replace:')
+    submit_replace=SubmitField('Replace')
 
 class ConfigRulesMain(FlaskForm):
     file_upload_error=FileField('Add new error config to database (.xlsx)')
@@ -140,7 +143,7 @@ class ConfigRulesGeneric(FlaskForm):
 
 # Database tables
 
-class UserLog(db.Model):
+class DfpmToolUserLog(db.Model):
     '''
     User logs db table
     '''
@@ -152,7 +155,7 @@ class UserLog(db.Model):
     USER_ACTION=db.Column(db.String(20))
     SUMMARY=db.Column(db.Text)
 
-class DfpmMapping(db.Model):
+class DfpmToolDfpmMapping(db.Model):
     '''
     DFPM mapping db table
     '''
@@ -160,12 +163,12 @@ class DfpmMapping(db.Model):
     DFPM=db.Column(db.String(10))
     Org=db.Column(db.String(3))
     BU=db.Column(db.String(40))
-    Extra_PF=db.Column(db.String(40))
-    Exclusion_PF=db.Column(db.String(40))
+    Extra_PF=db.Column(db.String(50))
+    Exclusion_PF=db.Column(db.String(60))
     Added_by=db.Column(db.String(10))
     Added_on=db.Column(db.Date)
 
-class Subscription(db.Model):
+class DfpmToolSubscription(db.Model):
     '''
     Email setting db table
     '''
@@ -175,20 +178,20 @@ class Subscription(db.Model):
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
 
-class GeneralConfigRule(db.Model):
+class DfpmToolGeneralConfigRule(db.Model):
     '''
     BU/PF based inclusion/exclusion rules db table
     '''
     id=db.Column(db.Integer,primary_key=True)
     ORG=db.Column(db.String(20))
     BU=db.Column(db.String(15))
-    PF=db.Column(db.String(60))
+    PF=db.Column(db.String(100))
     EXCEPTION_MAIN_PID =db.Column(db.String(100))
-    PID_A = db.Column(db.String(30))
-    PID_B = db.Column(db.String(30))
-    PID_B_OPERATOR=db.Column(db.String(4))
+    PID_A = db.Column(db.Text)
+    PID_B = db.Column(db.Text)
+    PID_B_OPERATOR=db.Column(db.String(2))
     PID_B_QTY=db.Column(db.Integer)
-    EFFECTIVE_DATE=db.Column(db.String(10))
+    EFFECTIVE_DATE=db.Column(db.Date)
     REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)
@@ -196,7 +199,7 @@ class GeneralConfigRule(db.Model):
 
 
 
-class HistoryNewErrorConfigRecord(db.Model):
+class DfpmToolHistoryNewErrorConfigRecord(db.Model):
     '''
     db table to store uploaded error config details
     '''
@@ -210,7 +213,7 @@ class HistoryNewErrorConfigRecord(db.Model):
     REMARK=db.Column(db.String(100))
     Added_by=db.Column(db.String(15))
 
-class RspSlot(db.Model):
+class DfpmToolRspSlot(db.Model):
     '''
     db table to store uploaded error config details
     '''
@@ -220,3 +223,14 @@ class RspSlot(db.Model):
     SLOT_KEYWORD = db.Column(db.String(20))
     Added_by=db.Column(db.String(15))
     Added_on = db.Column(db.Date)
+
+class DfpmToolAddressableBacklog(db.Model):
+    """
+    db table to store addressable backlog data
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    DATE = db.Column(db.Date)
+    ORG = db.Column(db.String(3))
+    BU = db.Column(db.String(20))
+    ADDRESSABLE_BACKLOG = db.Column(db.Float)
+    TOTAL_BACKLOG = db.Column(db.Float)

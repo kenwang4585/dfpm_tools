@@ -29,6 +29,8 @@ flask-bootstrap = "*"
 xlsxwriter = "*"
 numba = "*"
 cryptography = "*"
+flask-mysqldb = "*"
+mysqlclient = "*"
 
 [requires]
 python_version = "3.7"

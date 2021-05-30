@@ -1143,6 +1143,29 @@ def backlog():
         add_user_log(user=login_user, location='Backlog', user_action='Visit',
                  summary='')
 
+    """
+    df_backlog=read_table('dfpm_tool_addressable_backlog')
+
+    cutoff=pd.Timestamp.now().date() - pd.Timedelta(14,'d')
+    df_backlog=df_backlog[df_backlog.DATE>=cutoff].copy()
+
+    org_region={}
+    for region in org_name_global.keys():
+        orgs=org_name_global[region][region]
+        for org in orgs:
+            org_region[org]=region
+
+    df_backlog.loc[:,'REGION']=df_backlog.ORG.map(lambda x: org_region[x] if x in org_region.keys() else 'Unknown')
+
+    dfp=df_backlog.pivot_table(index=['REGION','ORG','DATE'],columns='BU',values='ADDRESSABLE_BACKLOG',aggfunc=sum)
+    dfp_apjc=dfp.loc[('APJC',slice(None),slice(None)),:].copy()
+    dfp_americas = dfp.loc[('Americas', slice(None), slice(None)), :].copy()
+    dfp_emea = dfp.loc[('EMEA', slice(None), slice(None)), :].copy()
+
+    dfp.to_excel('test.xlsx')
+    raise ValueError
+    """
+
     fname_apjc=os.path.join(base_dir_tracker,'apjc_history_addressable.xlsx')
     fname_emea=os.path.join(base_dir_tracker,'emea_history_addressable.xlsx')
     fname_americas=os.path.join(base_dir_tracker,'americas_history_addressable.xlsx')
@@ -1275,7 +1298,7 @@ def download_file_output(filename):
     if login_user != None:
         add_user_log(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
-    return send_from_directory(f_path, filename=filename, as_attachment=True)
+    return send_from_directory(f_path, filename, as_attachment=True)
 
 @app.route('/u/<filename>',methods=['GET'])
 def download_file_upload(filename):
@@ -1284,7 +1307,7 @@ def download_file_upload(filename):
     if login_user != None:
         add_user_log(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
-    return send_from_directory(f_path, filename=filename, as_attachment=True)
+    return send_from_directory(f_path, filename, as_attachment=True)
 
 @app.route('/t/<filename>',methods=['GET'])
 def download_file_tracker(filename):
@@ -1293,7 +1316,7 @@ def download_file_tracker(filename):
     if login_user != None:
         add_user_log(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
-    return send_from_directory(f_path, filename=filename, as_attachment=True)
+    return send_from_directory(f_path, filename, as_attachment=True)
 
 @app.route('/l/<filename>',methods=['GET'])
 def download_file_logs(filename):
@@ -1302,7 +1325,7 @@ def download_file_logs(filename):
     if login_user != None:
         add_user_log(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
-    return send_from_directory(f_path, filename=filename, as_attachment=True)
+    return send_from_directory(f_path, filename, as_attachment=True)
 
 
 @app.route('/subscribe', methods=['GET','POST'])
@@ -1602,7 +1625,7 @@ def admin():
         login_user = 'unknown'
         login_title = 'unknown'
 
-    if login_user not in [super_user]:# + ['unknown']:
+    if login_user not in [super_user] + ['unknown']:
         raise ValueError
         add_user_log(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
@@ -1614,30 +1637,42 @@ def admin():
     df_logs=get_file_info_on_drive(base_dir_logs,keep_hours=10000)
 
     # read logs
-    df_log_detail = read_table('user_log')
-    df_log_detail.sort_values(by=['DATE', 'TIME'], ascending=False, inplace=True)
+    df_log_detail = read_table('dfpm_tool_user_log')
+    df_log_detail.sort_values(by=['id'], ascending=False, inplace=True)
 
     if form.validate_on_submit():
         fname=form.file_name.data
-        if fname in df_dfpm_3a4.File_name.values:
-            f_path=df_dfpm_3a4[df_dfpm_3a4.File_name==fname].File_path.values[0]
-            os.remove(f_path)
-            msg='{} removed!'.format(fname)
-            flash(msg,'success')
-        elif fname in df_upload.File_name.values:
-            f_path = df_upload[df_upload.File_name == fname].File_path.values[0]
-            os.remove(f_path)
-            msg = '{} removed!'.format(fname)
+        fname_replae=form.file_name_upload.data
+
+        submit_delete=form.submit_delete.data
+        submit_replace=form.submit_replace.data
+
+        if submit_delete:
+            if fname in df_dfpm_3a4.File_name.values:
+                f_path=df_dfpm_3a4[df_dfpm_3a4.File_name==fname].File_path.values[0]
+                os.remove(f_path)
+                msg='{} removed!'.format(fname)
+                flash(msg,'success')
+            elif fname in df_upload.File_name.values:
+                f_path = df_upload[df_upload.File_name == fname].File_path.values[0]
+                os.remove(f_path)
+                msg = '{} removed!'.format(fname)
+                flash(msg, 'success')
+            elif fname in df_tracker.File_name.values:
+                f_path = df_tracker[df_tracker.File_name == fname].File_path.values[0]
+                os.remove(f_path)
+                msg = '{} removed!'.format(fname)
+                flash(msg, 'success')
+            else:
+                msg = 'Error file name! Ensure it is in output folder,upload folder or supply folder: {}'.format(fname)
+                flash(msg, 'warning')
+                return redirect(url_for('admin',_external=True,_scheme='http',viewarg1=1))
+        elif submit_replace:
+            file_path=os.path.join(base_dir_tracker,fname_replae.filename)
+            fname_replae.save(file_path)
+            msg = 'This file is uploaded to the tracker folder. Same file is replaced: {}'.format(fname_replae)
             flash(msg, 'success')
-        elif fname in df_tracker.File_name.values:
-            f_path = df_tracker[df_tracker.File_name == fname].File_path.values[0]
-            os.remove(f_path)
-            msg = '{} removed!'.format(fname)
-            flash(msg, 'success')
-        else:
-            msg = 'Error file name! Ensure it is in output folder,upload folder or supply folder: {}'.format(fname)
-            flash(msg, 'warning')
-            return redirect(url_for('admin',_external=True,_scheme='http',viewarg1=1))
+            return redirect(url_for('admin', _external=True, _scheme='http', viewarg1=1))
 
     return render_template('admin.html',form=form,
                            files_tracker=df_tracker.values,
