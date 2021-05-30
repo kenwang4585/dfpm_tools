@@ -827,7 +827,7 @@ def config_rules_main():
             id_list=df_error_db_remove.id.values
             id_list = [str(x) for x in id_list]
             if len(id_list)>0:
-                delete_record('history_new_error_config_record', id_list)
+                delete_record('dfpm_tool_history_new_error_config_record', id_list)
                 msg = 'Thanks, we have found {} same config record in database which have been removed'.format(remove_config_po_qty)
                 flash(msg, 'success')
                 # read and count again:
@@ -1363,7 +1363,7 @@ def subscribe():
                 id_list = df_subscription[df_subscription.Email.isin(email)].id.values
                 id_list=[str(x) for x in id_list]
                 if len(id_list)>0:
-                    delete_record('subscription', id_list)
+                    delete_record('dfpm_tools_subscription', id_list)
                     emails_removed=df_subscription[df_subscription.Email.isin(email)].Email.values
                     add_user_log_summary(user=login_user, location='Subscribe', user_action='Un-subscribe',
                                  summary='Email removed: {}'.format(emails_removed))
@@ -1710,7 +1710,7 @@ def delete_general_config_rule_pid_record(login_user,added_by,record_id):
 
     if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('general_config_rule_pid', id_list)
+        delete_record('dfpm_tool_general_config_rule_pid', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:
@@ -1728,7 +1728,7 @@ def delete_general_config_rule_record(login_user,added_by,record_id):
 
     if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('general_config_rule', id_list)
+        delete_record('dfpm_tool_general_config_rule', id_list)
         msg = 'General rule deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:
