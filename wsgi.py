@@ -15,7 +15,7 @@ from flask_setting import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
-from db_add import add_user_log,add_dfpm_mapping_data, add_subscription,add_incl_excl_rule,add_slot_and_rsp_keyword  # remove db and use above instead
+from db_add import *  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
 from db_delete import delete_record
@@ -267,7 +267,7 @@ def global_app():
                 summary='Processing time: {}min; parameters: {}; New config errors: {}; Config checking time: {}'.format(processing_time,'/'.join(user_selection),qty_new_error,checking_time)
             else:
                 summary = 'Processing time: {}min; parameters: {}'.format(processing_time,'/'.join(user_selection))
-            add_user_log(user=login_user, location='Home', user_action='Run', summary=summary)
+            add_user_log_summary(user=login_user, location='Home', user_action='Run', summary=summary)
 
             #return render_template('global_app.html', form=form,user=login_user,subtitle='')
             return redirect(url_for('global_app'))
@@ -281,7 +281,7 @@ def global_app():
 
             traceback.print_exc()
             flash(str(e),'warning')
-            add_user_log(user=login_user, location='Home', user_action='Run',
+            add_user_log_summary(user=login_user, location='Home', user_action='Run',
                          summary='[Error] ' + '/'.join(user_selection) + ' | ' + str(e))
             error_msg='\n['+login_user + '] Home: ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
             error_msg=error_msg + '\n' + '/'.join(user_selection) + '\n'
@@ -309,7 +309,7 @@ def top_customers_bookings_apjc():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Top_customer-APJC', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Top_customer-APJC', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'APJC top customers and bookings.npy')
@@ -339,7 +339,7 @@ def top_customers_bookings_americas():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Top_customer-Americas', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Top_customer-Americas', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'Americas top customers and bookings.npy')
@@ -370,7 +370,7 @@ def top_customers_bookings_emea():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Top_customer-EMEA', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Top_customer-EMEA', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'EMEA top customers and bookings.npy')
@@ -426,7 +426,7 @@ def backlog_ranking():
         elif ext_3a4 == 'xlsx':
             df = pd.read_excel(file_path_3a4,encoding='iso-8859-1',nrows=3)
         else:
-            add_user_log(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
                          summary='Wong file type used: {}'.format(file_path_3a4))
 
             msg = '3a4 file format error! Only accept .csv or .xlsx!'
@@ -480,7 +480,7 @@ def backlog_ranking():
             processing_time = round((time_stamp - start_time_).total_seconds() / 60, 1)
 
             # write program log to log file
-            add_user_log(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
                          summary='Success: {} - {}; processing time: {}'.format(org,email_option,str(processing_time)))
 
             return redirect(url_for('backlog_ranking'))
@@ -491,7 +491,7 @@ def backlog_ranking():
 
             print(e)
             traceback.print_exc()
-            add_user_log(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
                          summary='Error: ' + str(e))
             error_msg = '\n[' + login_user + '] Backlog_ranking: ' + org + '   ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
             with open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+') as file_object:
@@ -514,7 +514,7 @@ def config_rules_generic():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_rule=read_table('general_config_rule')
+    df_rule=read_table('dfpm_tool_general_config_rule')
 
     if form.validate_on_submit():
         org = ''.join(form.org.data.upper().split())
@@ -545,7 +545,7 @@ def config_rules_generic():
 
         add_incl_excl_rule(org,bu,pf, exception_main_pid, pid_a, pid_b,pid_b_operator,pid_b_qty, effective_date ,remark, login_user)
 
-        df_rule=read_table('general_config_rule')
+        df_rule=read_table('dfpm_tool_general_config_rule')
         for row in df_rule.itertuples():
             print(row)
 
@@ -630,7 +630,7 @@ def config_rules_complex():
             # 存储文件
             fname_calina.save(file_path_calina)
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+            add_user_log_summary(user=login_user, location='Config', user_action='Upload rule file',
                          summary='')
             msg = 'New file has been upload and rules replaced: {}'.format(fname_calina.filename)
             flash(msg, 'success')
@@ -661,7 +661,7 @@ def config_rules_complex():
             # 存储文件
             fname_rachel.save(file_path_rachel)
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+            add_user_log_summary(user=login_user, location='Config', user_action='Upload rule file',
                          summary='')
             msg = 'New file has been upload and rules replaced: {}'.format(fname_rachel.filename)
             flash(msg, 'success')
@@ -692,7 +692,7 @@ def config_rules_complex():
             # 存储文件
             fname_alex.save(file_path_alex)
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config - complex', user_action='Upload rule file',
+            add_user_log_summary(user=login_user, location='Config', user_action='Upload rule file',
                          summary='')
 
             msg = 'New file has been upload and rules replaced: {}'.format(fname_alex.filename)
@@ -728,11 +728,11 @@ def config_rules_main():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_error_db = read_table('history_new_error_config_record')
-    df_rsp_slot = read_table('rsp_slot')
+    df_error_db = read_table('dfpm_tool_history_new_error_config_record')
+    df_rsp_slot = read_table('dfpm_tool_rsp_slot')
 
     if login_user!='kwang2':
-        add_user_log(user=login_user, location='Config main', user_action='visit',
+        add_user_log_summary(user=login_user, location='Config', user_action='visit',
                      summary='')
 
     if form.validate_on_submit():
@@ -771,7 +771,7 @@ def config_rules_main():
                 return redirect(url_for("config_rules_main"))
 
             # get new config data and upload
-            df_error_db=read_table('history_new_error_config_record')
+            df_error_db=read_table('dfpm_tool_history_new_error_config_record')
             #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
 
             #df_error_db = fill_up_remark(df_error_db)
@@ -783,10 +783,10 @@ def config_rules_main():
 
             # read and count again:
             if new_config_po_qty>0:
-                df_error_db = read_table('history_new_error_config_record')
+                df_error_db = read_table('dfpm_tool_history_new_error_config_record')
 
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config', user_action='Upload error config',
+            add_user_log_summary(user=login_user, location='Config', user_action='Upload error config',
                              summary='Uploaded PO saved to tracker: {}; new configs saved to db: {}'.format(report_po_qty, new_config_po_qty))
 
             return redirect(url_for("config_rules_main"))
@@ -819,7 +819,7 @@ def config_rules_main():
                 return redirect(url_for("config_rules_main"))
 
             # find same config data from db and remove
-            df_error_db=read_table('history_new_error_config_record')
+            df_error_db=read_table('dfpm_tool_history_new_error_config_record')
             #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
             #report_po_qty=len(df_upload.PO_NUMBER.unique())
             df_error_db_remove=get_same_config_data_to_remove_from_db(df_error_db, df_remove) # use df_remove as the base
@@ -831,13 +831,13 @@ def config_rules_main():
                 msg = 'Thanks, we have found {} same config record in database which have been removed'.format(remove_config_po_qty)
                 flash(msg, 'success')
                 # read and count again:
-                df_error_db = read_table('history_new_error_config_record')
+                df_error_db = read_table('dfpm_tool_history_new_error_config_record')
             else:
                 msg = 'No same config record found in database to remove.'
                 flash(msg, 'info')
 
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config', user_action='Remove config',
+            add_user_log_summary(user=login_user, location='Config', user_action='Remove config',
                              summary='No of matching configs removed from database: {}'.format(remove_config_po_qty))
 
             return redirect(url_for("config_rules_main"))
@@ -854,7 +854,7 @@ def config_rules_main():
                 msg = 'Slot you try to add already exist.'
                 flash(msg, 'info')
 
-            df_rsp_slot = read_table('rsp_slot')
+            df_rsp_slot = read_table('dfpm_tool_rsp_slot')
 
             return redirect(url_for("config_rules_main"))
         elif submit_remove_tracker:
@@ -871,7 +871,7 @@ def config_rules_main():
             flash(msg, 'success')
 
             # write program log to log file
-            add_user_log(user=login_user, location='Manage config', user_action='Remove PO from tracker',
+            add_user_log_summary(user=login_user, location='Config', user_action='Remove PO from tracker',
                          summary='No. of PO removed from tracker: {}'.format(len(po_list)))
 
             return redirect(url_for("config_rules_main"))
@@ -902,7 +902,7 @@ def dfpm_app():
         login_name = 'unknown'
 
     # read DFPM mapping
-    df_dfpm_mapping = read_table('dfpm_mapping')
+    df_dfpm_mapping = read_table('dfpm_tool_dfpm_mapping')
     df_dfpm_mapping.sort_values(by=['DFPM'],inplace=True)
 
     if form.validate_on_submit():
@@ -1036,7 +1036,7 @@ def dfpm_app():
                 processing_time = round((time_stamp - start_time).total_seconds() / 60, 1)
                 print('Completed: {} min'.format(processing_time))
                 # write program log to log file
-                add_user_log(user=login_user, location='DFPM app', user_action='Run', summary='User selection: {}; Processing time: {} min.'.format(user_selection, str(processing_time)))
+                add_user_log_summary(user=login_user, location='DFPM app', user_action='Run', summary='User selection: {}; Processing time: {} min.'.format(user_selection, str(processing_time)))
 
                 return redirect(url_for('dfpm_app'))
             except Exception as e:
@@ -1044,7 +1044,7 @@ def dfpm_app():
                 flash(msg, 'warning')
 
                 traceback.print_exc()
-                add_user_log(user=login_user, location='DFPM app', user_action='Run',
+                add_user_log_summary(user=login_user, location='DFPM app', user_action='Run',
                              summary='User selection: {}; Error: {}'.format(user_selection,str(e)))
                 error_msg = '\n[' + login_user + '] DFPM app: ' + pd.Timestamp.now().strftime(
                     '%Y-%m-%d %H:%M:%S') + '\n'
@@ -1140,7 +1140,7 @@ def backlog():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log(user=login_user, location='Backlog', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Backlog', user_action='Visit',
                  summary='')
 
     """
@@ -1296,7 +1296,7 @@ def download_file_output(filename):
     f_path=base_dir_output
     login_user = request.headers.get('Oidc-Claim-Sub')
     if login_user != None:
-        add_user_log(user=login_user, location='Download', user_action='Download file',
+        add_user_log_summary(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
     return send_from_directory(f_path, filename, as_attachment=True)
 
@@ -1305,7 +1305,7 @@ def download_file_upload(filename):
     f_path=base_dir_uploaded
     login_user = request.headers.get('Oidc-Claim-Sub')
     if login_user != None:
-        add_user_log(user=login_user, location='Download', user_action='Download file',
+        add_user_log_summary(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
     return send_from_directory(f_path, filename, as_attachment=True)
 
@@ -1314,7 +1314,7 @@ def download_file_tracker(filename):
     f_path=base_dir_tracker
     login_user = request.headers.get('Oidc-Claim-Sub')
     if login_user != None:
-        add_user_log(user=login_user, location='Download', user_action='Download file',
+        add_user_log_summary(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
     return send_from_directory(f_path, filename, as_attachment=True)
 
@@ -1323,7 +1323,7 @@ def download_file_logs(filename):
     f_path=base_dir_logs
     login_user = request.headers.get('Oidc-Claim-Sub')
     if login_user != None:
-        add_user_log(user=login_user, location='Download', user_action='Download file',
+        add_user_log_summary(user=login_user, location='Download', user_action='Download file',
                  summary=filename)
     return send_from_directory(f_path, filename, as_attachment=True)
 
@@ -1340,7 +1340,7 @@ def subscribe():
         login_user = 'unknown'
         login_title = 'unknown'
 
-    df_subscription= read_table('subscription')
+    df_subscription= read_table('dfpm_tool_subscription')
     #df_subscription.sort_values(by=['Email'], ascending=True, inplace=True)
     df_subscription.drop_duplicates(keep='last',inplace=True)
 
@@ -1365,7 +1365,7 @@ def subscribe():
                 if len(id_list)>0:
                     delete_record('subscription', id_list)
                     emails_removed=df_subscription[df_subscription.Email.isin(email)].Email.values
-                    add_user_log(user=login_user, location='Subscribe', user_action='Un-subscribe',
+                    add_user_log_summary(user=login_user, location='Subscribe', user_action='Un-subscribe',
                                  summary='Email removed: {}'.format(emails_removed))
 
                     msg ='Following emails have been removed: {}'.format(emails_removed)
@@ -1594,11 +1594,11 @@ def subscribe():
             # write program log to log file
             msg = 'Subscription for following emails have been added/updated: {}'.format(email_list)
             flash(msg, 'success')
-            add_user_log(user=login_user, location='Subscribe', user_action='Subscribe',
+            add_user_log_summary(user=login_user, location='Subscribe', user_action='Subscribe',
                                  summary='Subscription details: {}'.format(new_sub_dict_dict))
 
         # read the table again for display
-        df_subscription = read_table('subscription')
+        df_subscription = read_table('dfpm_tool_subscription')
 
         return render_template('subscription.html', form=form,
                            user=login_user,
@@ -1627,7 +1627,7 @@ def admin():
 
     if login_user not in [super_user] + ['unknown']:
         raise ValueError
-        add_user_log(user=login_user, location='Admin', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Admin', user_action='Visit',
                  summary='Why happens?')
 
     # get file info
