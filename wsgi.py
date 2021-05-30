@@ -1670,7 +1670,7 @@ def admin():
         elif submit_replace:
             file_path=os.path.join(base_dir_tracker,fname_replae.filename)
             fname_replae.save(file_path)
-            msg = 'This file is uploaded to the tracker folder. Same file is replaced: {}'.format(fname_replae)
+            msg = 'This file is uploaded to the tracker folder. Same file is replaced: {}'.format(fname_replae.filename)
             flash(msg, 'success')
             return redirect(url_for('admin', _external=True, _scheme='http', viewarg1=1))
 
