@@ -309,7 +309,7 @@ def top_customers_bookings_apjc():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log_summary(user=login_user, location='Top_customer-APJC', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Book-APJC', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'APJC top customers and bookings.npy')
@@ -339,7 +339,7 @@ def top_customers_bookings_americas():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log_summary(user=login_user, location='Top_customer-Americas', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Book-AM', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'Americas top customers and bookings.npy')
@@ -370,7 +370,7 @@ def top_customers_bookings_emea():
         return 'Sorry, you are not authorized to access this.'
 
     if login_user != 'kwang2':
-        add_user_log_summary(user=login_user, location='Top_customer-EMEA', user_action='Visit',
+        add_user_log_summary(user=login_user, location='Book-EMEA', user_action='Visit',
                      summary='')
 
     file_name = os.path.join(base_dir_tracker, 'EMEA top customers and bookings.npy')
@@ -426,7 +426,7 @@ def backlog_ranking():
         elif ext_3a4 == 'xlsx':
             df = pd.read_excel(file_path_3a4,encoding='iso-8859-1',nrows=3)
         else:
-            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
                          summary='Wong file type used: {}'.format(file_path_3a4))
 
             msg = '3a4 file format error! Only accept .csv or .xlsx!'
@@ -480,7 +480,7 @@ def backlog_ranking():
             processing_time = round((time_stamp - start_time_).total_seconds() / 60, 1)
 
             # write program log to log file
-            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
                          summary='Success: {} - {}; processing time: {}'.format(org,email_option,str(processing_time)))
 
             return redirect(url_for('backlog_ranking'))
@@ -491,7 +491,7 @@ def backlog_ranking():
 
             print(e)
             traceback.print_exc()
-            add_user_log_summary(user=login_user, location='Backlog ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
                          summary='Error: ' + str(e))
             error_msg = '\n[' + login_user + '] Backlog_ranking: ' + org + '   ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
             with open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+') as file_object:
