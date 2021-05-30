@@ -191,7 +191,7 @@ class DfpmToolGeneralConfigRule(db.Model):
     PID_B = db.Column(db.Text)
     PID_B_OPERATOR=db.Column(db.String(2))
     PID_B_QTY=db.Column(db.Integer)
-    EFFECTIVE_DATE=db.Column(db.Date)
+    EFFECTIVE_DATE=db.Column(db.String(10))
     REMARK = db.Column(db.String(100))
     Added_by = db.Column(db.String(10))
     Added_on = db.Column(db.Date)

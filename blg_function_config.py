@@ -30,7 +30,7 @@ def combine_pid_and_slot(df):
     """
     Identify the slot PIDs and combine it with the module PID beneath it
     """
-    df_rsp_slot=read_table('rsp_slot')
+    df_rsp_slot=read_table('dfpm_tool_rsp_slot')
     for row in df_rsp_slot.itertuples():
         pf_list=row.PF.split(';')
         rsp=row.RSP_KEYWORD
@@ -661,7 +661,7 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
     Using generic rules to identify errors
     :return error order dict
     '''
-    df_rule = read_table('general_config_rule')
+    df_rule = read_table('dfpm_tool_general_config_rule')
 
     #df_rule=pd.read_excel(os.path.join(base_dir_tracker,'General rule.xlsx'))
     #print(df_rule)
@@ -683,7 +683,7 @@ def find_config_error_per_generic_rule(dfx,wrong_po_dict,checking_time):
         dfy=dfx[(dfx.ORGANIZATION_CODE.isin(org))&(dfx.main_bu.isin(bu))].copy()
 
         if effective_date != '':
-            effective_date = datetime.strptime(effective_date, '%Y-%m-%d')
+            effective_date = datetime.strptime(effective_date,'%Y-%m-%d')
             dfy=dfy[dfy.LINE_CREATION_DATE>=effective_date].copy()
 
         if pf!=['']:
@@ -736,7 +736,7 @@ def find_config_error_per_generic_rule_alternative_way(dfx,wrong_po_dict):
     (performance is lower thus not used)
     :return error order dict
     '''
-    df_rule = read_table('general_config_rule')
+    df_rule = read_table('dfpm_tool_general_config_rule')
     orgs=df_rule.ORG.unique()
     bus=df_rule.BU.unique()
     pfs = df_rule.PF.unique()
@@ -1063,7 +1063,7 @@ def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict,checkin
     time_start=time.time()
 
     # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
-    df_history_error=read_table('history_new_error_config_record')
+    df_history_error=read_table('dfpm_tool_history_new_error_config_record')
 
     # 生成模型对象并使用方法
     fsc = FindSameConfig()
