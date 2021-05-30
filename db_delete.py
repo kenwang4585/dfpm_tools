@@ -10,16 +10,11 @@ def delete_record(table_name,id_list):
     table_name=''.join(table_name)
     table_class=eval(table_name)
 
-    """
     for id in id_list:
         record=table_class.query.get(id)
 
         db.session.delete(record)
         db.session.commit()
-    """
-    db.session.query(table_class).filter(table_class.id >1000).delete()
-
-    db.session.commit()
 
     print('records deleted')
 
