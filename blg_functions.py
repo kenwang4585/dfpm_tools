@@ -222,7 +222,7 @@ def read_subscription_by_region():
     """
     Read the subscrition db for emails by region
     """
-    df_subscription = read_table('subscription')
+    df_subscription = read_table('dfpm_tools_subscription')
 
     backlog_dashboard_emails_global={}
     wnbu_compliance_check_emails_global={}
@@ -278,7 +278,7 @@ def read_subscription_by_site(org):
     """
     Read the subscrition db for emails by org code
     """
-    df_subscription = read_table('subscription')
+    df_subscription = read_table('dfpm_tool_subscription')
 
     ranking_cm =[] # based on specific org
 
