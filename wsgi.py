@@ -1691,7 +1691,7 @@ def delete_slot_record(login_user,added_by,record_id):
 
     if login_user==added_by:# or login_user==super_user:
         id_list=[str(record_id)]
-        delete_record('rsp_slot', id_list)
+        delete_record('dfpm_tool_rsp_slot', id_list)
         msg = 'Slot deleted: {}'.format(record_id)
         flash(msg, 'success')
     else:
