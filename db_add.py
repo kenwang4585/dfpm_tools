@@ -112,7 +112,25 @@ def add_error_config_data(df_upload,login_user):
                                     )
     db.session.commit()
 
+def add_backlog_data(df_backlog):
+    '''
+    Add backlog data
+    '''
+    df_data = df_backlog.values
 
+    db.session.bulk_insert_mappings(DfpmToolAddressableBacklog,
+                                    [dict(
+                                        DATE=pd.Timestamp.now().date(),
+                                        REGION=row[0],
+                                        ORG=row[1],
+                                        BU=row[2],
+                                        ADDRESSABLE_BACKLOG=row[3],
+                                        TOTAL_BACKLOG=row[4],
+                                        )
+                                     for row in df_data]
+                                    )
+    db.session.commit()
+    print('data added')
 
 def roll_back():
     try:

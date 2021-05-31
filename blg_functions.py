@@ -817,6 +817,39 @@ def ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ranking_col_dic, l
 
     return df_3a4
 
+def collect_addressable_and_total_backlog_for_saving_to_db(df):
+    """
+    collect the backlog (addressable and total) for saving to mysql db later
+    """
+
+    dfx=df.pivot_table(index=['ORGANIZATION_CODE','main_bu'],
+                       columns=['ADDRESSABLE_FLAG'],
+                        values='po_rev_unstg',
+                       aggfunc=sum)
+
+    dfx.loc[:,'TOTAL_BACKLOG']=dfx.sum(axis=1)
+    if 'ADDRESSABLE' not in dfx.columns:
+        dfx.loc[:,'ADDRESSABLE']=0
+    dfx=dfx[['ADDRESSABLE','TOTAL_BACKLOG']].copy()
+    dfx = dfx.applymap(lambda x: round(x / 1000000, 1))
+
+    org_region = {}
+    for region in org_name_global.keys():
+        orgs = org_name_global[region][region]
+        for org in orgs:
+            org_region[org] = region
+
+    dfx.reset_index(inplace=True)
+    dfx.loc[:, 'REGION'] = dfx.ORGANIZATION_CODE.map(lambda x: org_region[x] if x in org_region.keys() else 'Unknown')
+
+    dfx.rename(columns={'ORGANIZATION_CODE':'ORG','main_bu':'BU','ADDRESSABLE':'ADDRESSABLE_BACKLOG'},inplace=True)
+    dfx=dfx[['REGION','ORG','BU','ADDRESSABLE_BACKLOG','TOTAL_BACKLOG']]
+
+    return dfx
+
+
+
+
 def create_addr_summary(df, org_name_region):
     '''
     Create addressable summary based on df_3a4 and org_name map

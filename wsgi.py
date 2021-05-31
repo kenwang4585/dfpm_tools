@@ -221,6 +221,14 @@ def global_app():
                                                     login_user,config_check_emails, sender)
 
             if backlog_summary:
+                # add backlog (addr, total by region/org/bu) to mysql)
+                df_backlog=collect_addressable_and_total_backlog_for_saving_to_db(df_3a4)
+                df_backlog.to_excel('test.xlsx')
+                add_backlog_data(df_backlog)
+
+
+                raise ValueError
+
                 # addressable data to tracker.
                 addr_df_summary, addr_df_dict = create_addressable_summary_and_comb_addressable_history(df_3a4_main,
                                                                                                            org_name_region,
