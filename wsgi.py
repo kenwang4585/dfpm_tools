@@ -1363,7 +1363,7 @@ def subscribe():
                 id_list = df_subscription[df_subscription.Email.isin(email)].id.values
                 id_list=[str(x) for x in id_list]
                 if len(id_list)>0:
-                    delete_record('dfpm_tools_subscription', id_list)
+                    delete_record('dfpm_tool_subscription', id_list)
                     emails_removed=df_subscription[df_subscription.Email.isin(email)].Email.values
                     add_user_log_summary(user=login_user, location='Subscribe', user_action='Un-subscribe',
                                  summary='Email removed: {}'.format(emails_removed))
