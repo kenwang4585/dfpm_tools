@@ -56,11 +56,13 @@ def add_outlier_col(df=None):
     '''
     # add entered_not_booked days col
     df.loc[:, 'entered_not_booked'] = np.where(df.BOOKED_DATE.isnull(),
-                                               pd.Timestamp.now() - df.LINE_CREATION_DATE, np.nan)
+                                               pd.Timestamp.now() - df.LINE_CREATION_DATE,
+                                               np.nan)
     df.loc[:, 'entered_not_booked'] = df.entered_not_booked.map(lambda x: x.days if x != np.nan else x)
     # add booked_nots_scheduled days col
     df.loc[:, 'booked_not_scheduled'] = np.where(((df.ORIGINAL_FCD_NBD_DATE.isnull()) & (~df.BOOKED_DATE.isnull())),
-                                                 pd.Timestamp.now() - df.BOOKED_DATE, np.nan)
+                                                 pd.Timestamp.now() - df.BOOKED_DATE,
+                                                 np.nan)
     df.loc[:, 'booked_not_scheduled'] = df.booked_not_scheduled.map(lambda x: x.days if x != np.nan else x)
     # add missing OSSD days col
     df.loc[:, 'missed_ossd'] = np.where(((df.ORIGINAL_FCD_NBD_DATE.notnull()) & (df.PACKOUT_QUANTITY != 'Packout Completed')),
@@ -222,7 +224,7 @@ def read_subscription_by_region():
     """
     Read the subscrition db for emails by region
     """
-    df_subscription = read_table('dfpm_tools_subscription')
+    df_subscription = read_table('dfpm_tool_subscription')
 
     backlog_dashboard_emails_global={}
     wnbu_compliance_check_emails_global={}
