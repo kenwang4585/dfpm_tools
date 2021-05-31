@@ -152,7 +152,7 @@ def from_file_add_backlog_data_from_template(df):
     db.session.bulk_insert_mappings(
                                     DfpmToolAddressableBacklog,
                                     [dict(
-                                        DATE=row[0].replace('\xa0',''),
+                                        DATE=row[0],
                                         REGION=row[1].replace('\xa0',''),
                                         ORG=row[2].replace('\xa0',''),
                                         BU=row[3].replace('\xa0',''),
@@ -254,17 +254,17 @@ if __name__ == '__main__':
     #add_user_log(user='kwang2', location='Admin', user_action='Visit',
     #             summary='Warning')
 
-    df_backlog=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='backlog')
-    df_config_rule=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='config_rule')
-    df_dfpm_mapping=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='dfpm')
-    df_subscribe   =pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='subscribe')
+    df_backlog=pd.read_excel('/Users/wangken/py/dfpm_tools/backlog history.xlsx')
+    #df_config_rule=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='config_rule')
+    #df_dfpm_mapping=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='dfpm')
+    #df_subscribe   =pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='subscribe')
 
-    print(df_backlog)
+    print(df_backlog.DATE)
 
     #from_file_add_tan_grouping_data_from_template(df_grouping)
     #from_file_add_exceptional_sourcing_split_data_from_template(df_split)
     #from_file_add_exceptional_priority_data_from_template(df_priority)
     #from_file_add_backlog_data_from_template(df_backlog)
-    from_file_add_config_rule_data_from_template(df_config_rule)
+    #from_file_add_config_rule_data_from_template(df_config_rule)
     #from_file_add_dfpm_mapping_data_from_template(df_dfpm_mapping)
     #from_file_add_subscribe_data_from_template(df_subscribe)

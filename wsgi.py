@@ -221,14 +221,6 @@ def global_app():
                                                     login_user,config_check_emails, sender)
 
             if backlog_summary:
-                # add backlog (addr, total by region/org/bu) to mysql)
-                df_backlog=collect_addressable_and_total_backlog_for_saving_to_db(df_3a4)
-                df_backlog.to_excel('test.xlsx')
-                add_backlog_data(df_backlog)
-
-
-                raise ValueError
-
                 # addressable data to tracker.
                 addr_df_summary, addr_df_dict = create_addressable_summary_and_comb_addressable_history(df_3a4_main,
                                                                                                            org_name_region,
@@ -246,6 +238,10 @@ def global_app():
                 flash(msg, 'success')
 
                 if running_option == 'formal':
+                    # add backlog (addr, total by region/org/bu) to mysql - currently still using excel method, so this is just a backup
+                    df_backlog = collect_addressable_and_total_backlog_for_saving_to_db(df_3a4)
+                    add_backlog_data(df_backlog)
+
                     # save new addressable data to tracker
                     save_addr_tracker(df_3a4_main, addr_df_dict, region, org_name_region, addr_history_fname)
 
@@ -281,6 +277,8 @@ def global_app():
             return redirect(url_for('global_app'))
 
         except Exception as e:
+            roll_back()
+
             try:
                 del df_3a4, df_3a4_main
                 gc.collect()

@@ -230,6 +230,7 @@ class DfpmToolAddressableBacklog(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     DATE = db.Column(db.Date)
+    REGION = db.Column(db.String(8))
     ORG = db.Column(db.String(3))
     BU = db.Column(db.String(20))
     ADDRESSABLE_BACKLOG = db.Column(db.Float)
