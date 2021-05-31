@@ -224,7 +224,7 @@ class DfpmToolRspSlot(db.Model):
     Added_by=db.Column(db.String(15))
     Added_on = db.Column(db.Date)
 
-class DfpmToolAddressableBacklog(db.Model):
+class DfpmToolBacklog(db.Model):
     """
     db table to store addressable backlog data
     """
@@ -233,5 +233,9 @@ class DfpmToolAddressableBacklog(db.Model):
     REGION = db.Column(db.String(8))
     ORG = db.Column(db.String(3))
     BU = db.Column(db.String(20))
-    ADDRESSABLE_BACKLOG = db.Column(db.Float)
+    ADDRESSABLE = db.Column(db.Float)
+    MFG_HOLD = db.Column(db.Float)
+    UNSCHEDULED = db.Column(db.Float)
+    PO_CANCELLED = db.Column(db.Float)
+    NOT_ADDRESSABLE = db.Column(db.Float)
     TOTAL_BACKLOG = db.Column(db.Float)

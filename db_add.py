@@ -118,14 +118,18 @@ def add_backlog_data(df_backlog):
     '''
     df_data = df_backlog.values
 
-    db.session.bulk_insert_mappings(DfpmToolAddressableBacklog,
+    db.session.bulk_insert_mappings(DfpmToolBacklog,
                                     [dict(
                                         DATE=pd.Timestamp.now().date(),
                                         REGION=row[0],
                                         ORG=row[1],
                                         BU=row[2],
-                                        ADDRESSABLE_BACKLOG=row[3],
-                                        TOTAL_BACKLOG=row[4],
+                                        ADDRESSABLE=row[3],
+                                        MFG_HOLD=row[4],
+                                        UNSCHEDULED=row[5],
+                                        PO_CANCELLED=row[6],
+                                        NOT_ADDRESSABLE=row[7],
+                                        TOTAL_BACKLOG=row[8],
                                         )
                                      for row in df_data]
                                     )
@@ -150,14 +154,18 @@ def from_file_add_backlog_data_from_template(df):
     df_data = df.values
 
     db.session.bulk_insert_mappings(
-                                    DfpmToolAddressableBacklog,
+                                    DfpmToolBacklog,
                                     [dict(
                                         DATE=row[0],
                                         REGION=row[1].replace('\xa0',''),
                                         ORG=row[2].replace('\xa0',''),
                                         BU=row[3].replace('\xa0',''),
-                                        ADDRESSABLE_BACKLOG=row[4],
-                                        TOTAL_BACKLOG=row[5],
+                                        ADDRESSABLE=row[4],
+                                        MFG_HOLD=row[5],
+                                        UNSCHEDULED=row[6],
+                                        PO_CANCELLED=row[7],
+                                        NOT_ADDRESSABLE=row[8],
+                                        TOTAL_BACKLOG=row[9],
                                         )
                                      for row in df_data]
                                     )
@@ -264,7 +272,7 @@ if __name__ == '__main__':
     #from_file_add_tan_grouping_data_from_template(df_grouping)
     #from_file_add_exceptional_sourcing_split_data_from_template(df_split)
     #from_file_add_exceptional_priority_data_from_template(df_priority)
-    #from_file_add_backlog_data_from_template(df_backlog)
+    from_file_add_backlog_data_from_template(df_backlog)
     #from_file_add_config_rule_data_from_template(df_config_rule)
     #from_file_add_dfpm_mapping_data_from_template(df_dfpm_mapping)
     #from_file_add_subscribe_data_from_template(df_subscribe)

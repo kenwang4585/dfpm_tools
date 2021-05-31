@@ -239,6 +239,7 @@ def global_app():
 
                 if running_option == 'formal':
                     # add backlog (addr, total by region/org/bu) to mysql - currently still using excel method, so this is just a backup
+                    # TODO: need modify below in future if drop the file storage method
                     df_backlog = collect_addressable_and_total_backlog_for_saving_to_db(df_3a4)
                     add_backlog_data(df_backlog)
 

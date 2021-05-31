@@ -828,9 +828,6 @@ def collect_addressable_and_total_backlog_for_saving_to_db(df):
                        aggfunc=sum)
 
     dfx.loc[:,'TOTAL_BACKLOG']=dfx.sum(axis=1)
-    if 'ADDRESSABLE' not in dfx.columns:
-        dfx.loc[:,'ADDRESSABLE']=0
-    dfx=dfx[['ADDRESSABLE','TOTAL_BACKLOG']].copy()
     dfx = dfx.applymap(lambda x: round(x / 1000000, 1))
 
     org_region = {}
@@ -842,8 +839,15 @@ def collect_addressable_and_total_backlog_for_saving_to_db(df):
     dfx.reset_index(inplace=True)
     dfx.loc[:, 'REGION'] = dfx.ORGANIZATION_CODE.map(lambda x: org_region[x] if x in org_region.keys() else 'Unknown')
 
-    dfx.rename(columns={'ORGANIZATION_CODE':'ORG','main_bu':'BU','ADDRESSABLE':'ADDRESSABLE_BACKLOG'},inplace=True)
-    dfx=dfx[['REGION','ORG','BU','ADDRESSABLE_BACKLOG','TOTAL_BACKLOG']]
+    dfx.rename(columns={'ORGANIZATION_CODE': 'ORG', 'main_bu': 'BU'}, inplace=True)
+
+    # add the needed categories col in case missing
+    default_category=['ADDRESSABLE','MFG_HOLD','UNSCHEDULED','PO_CANCELLED','NOT_ADDRESSABLE']
+    missing_cat=np.setdiff1d(default_category,dfx.columns)
+    for cat in missing_cat:
+        dfx.loc[:,cat]=0
+
+    dfx=dfx[['REGION','ORG','BU','ADDRESSABLE','MFG_HOLD','UNSCHEDULED','PO_CANCELLED','NOT_ADDRESSABLE','TOTAL_BACKLOG']]
 
     dfx.fillna(0, inplace=True)
 
@@ -3313,12 +3317,12 @@ def redefine_addressable_flag_new(df_3a4,mfg_holds):
                                                  'ADDRESSABLE',
                                                  df_3a4.ADDRESSABLE_FLAG)
 
-
+    """
     # Non_revenue orders
     df_3a4.loc[:, 'ADDRESSABLE_FLAG'] = np.where(df_3a4.REVENUE_NON_REVENUE=='NO',
                                                   'NON_REVENUE',
                                                 df_3a4.ADDRESSABLE_FLAG)
-
+    """
     # 如果没有LT_TARGET_FCD/TARGET_SSD/CURRENT_FCD_NBD_DATE,则作如下处理 - 可能是没有schedule或缺失Target LT date or Target SSD
     df_3a4.loc[:, 'ADDRESSABLE_FLAG'] = np.where(df_3a4.CURRENT_FCD_NBD_DATE.isnull(),
                                                  'UNSCHEDULED',
