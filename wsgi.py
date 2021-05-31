@@ -460,10 +460,7 @@ def backlog_ranking():
                 return redirect(url_for('backlog_ranking'))
 
             # read smartsheet priorities
-            ss_exceptional_priority,df_removal = read_backlog_priority_from_smartsheet(df_3a4,login_user)
-
-            # Remove and send email notification for ss removal from exceptional priority smartsheet
-            remove_priority_ss_from_smtsheet_and_notify(df_removal, login_user, sender=login_user + ' via DFPM tools')
+            ss_exceptional_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
 
             # Rank the orders
             df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
@@ -981,14 +978,9 @@ def dfpm_app():
                 df_3a4=basic_data_processin_dfpm_app(df_3a4)
 
                 # read smartsheet priorities
-                ss_exceptional_priority, df_removal = read_backlog_priority_from_smartsheet(df_3a4, login_user)
-
-                # Remove and send email notification for ss removal from exceptional priority smartsheet
-                #remove_priority_ss_from_smtsheet_and_notify(df_removal, login_user, sender='APJC DF - 3a4 auto')
+                ss_exceptional_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
 
                 # Rank the orders
-                #df_3a4 = ss_ranking_overall_new_december(df_3a4, ss_exceptional_priority, ranking_col,lowest_priority_cat, order_col='SO_SS',
-                #                                    new_col='ss_overall_rank')
                 df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
                                            order_col='SO_SS')
 

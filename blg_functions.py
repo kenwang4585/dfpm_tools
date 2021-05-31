@@ -352,6 +352,7 @@ def create_po_rev_unstg_col(df_3a4):
     return df_3a4
 
 
+# deprecated and replaced with the db as datasource
 def read_backlog_priority_from_smartsheet(df_3a4,login_user):
     '''
     Read backlog priorities from smartsheet; remove SS showing packed/cancelled, or created by self but disappear from 34(if the org/BU also exist in 3a4.);
@@ -396,6 +397,36 @@ def read_backlog_priority_from_smartsheet(df_3a4,login_user):
         ss_exceptional_priority['priority_mid'] = priority_mid
 
     return ss_exceptional_priority,df_removal
+
+
+def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority'):
+    '''
+    Read backlog priorities from db;create and segregate to top priority and mid priority
+    '''
+    # read the data from db - share same db with allocation
+    df_priority=read_table(db_name)
+
+    # create the priority dict
+    df_priority.drop_duplicates('SO_SS', keep='last', inplace=True)
+    df_priority = df_priority[(df_priority.SO_SS.notnull()) & (df_priority.Ranking.notnull())]
+    ss_exceptional_priority = {}
+    priority_top = {}
+    priority_mid = {}
+    for row in df_priority.itertuples():
+        try: # in case error input of non-num ranking
+            if float(row.Ranking)<4:
+                priority_top[row.SO_SS] = float(row.Ranking)
+            else:
+                priority_mid[row.SO_SS] = float(row.Ranking)
+        except:
+            print('{} has a wrong ranking#: {}.'.format(row.SO_SS,row.Ranking) )
+
+        ss_exceptional_priority['priority_top'] = priority_top
+        ss_exceptional_priority['priority_mid'] = priority_mid
+
+    return ss_exceptional_priority
+
+
 
 def remove_priority_ss_from_smtsheet_and_notify(df_removal,login_user,sender='APJC DFPM'):
     """
