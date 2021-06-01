@@ -101,7 +101,7 @@ class ConfigRulesMain(FlaskForm):
     rsp_keyword=StringField('RSP keyword:')
     submit_add_slot=SubmitField('ADD')
 
-    remove_tracker=TextAreaField('List of PO to remove:',validators=[DataRequired()])
+    remove_tracker=TextAreaField('List of PO to remove:')
     submit_remove_tracker=SubmitField('REMOVE')
 
 class ConfigRulesComplex(FlaskForm):
@@ -152,7 +152,7 @@ class DfpmToolUserLog(db.Model):
     DATE=db.Column(db.Date)
     TIME=db.Column(db.String(8))
     LOCATION=db.Column(db.String(10))
-    USER_ACTION=db.Column(db.String(20))
+    USER_ACTION=db.Column(db.String(50))
     SUMMARY=db.Column(db.Text)
 
 class DfpmToolDfpmMapping(db.Model):
@@ -199,19 +199,37 @@ class DfpmToolGeneralConfigRule(db.Model):
 
 
 
-class DfpmToolHistoryNewErrorConfigRecord(db.Model):
+class DfpmToolUserUploadedErrorConfig(db.Model):
     '''
-    db table to store uploaded error config details
+    db table to store user uploaded error config details
     '''
     id=db.Column(db.Integer,primary_key=True)
     ORGANIZATION_CODE=db.Column(db.String(3))
-    BUSINESS_UNIT=db.Column(db.String(10))
-    PO_NUMBER=db.Column(db.String(11))
+    BUSINESS_UNIT=db.Column(db.String(20))
+    PO_NUMBER=db.Column(db.String(14))
     OPTION_NUMBER =db.Column(db.Integer)
     PRODUCT_ID = db.Column(db.String(30))
     ORDERED_QUANTITY = db.Column(db.Integer)
     REMARK=db.Column(db.String(100))
     Added_by=db.Column(db.String(15))
+
+class DfpmToolIdentifiedErrorConfig(db.Model):
+    """
+    db to store the identified error orders
+    """
+    id=db.Column(db.Integer,primary_key=True)
+    ORGANIZATION_CODE=db.Column(db.String(3))
+    BUSINESS_UNIT=db.Column(db.String(20))
+    PRODUCT_FAMILY=db.Column(db.String(20))
+    PO_NUMBER=db.Column(db.String(14))
+    OPTION_NUMBER =db.Column(db.Integer)
+    PRODUCT_ID = db.Column(db.String(30))
+    ORDERED_QUANTITY = db.Column(db.Integer)
+    LINE_CREATION_DATE= db.Column(db.Date)
+    ORDER_HOLDS=db.Column(db.Text)
+    Config_error=db.Column(db.Text)
+    Report_date = db.Column(db.Date)
+
 
 class DfpmToolRspSlot(db.Model):
     '''

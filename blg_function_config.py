@@ -4,7 +4,7 @@ from sending_email import send_attachment_and_embded_image
 from blg_settings import *
 from blg_functions import commonize_and_create_main_item
 from db_read import read_table
-from db_add import add_error_config_data
+from db_add import *
 import time
 from datetime import datetime
 
@@ -822,8 +822,9 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
            'ORDERED_QUANTITY', 'LINE_CREATION_DATE', 'ORDER_HOLDS', 'Config_error', 'Report date']
 
     # config error tracker
-    df_error_tracker_old_full = pd.read_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
-    df_error_tracker_old_full.loc[:, 'Report date'] = df_error_tracker_old_full['Report date'].map(lambda x: x.date())
+    #df_error_tracker_old_full = pd.read_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
+    #df_error_tracker_old_full.loc[:, 'Report date'] = df_error_tracker_old_full['Report date'].map(lambda x: x.date())
+    df_error_tracker_old_full=read_table('dfpm_tool_identified_error_config')
 
     # create the new order error df and old open error df
     df_error_new = df_3a4[
@@ -840,7 +841,7 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
 
     report_date_dic={}
     for row in df_error_tracker_old_full.itertuples():
-        report_date_dic[row.PO_NUMBER]=[row.Config_error,row._11]
+        report_date_dic[row.PO_NUMBER]=[row.Config_error,row.Report_date]
 
     df_error_old.loc[:, 'Report date'] = df_error_old.PO_NUMBER.map(lambda x:report_date_dic.get(x)[1])
     df_error_old.loc[:, 'Config_error'] = df_error_old.PO_NUMBER.map(lambda x: report_date_dic.get(x)[0])
@@ -864,9 +865,11 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
 
         # save new tracker file
         if save_to_tracker:
-            df_error_tracker_old_full.set_index('ORGANIZATION_CODE', inplace=True)
-            df_error_tracker = pd.concat([df_error_tracker_old_full, df_error_new[df_error_new.OPTION_NUMBER == 0]], sort=False)
-            df_error_tracker.to_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
+            #df_error_tracker_old_full.set_index('ORGANIZATION_CODE', inplace=True)
+            #df_error_tracker = pd.concat([df_error_tracker_old_full, df_error_new[df_error_new.OPTION_NUMBER == 0]], sort=False)
+            #df_error_tracker.to_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
+            df_error_new_to_save = df_error_new[df_error_new.OPTION_NUMBER == 0]
+            add_identified_error_config_data(df_error_new_to_save)
     else:
         fname_new_error = ''
 
@@ -1025,8 +1028,8 @@ def add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload,df_e
     # add to database
     new_config_po_qty = len(df_upload.PO_NUMBER.unique())
     if new_config_po_qty > 0:
-        add_error_config_data(df_upload_unique, login_user)
-
+        add_uploaded_error_config_data(df_upload_unique, login_user)
+    """
     # TODO: add to tracker file as well (issue, deleting from tracker might be an issue if want to)
     df_error_tracker = pd.read_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
     df_upload_main_new = df_upload[(~df_upload.PO_NUMBER.isin(df_error_tracker.PO_NUMBER))&(df_upload.OPTION_NUMBER==0)]
@@ -1036,7 +1039,7 @@ def add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload,df_e
     df_error_tracker=pd.concat([df_error_tracker,df_upload_main_new],sort=False)
     df_error_tracker.set_index('ORGANIZATION_CODE',inplace=True)
     df_error_tracker.to_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
-
+    """
     return new_config_po_qty
 
 def fill_up_remark(df):
@@ -1057,13 +1060,11 @@ def fill_up_remark(df):
 def find_error_by_config_comparison_with_history_error(dfx,wrong_po_dict,checking_time):
     '''
     做config对比，找出相同的error config订单。
-    :param dfx: new order df to find error with
-    :param wrong_po_dict: {PO:error_message}
     '''
     time_start=time.time()
 
     # read history error data fill up/replace the REMARK for options based on OPTION 0 comments
-    df_history_error=read_table('dfpm_tool_history_new_error_config_record')
+    df_history_error=read_table('dfpm_tool_user_uploaded_error_config')
 
     # 生成模型对象并使用方法
     fsc = FindSameConfig()

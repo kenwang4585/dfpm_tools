@@ -732,7 +732,7 @@ def config_rules_main():
         login_user = 'unknown'
         login_name = 'unknown'
 
-    df_error_db = read_table('dfpm_tool_history_new_error_config_record')
+    df_error_uploaded = read_table('dfpm_tool_user_uploaded_error_config')
     df_rsp_slot = read_table('dfpm_tool_rsp_slot')
 
     if login_user!='kwang2':
@@ -747,6 +747,7 @@ def config_rules_main():
         submit_remove_tracker=form.submit_remove_tracker.data
 
         if submit_upload:
+            # user upload new error configs
             file_upload_error=form.file_upload_error.data
 
             if not file_upload_error:
@@ -755,7 +756,7 @@ def config_rules_main():
                 return redirect(url_for("config_rules_main"))
 
             # 存储文件
-            filename = secure_filename(file_upload_error.filename)
+            #filename = secure_filename(file_upload_error.filename)
             file_path = os.path.join(base_dir_uploaded,
                                              'New error config upload (' + login_user + ')' + start_time.strftime(
                                                  '%Y-%m-%d %H:%M:%S') + '.xlsx')
@@ -774,20 +775,20 @@ def config_rules_main():
                 flash(msg,'warning')
                 return redirect(url_for("config_rules_main"))
 
-            # get new config data and upload
-            df_error_db=read_table('dfpm_tool_history_new_error_config_record')
+            # compare and identify the new config data for upload
+            df_error_uploaded=read_table('dfpm_tool_user_uploaded_error_config')
             #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
 
             #df_error_db = fill_up_remark(df_error_db)
             report_po_qty=len(df_upload.PO_NUMBER.unique())
-            new_config_po_qty=add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload, df_error_db,login_user)
+            new_config_po_qty=add_reported_po_to_tracker_and_upload_unique_new_config_to_db(df_upload, df_error_uploaded,login_user)
             msg = 'Thank you! You reported {} PO with error configs, {} PO are new configs added to database.'.format(
                     report_po_qty, new_config_po_qty)
             flash(msg, 'success')
 
             # read and count again:
             if new_config_po_qty>0:
-                df_error_db = read_table('dfpm_tool_history_new_error_config_record')
+                df_error_uploaded = read_table('dfpm_tool_user_uploaded_error_config')
 
             # write program log to log file
             add_user_log_summary(user=login_user, location='Config', user_action='Upload error config',
@@ -795,6 +796,7 @@ def config_rules_main():
 
             return redirect(url_for("config_rules_main"))
         elif submit_remove_config:
+            # remove user uploaded configs per template
             file_remove_error=form.file_remove_error.data
 
             if not file_remove_error:
@@ -803,7 +805,7 @@ def config_rules_main():
                 return redirect(url_for("config_rules_main"))
 
             # 存储文件
-            filename = secure_filename(file_remove_error.filename)
+            #filename = secure_filename(file_remove_error.filename)
             file_path = os.path.join(base_dir_uploaded,
                                              'Removal error config upload (' + login_user + ')' + start_time.strftime(
                                                  '%Y-%m-%d %H:%M:%S') + '.xlsx')
@@ -823,19 +825,19 @@ def config_rules_main():
                 return redirect(url_for("config_rules_main"))
 
             # find same config data from db and remove
-            df_error_db=read_table('dfpm_tool_history_new_error_config_record')
+            df_error_uploaded=read_table('dfpm_tool_user_uploaded_error_config')
             #df_error_db = commonize_and_create_main_item(df_error_db, 'BUSINESS_UNIT', 'main_bu')
             #report_po_qty=len(df_upload.PO_NUMBER.unique())
-            df_error_db_remove=get_same_config_data_to_remove_from_db(df_error_db, df_remove) # use df_remove as the base
+            df_error_db_remove=get_same_config_data_to_remove_from_db(df_error_uploaded, df_remove) # use df_remove as the base
             remove_config_po_qty=len(df_error_db_remove.PO_NUMBER.unique())
             id_list=df_error_db_remove.id.values
             id_list = [str(x) for x in id_list]
             if len(id_list)>0:
-                delete_record('dfpm_tool_history_new_error_config_record', id_list)
+                delete_record('dfpm_tool_user_uploaded_error_config', id_list)
                 msg = 'Thanks, we have found {} same config record in database which have been removed'.format(remove_config_po_qty)
                 flash(msg, 'success')
                 # read and count again:
-                df_error_db = read_table('dfpm_tool_history_new_error_config_record')
+                df_error_uploaded = read_table('dfpm_tool_user_uploaded_error_config')
             else:
                 msg = 'No same config record found in database to remove.'
                 flash(msg, 'info')
@@ -865,22 +867,26 @@ def config_rules_main():
             po_str=form.remove_tracker.data
             regex = re.compile(r'\d{9,10}-\d{1,2}')
             po_list = regex.findall(po_str)
-
+            """
             df_tracker=pd.read_excel(os.path.join(base_dir_tracker,'config_error_tracker.xlsx'))
             df_tracker=df_tracker[~df_tracker.PO_NUMBER.isin(po_list)]
             df_tracker.set_index('ORGANIZATION_CODE',inplace=True)
             df_tracker.to_excel(os.path.join(base_dir_tracker,'config_error_tracker.xlsx'))
+            """
+            df_tracker=read_table('dfpm_tool_identified_error_config')
+            id_list=df_tracker[df_tracker.PO_NUMBER.isin(po_list)].id.unique()
+            delete_record('dfpm_tool_identified_error_config', id_list)
 
             msg='Following PO have been removed from the tracker file: {}'.format(','.join(po_list))
             flash(msg, 'success')
 
             # write program log to log file
-            add_user_log_summary(user=login_user, location='Config', user_action='Remove PO from tracker',
+            add_user_log_summary(user=login_user, location='Config', user_action='Remove_PO from tracker',
                          summary='No. of PO removed from tracker: {}'.format(len(po_list)))
 
             return redirect(url_for("config_rules_main"))
 
-    df_error_db_summary=df_error_db[df_error_db.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT','Added_by'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
+    df_error_db_summary=df_error_uploaded[df_error_uploaded.OPTION_NUMBER==0].pivot_table(index=['ORGANIZATION_CODE','BUSINESS_UNIT','Added_by'],values=['PO_NUMBER'],aggfunc=len,margins=True).reset_index()
     df_error_db_summary.rename(columns={'PO_NUMBER':'No. of error configs'},inplace=True)
 
     return render_template('config_rules_main.html',

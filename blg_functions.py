@@ -1781,7 +1781,7 @@ def check_compliance_for_wnbu(df_3a4, no_ship):
     return df_compliance_release, df_compliance_hold, df_country_missing
 
 
-def read_ctb_from_smartsheet():
+def read_cm_ctb_from_smartsheet():
     '''
     Read CTB data from smartsheet - pick the latest record by org
     :return: ctb df
@@ -1789,8 +1789,6 @@ def read_ctb_from_smartsheet():
     # 数据源基本设定 - smartsheet设定
     token = os.getenv('SMARTSHEET_TOKEN_CTB')
     attachment_sheet_id = os.getenv('CTB_SHEET_ID')
-    #print(token)
-    #print(attachment_sheet_id)
 
     proxies = None  # for proxy server
 
@@ -2705,7 +2703,7 @@ def add_cm_ctb_to_3a4(df_3a4):
     """
     Read CM CTB from smartsheet and add to 3a4
     """
-    ctb_df, ctb_error_msg = read_ctb_from_smartsheet()
+    ctb_df, ctb_error_msg = read_cm_ctb_from_smartsheet()
 
     regex_line = re.compile(r'-\d+')
 

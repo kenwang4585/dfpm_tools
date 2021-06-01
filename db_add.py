@@ -89,14 +89,14 @@ def add_incl_excl_rule(org, bu, pf, exception_main_pid, pid_a, pid_b,pid_b_opera
     db.session.commit()
     #print('User log added')
 
-def add_error_config_data(df_upload,login_user):
+def add_uploaded_error_config_data(df_upload,login_user):
     '''
     Add the error config data to db
     '''
 
     df_data = df_upload.values
 
-    db.session.bulk_insert_mappings(DfpmToolHistoryNewErrorConfigRecord,
+    db.session.bulk_insert_mappings(DfpmToolUserUploadedErrorConfig,
                                     [dict(
                                         ORGANIZATION_CODE=row[0],
                                         BUSINESS_UNIT=row[1],
@@ -111,6 +111,34 @@ def add_error_config_data(df_upload,login_user):
                                      for row in df_data]
                                     )
     db.session.commit()
+
+def add_identified_error_config_data(df):
+    '''
+    Add the identified error config data to db
+    '''
+
+    df_data = df.values
+
+    db.session.bulk_insert_mappings(
+                                    DfpmToolIdentifiedErrorConfig,
+                                    [dict(
+                                        ORGANIZATION_CODE=row[0],
+                                        BUSINESS_UNIT=row[1],
+                                        PRODUCT_FAMILY=row[2],
+                                        PO_NUMBER=row[3],
+                                        OPTION_NUMBER=row[4],
+                                        PRODUCT_ID=row[5],
+                                        ORDERED_QUANTITY=row[6],
+                                        LINE_CREATION_DATE=row[7],
+                                        ORDER_HOLDS=row[8],
+                                        Config_error=row[9],
+                                        Report_date=pd.Timestamp.now().date()
+                                        )
+                                     for row in df_data]
+                                    )
+    db.session.commit()
+    print('data added')
+
 
 def add_backlog_data(df_backlog):
     '''
@@ -166,6 +194,42 @@ def from_file_add_backlog_data_from_template(df):
                                         PO_CANCELLED=row[7],
                                         NOT_ADDRESSABLE=row[8],
                                         TOTAL_BACKLOG=row[9],
+                                        )
+                                     for row in df_data]
+                                    )
+    db.session.commit()
+    print('data added')
+
+def from_file_add_identified_error_config_data_from_template(df):
+    '''
+    Add tan grouping data
+    '''
+    df.ORDER_HOLDS.fillna('',inplace=True)
+    df.PRODUCT_FAMILY.fillna('', inplace=True)
+    df.loc[:,'LINE_CREATION_DATE']=pd.to_datetime(df.LINE_CREATION_DATE)
+    df.loc[:, 'Report_date'] = pd.to_datetime(df.Report_date)
+    df.loc[:,'LINE_CREATION_DATE']=df.LINE_CREATION_DATE.map(lambda x: x.date())
+    df.loc[:, 'Report_date'] = df.Report_date.map(lambda x: x.date())
+
+    #df=df[['ORGANIZATION_CODE', 'BUSINESS_UNIT', 'PO_NUMBER','LINE_CREATION_DATE', 'OPTION_NUMBER',
+    #   'PRODUCT_ID', 'ORDERED_QUANTITY','LABEL','COMMENTS','REPORT_DATE', 'UPLOAD_BY','ML_COLLECTED']]
+
+    df_data = df.values
+
+    db.session.bulk_insert_mappings(
+                                    DfpmToolIdentifiedErrorConfig,
+                                    [dict(
+                                        ORGANIZATION_CODE=row[0].replace('\xa0',''),
+                                        BUSINESS_UNIT=row[1].replace('\xa0',''),
+                                        PRODUCT_FAMILY=row[2].replace('\xa0',''),
+                                        PO_NUMBER=row[3].replace('\xa0',''),
+                                        OPTION_NUMBER=row[4],
+                                        PRODUCT_ID=row[5].replace('\xa0',''),
+                                        ORDERED_QUANTITY=row[6],
+                                        LINE_CREATION_DATE=row[7],
+                                        ORDER_HOLDS=row[8].replace('\xa0',''),
+                                        Config_error=row[9].replace('\xa0',''),
+                                        Report_date=row[10]
                                         )
                                      for row in df_data]
                                     )
@@ -262,17 +326,19 @@ if __name__ == '__main__':
     #add_user_log(user='kwang2', location='Admin', user_action='Visit',
     #             summary='Warning')
 
-    df_backlog=pd.read_excel('/Users/wangken/py/dfpm_tools/backlog history.xlsx')
+    #df_backlog=pd.read_excel('/Users/wangken/py/dfpm_tools/backlog history.xlsx')
     #df_config_rule=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='config_rule')
     #df_dfpm_mapping=pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='dfpm')
     #df_subscribe   =pd.read_excel('/Users/wangken/downloads/dfpm tool data.xlsx',sheet_name='subscribe')
 
-    print(df_backlog.DATE)
-
     #from_file_add_tan_grouping_data_from_template(df_grouping)
     #from_file_add_exceptional_sourcing_split_data_from_template(df_split)
     #from_file_add_exceptional_priority_data_from_template(df_priority)
-    from_file_add_backlog_data_from_template(df_backlog)
+    #from_file_add_backlog_data_from_template(df_backlog)
     #from_file_add_config_rule_data_from_template(df_config_rule)
     #from_file_add_dfpm_mapping_data_from_template(df_dfpm_mapping)
     #from_file_add_subscribe_data_from_template(df_subscribe)
+
+    #df_config = pd.read_excel('/Users/wangken/downloads/Copy of config_error_tracker.xlsx')
+    #from_file_add_identified_error_config_data_from_template(df_config)
+    pass
