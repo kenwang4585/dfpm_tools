@@ -448,7 +448,7 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     # send out to users
     df_priority = df_priority[df_priority.ORG == org]
 
-    if email_option=='to_me':
+    if email_option=='to_all':
         users=df_priority.Added_by.unique()
         to_address = [user + '@cisco.com' for user in users]
         to_address = to_address + [login_user + '@cisco.com'] + ['staff.kwang2@cisco.com']
