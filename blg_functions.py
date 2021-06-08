@@ -10,7 +10,8 @@ import time
 #import xlsxwriter # used to avoid
 from blg_settings import *
 from sending_email import send_attachment_and_embded_image
-from db_read import read_table
+from db_read import *
+from db_delete import *
 import gc
 import numpy as np
 import pandas as pd

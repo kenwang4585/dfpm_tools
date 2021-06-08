@@ -18,7 +18,7 @@ from blg_settings import *
 from db_add import *  # remove db and use above instead
 from db_read import read_table
 from db_update import update_dfpm_mapping_data,update_subscription
-from db_delete import delete_record
+from db_delete import *
 import traceback
 import pprint
 #from flask_bootstrap import Bootstrap
