@@ -444,17 +444,18 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
 
     # send out to users
     df_priority = df_priority[df_priority.ORG == org]
+    df_priority.fillna('',inplace=True)
     to_address = ['kwang2@cisco.com']
     #to_address = to_address + [login_user + '@cisco.com']
-    html_template = 'priority_ss_removal_email.html'
-    subject = 'Exceptional priority status update - by {}'.format(login_user)
+    html_template = 'priority_ss_status_update_email.html'
+    subject = '{} - Exceptional priority status update - by {}'.format(org,login_user)
 
     send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
                                      embeded_filenames=None,
                                      sender=login_user + ' via DFPM auto tool',
                                      bcc=None,
-                                     removal_ss_header=df_priority.columns,
-                                     removal_ss_details=df_priority.values,
+                                     df_header=df_priority.columns,
+                                     df_data=df_priority.values,
                                      user=login_user)
 
 

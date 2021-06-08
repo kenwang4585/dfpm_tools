@@ -2,16 +2,20 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head>
 <body>
 	    <span style="font-size: large">
-            <strong>Below orders were removed from Exceptional priority SS smartsheet:</strong>
-                <br>
+            <strong>Note:</strong>
+            <li>The list here includes exceptional priority orders for specified org;</li>
+            <li>The CTB status is based on CM CTB they created 2 times a week;</li>
+            <li>Orders packed or cancelled will also be removed from the exception priority database.</li>
+            <li>You receive this email when CM runs the backlog ranking to plan their CTB/Production.</li>
+                <br><br>
                 <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="1" cellspacing="0px" align="left">
                     <tr>
-                        {% for col in removal_ss_header %}
+                        {% for col in df_header %}
                             <td>&nbsp;&nbsp;{{ col }}</td>
                         {% endfor %}
                     </tr>
 
-                    {% for row in removal_ss_details %}
+                    {% for row in df_data %}
                         <tr>
                             {% for col in row %}
                                 <td><span style="font-size: small">&nbsp;&nbsp;&nbsp;{{col}}</span></td>
@@ -22,15 +26,6 @@
                 </table>
             <br><br>
 
-            <table style="border-collapse:collapse; word-break:break-all; word-wrap: break-word " border="0" cellspacing="0px" align="left">
-                <tr>
-                    <td>
-                        <strong>Note:</strong>
-                        <li>The removal is based on SS shown as cancelled or fully packed in 3a4 used here;</li>
-                        <li>For SS not exist in 3a4 but same BU exist in the 3a4, the SS is considered closed and will get removed as well as long as it's created by yourself.</li>
-                    </td>
-                </tr>
-            </table>
         </span>
 </body>
 </html>
