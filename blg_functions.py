@@ -436,17 +436,21 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
 
     # merge CTB data into df_priority
     df_priority=pd.merge(df_priority,df_3a4[['SO_SS','PO_NUMBER','PACKOUT_QUANTITY','ORDER_HOLDS','CM_CTB','CTB_STATUS','CTB_COMMENT']],left_on='SO_SS',right_on='SO_SS',how='left')
+    df_priority = df_priority[df_priority.ORG == org]
     df_priority.fillna('', inplace=True)
 
-    # remove packed/cancelled orders from the db
+    # remove packed/cancelled/not exist (PO_NUMBER is blank) orders from the db
     ss_to_remove=get_packed_or_cancelled_ss_from_3a4(df_priority)
-    removal_id=df_priority[df_priority.SO_SS.isin(ss_to_remove)].id.unique()
+    removal_id=df_priority[(df_priority.SO_SS.isin(ss_to_remove))|(df_priority.PO_NUMBER=='')].id.unique()
     if len(removal_id)>0:
         delete_table_data(table_name, removal_id)
 
-    # send out to users
-    df_priority = df_priority[df_priority.ORG == org]
+    # add comment into df
+    df_priority.loc[:,'Removed from DB']=np.where(df_priority.id.isin(removal_id),
+                                                  'YEs',
+                                                  '')
 
+    # send out to users
     if email_option=='to_all':
         users=df_priority.Added_by.unique()
         to_address = [user + '@cisco.com' for user in users]
