@@ -469,21 +469,14 @@ def backlog_ranking():
             df_3a4,ctb_error_msg=add_cm_ctb_to_3a4(df_3a4)
 
             # save the file and send the email
-            # send email
-            if email_option == 'to_me':
-                to_address = [login_user + '@cisco.com']
-            else:
-                to_address = read_subscription_by_site(org)
-                if len(to_address)==0:
-                    to_address = [login_user + '@cisco.com']
-            create_and_send_3a4_backlog_ranking(df_3a4, to_address, org, login_user, login_name)
-
+            create_and_send_3a4_backlog_ranking(df_3a4, email_option, org, login_user, login_name)
             msg='3A4 backlog ranking has been generated and sent to the defined emails!'
             flash(msg,'success')
 
             # delete the packed/cancelled orders from the db; send the status of exceptional priority orders back to PSP with CTB&pack status
-            #if email_option=='to_all':
-            send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,login_user,table_name='allocation_exception_priority')
+            send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,email_option,login_user,table_name='allocation_exception_priority')
+            msg = 'Exceptional priority order status sent to the corresponding emails. Packed or cancelled orders are removed from the database.'
+            flash(msg, 'success')
 
             # summarize time
             time_stamp = pd.Timestamp.now()

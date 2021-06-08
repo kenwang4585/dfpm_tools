@@ -428,7 +428,7 @@ def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_prio
     return ss_exceptional_priority,df_priority
 
 
-def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,login_user,table_name):
+def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,email_option,login_user,table_name):
     """
     Check based on 3a4 for CM CTB status and update it by email to the corresponding PSP (and DFPM if possible).
     Remove the packed orders from the db at the same time.
@@ -446,9 +446,13 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     df_priority = df_priority[df_priority.ORG == org]
     df_priority.fillna('',inplace=True)
 
-    users=df_priority.Added_by.unique()
-    to_address = [user + '@cisco.com' or user in users]
-    to_address = to_address + [login_user + '@cisco.com']
+    if email_option=='to_me':
+        users=df_priority.Added_by.unique()
+        to_address = [user + '@cisco.com' or user in users]
+        to_address = to_address + [login_user + '@cisco.com'] + ['staff.kwang2@cisco.com']
+    else:
+        to_address = [login_user + '@cisco.com']
+
     html_template = 'priority_ss_status_update_email.html'
     subject = '{} - Exceptional priority status update - by {}'.format(org,login_user)
 
@@ -3116,10 +3120,16 @@ def create_and_send_cm_3a4(df_3a4, cm_emails_to, outlier_elements,outlier_chart_
 
 
 
-def create_and_send_3a4_backlog_ranking(df_3a4, to_address, org, login_user,login_name):
+def create_and_send_3a4_backlog_ranking(df_3a4, email_option, org, login_user,login_name):
     '''
     Create 3a4 backlog ranking file and send via email
     '''
+    if email_option == 'to_me':
+        to_address = [login_user + '@cisco.com']
+    else:
+        to_address = read_subscription_by_site(org)
+        if len(to_address) == 0:
+            to_address = [login_user + '@cisco.com']
 
     # create the output file
     df_3a4 = df_3a4[col_3a4_backlog_ranking_output_col].copy()

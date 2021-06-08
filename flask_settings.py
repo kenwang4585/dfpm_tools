@@ -257,3 +257,16 @@ class DfpmToolBacklog(db.Model):
     PO_CANCELLED = db.Column(db.Float)
     NOT_ADDRESSABLE = db.Column(db.Float)
     TOTAL_BACKLOG = db.Column(db.Float)
+
+class AllocationExceptionPriority(db.Model):
+    '''
+    Exceptional priority SS db table. This is also set under both the PCBA allocation tool and DFPM auto tools as it's commonly used.
+    '''
+    id=db.Column(db.Integer,primary_key=True)
+    SO_SS=db.Column(db.String(30))
+    ORG=db.Column(db.String(3))
+    BU=db.Column(db.String(12))
+    Ranking=db.Column(db.FLOAT())
+    Comments=db.Column(db.String(100))
+    Added_by=db.Column(db.String(10))
+    Added_on=db.Column(db.Date)
