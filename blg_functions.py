@@ -428,7 +428,7 @@ def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_prio
     return ss_exceptional_priority,df_priority
 
 
-def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,login_user):
+def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,login_user,table_name):
     """
     Check based on 3a4 for CM CTB status and update it by email to the corresponding PSP (and DFPM if possible).
     Remove the packed orders from the db at the same time.
@@ -440,20 +440,22 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     # remove packed/cancelled orders from the db
     df_priority_removal=df_priority[(df_priority.PACKOUT_QUANTITY=='Packout Completed')|(df_priority.ORDER_HOLDS.str.contains('cancel',case=False))]
     removal_id=df_priority_removal.id
-    #delete_table_data(table_name, removal_id)
+    delete_table_data(table_name, removal_id)
 
     # send out to users
     df_priority = df_priority[df_priority.ORG == org]
     df_priority.fillna('',inplace=True)
-    to_address = ['kwang2@cisco.com']
-    #to_address = to_address + [login_user + '@cisco.com']
+
+    users=df_priority.Added_by.unique()
+    to_address = [user + '@cisco.com' or user in users]
+    to_address = to_address + [login_user + '@cisco.com']
     html_template = 'priority_ss_status_update_email.html'
     subject = '{} - Exceptional priority status update - by {}'.format(org,login_user)
 
     send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
                                      embeded_filenames=None,
                                      sender=login_user + ' via DFPM auto tool',
-                                     bcc=None,
+                                     bcc=[super_user + '@cisco.com'],
                                      df_header=df_priority.columns,
                                      df_data=df_priority.values,
                                      user=login_user)
