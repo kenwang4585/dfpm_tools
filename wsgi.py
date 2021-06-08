@@ -11,7 +11,7 @@ matplotlib.use('Agg')
 from werkzeug.utils import secure_filename
 from flask import flash,send_from_directory,render_template,request, redirect, url_for
 from datetime import datetime
-from flask_setting import *
+from flask_settings import *
 from blg_functions import *
 from blg_function_config import *
 from blg_settings import *
