@@ -440,6 +440,8 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     # remove packed/cancelled orders from the db
     df_priority_removal=df_priority[(df_priority.PACKOUT_QUANTITY=='Packout Completed')|(df_priority.ORDER_HOLDS.str.contains('cancel',case=False))]
     removal_id=df_priority_removal.id
+
+    print(removal_id)
     delete_table_data(table_name, removal_id)
 
     # send out to users
