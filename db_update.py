@@ -1,4 +1,4 @@
-from flask_setting import *
+from flask_settings import *
 import pandas as pd
 
 def update_dfpm_mapping_data(dfpm, org, bu, extra_pf, exclusion_pf,login_user):

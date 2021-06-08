@@ -1,7 +1,7 @@
 # import cryptography
 
 import pandas as pd
-from flask_setting import *
+from flask_settings import *
 
 
 def add_user_log_summary(user='', location='', user_action='',summary=''):

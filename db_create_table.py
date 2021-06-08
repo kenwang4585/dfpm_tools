@@ -1,4 +1,4 @@
-from flask_setting import *
+from flask_settings import *
 from sqlalchemy import create_engine
 import os
 
