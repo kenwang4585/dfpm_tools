@@ -499,21 +499,21 @@ def remove_priority_ss_from_smtsheet_and_notify(df_removal,login_user,sender='AP
 
 
 
-def get_packed_or_cancelled_ss_from_3a4(df_3a4):
+def get_packed_or_cancelled_ss_from_3a4(df):
     """
-    Get the fully packed or canceleld SS from 3a4 - for deleting exceptional priority smartsheet purpose.
+    Get the fully packed or canceleld SS from 3a4 - for deleting exceptional priority data from db purpose.
     """
-    ss_cancelled=df_3a4[df_3a4.ADDRESSABLE_FLAG=='PO_CANCELLED'].SO_SS.unique()
+    ss_cancelled=df[df.ORDER_HOLDS.str.contains('cancel',case=False)].SO_SS.unique()
 
-    ss_with_po_packed=df_3a4[df_3a4.PACKOUT_QUANTITY=='Packout Completed'].SO_SS.unique()
-    ss_wo_po_packed = df_3a4[df_3a4.PACKOUT_QUANTITY != 'Packout Completed'].SO_SS.unique() # some PO may not be packed in one SS
+    ss_with_po_packed=df[df.PACKOUT_QUANTITY=='Packout Completed'].SO_SS.unique()
+    ss_wo_po_packed = df[df.PACKOUT_QUANTITY != 'Packout Completed'].SO_SS.unique() # some PO may not be packed in one SS
     ss_fully_packed=np.setdiff1d(ss_with_po_packed,ss_wo_po_packed)
 
     ss_packed_not_cancelled=np.setdiff1d(ss_fully_packed,ss_cancelled)
 
-    ss_cancelled_or_packed_3a4=ss_cancelled.tolist()+ss_packed_not_cancelled.tolist()
+    ss_cancelled_or_packed=ss_cancelled.tolist()+ss_packed_not_cancelled.tolist()
 
-    return ss_cancelled_or_packed_3a4
+    return ss_cancelled_or_packed
 
 
 def get_file_info_on_drive(base_path,keep_hours=100):
