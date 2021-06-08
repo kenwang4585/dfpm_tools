@@ -442,15 +442,15 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     ss_to_remove=get_packed_or_cancelled_ss_from_3a4(df_priority)
     removal_id=df_priority[df_priority.SO_SS.isin(ss_to_remove)].id.unique()
     print(removal_id)
-    delete_table_data(table_name, removal_id)
+    if len(removal_id)>0:
+        delete_table_data(table_name, removal_id)
 
     # send out to users
     df_priority = df_priority[df_priority.ORG == org]
 
-
     if email_option=='to_me':
         users=df_priority.Added_by.unique()
-        to_address = [user + '@cisco.com' or user in users]
+        to_address = [user + '@cisco.com' for user in users]
         to_address = to_address + [login_user + '@cisco.com'] + ['staff.kwang2@cisco.com']
     else:
         to_address = [login_user + '@cisco.com']
