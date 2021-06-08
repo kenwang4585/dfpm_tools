@@ -447,7 +447,7 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
 
     # add comment into df
     df_priority.loc[:,'Removed from DB']=np.where(df_priority.id.isin(removal_id),
-                                                  'YEs',
+                                                  'Yes',
                                                   '')
 
     # send out to users
