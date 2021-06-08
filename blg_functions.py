@@ -435,7 +435,7 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
     """
 
     # merge CTB data into df_priority
-    df_priority=pd.merge(df_priority,df_3a4['SO_SS','PACKOUT_QUANTITY','ORDER_HOLDS','CM_CTB','CTB_STATUS','CTB_COMMENT'],left_on='SO_SS',right_on='SO_SS',how='left')
+    df_priority=pd.merge(df_priority,df_3a4[['SO_SS','PACKOUT_QUANTITY','ORDER_HOLDS','CM_CTB','CTB_STATUS','CTB_COMMENT']],left_on='SO_SS',right_on='SO_SS',how='left')
 
     # remove packed/cancelled orders from the db
     df_priority_removal=df_priority[(df_priority.PACKOUT_QUANTITY=='Packout Completed')|(df_priority.ORDER_HOLDS.str.contains('cancel',case=False))]

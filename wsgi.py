@@ -482,6 +482,7 @@ def backlog_ranking():
             flash(msg,'success')
 
             # delete the packed/cancelled orders from the db; send the status of exceptional priority orders back to PSP with CTB&pack status
+            #if email_option=='to_all':
             send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org)
 
             # summarize time
