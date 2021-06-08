@@ -451,7 +451,7 @@ def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3
 
     send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
                                      embeded_filenames=None,
-                                     sender=sender,
+                                     sender=login_user + ' via DFPM auto tool',
                                      bcc=None,
                                      removal_ss_header=df_priority.columns,
                                      removal_ss_details=df_priority.values,
