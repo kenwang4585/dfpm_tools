@@ -428,7 +428,7 @@ def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_prio
     return ss_exceptional_priority,df_priority
 
 
-def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org):
+def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,login_user):
     """
     Check based on 3a4 for CM CTB status and update it by email to the corresponding PSP (and DFPM if possible).
     Remove the packed orders from the db at the same time.
