@@ -1,6 +1,6 @@
-from flask_setting import *
+from flask_settings import *
 
-def delete_record(table_name,id_list):
+def delete_table_data(table_name,id_list):
     '''
     delete a list of records from a defined table
     '''
@@ -8,6 +8,7 @@ def delete_record(table_name,id_list):
     table_name=table_name.split('_')
     table_name=[x.title() for x in table_name]
     table_name=''.join(table_name)
+    
     table_class=eval(table_name)
 
     for id in id_list:
@@ -16,11 +17,7 @@ def delete_record(table_name,id_list):
         db.session.delete(record)
         db.session.commit()
 
-    print('records deleted')
-
 
 if __name__=='__main__':
-    #table_name='dfpm_tool_addressable_backlog'
-    #id_list=range(1,29965)
-    delete_record(table_name,id_list)
+    delete_email('email_settings', [''])
     #pass

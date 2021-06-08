@@ -460,11 +460,13 @@ def backlog_ranking():
                 return redirect(url_for('backlog_ranking'))
 
             # read smartsheet priorities
-            ss_exceptional_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
+            ss_exceptional_priority,df_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
 
             # Rank the orders
             df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
                                        order_col='SO_SS',with_dollar=False)
+            # read CTB from smartsheet and add CTB comment into the ranked 3a4
+            df_3a4,ctb_error_msg=add_cm_ctb_to_3a4(df_3a4)
 
             # save the file and send the email
             # send email
@@ -478,6 +480,9 @@ def backlog_ranking():
 
             msg='3A4 backlog ranking has been generated and sent to the defined emails!'
             flash(msg,'success')
+
+            # delete the packed/cancelled orders from the db; send the status of exceptional priority orders back to PSP with CTB&pack status
+            send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org)
 
             # summarize time
             time_stamp = pd.Timestamp.now()
@@ -495,7 +500,7 @@ def backlog_ranking():
 
             print(e)
             traceback.print_exc()
-            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
+            add_user_log_summary(user=login_user, location='Ranking', user_action='Run-error',
                          summary='Error: ' + str(e))
             error_msg = '\n[' + login_user + '] Backlog_ranking: ' + org + '   ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
             with open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+') as file_object:

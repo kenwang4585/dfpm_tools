@@ -424,7 +424,37 @@ def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_prio
         ss_exceptional_priority['priority_top'] = priority_top
         ss_exceptional_priority['priority_mid'] = priority_mid
 
-    return ss_exceptional_priority
+    return ss_exceptional_priority,df_priority
+
+
+def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org):
+    """
+    Check based on 3a4 for CM CTB status and update it by email to the corresponding PSP (and DFPM if possible).
+    Remove the packed orders from the db at the same time.
+    """
+
+    # merge CTB data into df_priority
+    df_priority=pd.merge(df_priority,df_3a4['SO_SS','PACKOUT_QUANTITY','ORDER_HOLDS','CM_CTB','CTB_STATUS','CTB_COMMENT'],left_on='SO_SS',right_on='SO_SS',how='left')
+
+    # remove packed/cancelled orders from the db
+    df_priority_removal=df_priority[(df_priority.PACKOUT_QUANTITY=='Packout Completed')|(df_priority.ORDER_HOLDS.str.contains('cancel',case=False))]
+    removal_id=df_priority_removal.id
+    #delete_table_data(table_name, removal_id)
+
+    # send out to users
+    df_priority = df_priority[df_priority.ORG == org]
+    to_address = ['kwang2@cisco.com']
+    #to_address = to_address + [login_user + '@cisco.com']
+    html_template = 'priority_ss_removal_email.html'
+    subject = 'Exceptional priority status update - by {}'.format(login_user)
+
+    send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
+                                     embeded_filenames=None,
+                                     sender=sender,
+                                     bcc=None,
+                                     removal_ss_header=df_priority.columns,
+                                     removal_ss_details=df_priority.values,
+                                     user=login_user)
 
 
 

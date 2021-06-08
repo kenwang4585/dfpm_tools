@@ -182,7 +182,7 @@ col_3a4_must_have_backlog_ranking=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT
 # output col
 col_3a4_backlog_ranking_output_col=['ORGANIZATION_CODE', 'SO_SS','PO_NUMBER','BUSINESS_UNIT','PRODUCT_FAMILY','PRODUCT_ID','ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD', 'ORDER_HOLDS',
                                    'PACKOUT_QUANTITY','C_UNSTAGED_QTY','REVENUE_NON_REVENUE','BUP_RANK','OTM_SHIPPING_ROUTE_CODE',
-                                   'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE']
+                                   'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CM_CTB','CTB_STATUS','CTB_COMMENT']
 
 # Condensed col for site level data (& without $ col): for site lead, and CM
 col_3a4_cm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PRODUCT_FAMILY','PRODUCT_ID',
