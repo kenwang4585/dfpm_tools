@@ -982,8 +982,8 @@ def dfpm_app():
 
                 df_3a4=basic_data_processin_dfpm_app(df_3a4)
 
-                # read smartsheet priorities
-                ss_exceptional_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
+                # read priorities from db
+                ss_exceptional_priority,df_priority = read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority')
 
                 # Rank the orders
                 df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
