@@ -400,7 +400,7 @@ def read_backlog_priority_from_smartsheet(df_3a4,login_user):
     return ss_exceptional_priority,df_removal
 
 
-def read_exceptional_backlog_priority_from_db(db_name='allocation_exception_priority'):
+def read_exceptional_backlog_priority_from_db(db_name='ctb_exceptional_priority'):
     '''
     Read backlog priorities from db;create and segregate to top priority and mid priority
     '''
