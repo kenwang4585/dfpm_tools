@@ -865,10 +865,7 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
 
         # save new tracker file
         if save_to_tracker:
-            #df_error_tracker_old_full.set_index('ORGANIZATION_CODE', inplace=True)
-            #df_error_tracker = pd.concat([df_error_tracker_old_full, df_error_new[df_error_new.OPTION_NUMBER == 0]], sort=False)
-            #df_error_tracker.to_excel(os.path.join(base_dir_tracker, 'config_error_tracker.xlsx'))
-            df_error_new_to_save.reset_index(inpace=True)
+            df_error_new.reset_index(inpace=True)
             df_error_new_to_save = df_error_new[df_error_new.OPTION_NUMBER == 0]
             add_identified_error_config_data(df_error_new_to_save)
     else:
