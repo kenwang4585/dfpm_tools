@@ -117,6 +117,7 @@ def add_identified_error_config_data(df):
     Add the identified error config data to db
     '''
 
+    df.fillna('', inplace=True)
     df_data = df.values
 
     db.session.bulk_insert_mappings(

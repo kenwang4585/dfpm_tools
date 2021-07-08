@@ -429,48 +429,6 @@ def read_exceptional_backlog_priority_from_db(db_name='ctb_exceptional_priority'
     return ss_exceptional_priority,df_priority
 
 
-def send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,email_option,login_user,table_name):
-    """
-    Check based on 3a4 for CM CTB status and update it by email to the corresponding PSP (and DFPM if possible).
-    Remove the packed orders from the db at the same time.
-    """
-
-    # merge CTB data into df_priority
-    df_priority=pd.merge(df_priority,df_3a4[['SO_SS','PO_NUMBER','PACKOUT_QUANTITY','ORDER_HOLDS','CM_CTB','CTB_STATUS','CTB_COMMENT']],left_on='SO_SS',right_on='SO_SS',how='left')
-    df_priority = df_priority[df_priority.ORG == org]
-    df_priority.fillna('', inplace=True)
-
-    # remove packed/cancelled/not exist (PO_NUMBER is blank) orders from the db
-    ss_to_remove=get_packed_or_cancelled_ss_from_3a4(df_priority)
-    removal_id=df_priority[(df_priority.SO_SS.isin(ss_to_remove))|(df_priority.PO_NUMBER=='')].id.unique()
-    if len(removal_id)>0:
-        delete_table_data(table_name, removal_id)
-
-    # add comment into df
-    df_priority.loc[:,'Removed from DB']=np.where(df_priority.id.isin(removal_id),
-                                                  'Yes',
-                                                  '')
-
-    # send out to users
-    if email_option=='to_all':
-        users=df_priority.Added_by.unique()
-        to_address = [user + '@cisco.com' for user in users]
-        to_address = to_address + [login_user + '@cisco.com'] + ['staff.kwang2@cisco.com']
-    else:
-        to_address = [login_user + '@cisco.com']
-
-    html_template = 'priority_ss_status_update_email.html'
-    subject = '{} - Exceptional priority status update - by {}'.format(org,login_user)
-
-    send_attachment_and_embded_image(to_address, subject, html_template, att_filenames=None,
-                                     embeded_filenames=None,
-                                     sender=login_user + ' via DFPM auto tool',
-                                     bcc=[super_user + '@cisco.com'],
-                                     df_header=df_priority.columns,
-                                     df_data=df_priority.values,
-                                     user=login_user)
-
-
 
 def remove_priority_ss_from_smtsheet_and_notify(df_removal,login_user,sender='APJC DFPM'):
     """
