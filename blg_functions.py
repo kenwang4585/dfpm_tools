@@ -654,7 +654,7 @@ def create_dfpm_3a4(dfpm_mapping,dfpm_3a4_option,df_3a4,df_asp,addr_ctb_by_org_b
     return dfpm_3a4_created
 
 # newly introduced in Jan 2021 to add riso_ranking
-def ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ranking_col_dic, lowest_priority_cat,order_col='SO_SS',with_dollar=True):
+def ctb_ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ctb_ranking_options, lowest_priority_cat,order_col='SO_SS',with_dollar=True):
     """
     按照ranking_col的顺序对SS进行排序。最后放MFG_HOLD订单.
     注：CTB和PCBA allocation用相同的方式在开始处删除cancelled的订单；summary_3a4不删除cancelled订单，不过在结尾处清除cancelled订单的ranking#
@@ -738,7 +738,7 @@ def ss_ranking_overall_new_jan(df_3a4,ss_exceptional_priority,ranking_col_dic, l
 
 
     ##### 2: Create the overall_rank (or called Prod_ranking)
-    for ranking_name,ranking_col in ranking_col_dic.items():
+    for ranking_name,ranking_col in ctb_ranking_options.items():
         ##### Step 2-1: sort the SS per ranking columns
         df_3a4.sort_values(by=ranking_col, ascending=True, inplace=True)
 
@@ -2998,34 +2998,6 @@ def create_and_send_cm_3a4(df_3a4, cm_emails_to, outlier_elements,outlier_chart_
     gc.collect()
 
 
-
-
-def create_and_send_3a4_backlog_ranking(df_3a4, email_option, org, login_user,login_name):
-    '''
-    Create 3a4 backlog ranking file and send via email
-    '''
-    if email_option == 'to_me':
-        to_address = [login_user + '@cisco.com']
-    else:
-        to_address = read_subscription_by_site(org)
-        if len(to_address) == 0:
-            to_address = [login_user + '@cisco.com']
-
-    # create the output file
-    df_3a4 = df_3a4[col_3a4_backlog_ranking_output_col].copy()
-    df_3a4.set_index('ORGANIZATION_CODE', inplace=True)
-    fname=org + ' 3a4 backlog ranking ' + login_user + ' ' + pd.Timestamp.now().strftime('%m-%d %H:%M') + '.xlsx'
-    output_file = os.path.join(base_dir_output, fname)
-    df_3a4.to_excel(output_file)
-
-    # 添加文件到附件列表
-    att_files=[(base_dir_output, fname)]  # List of tuples (path, file_name)
-    subject = org + ' 3a4 backlog ranking'
-    html = 'backlog_ranking_email.html'
-
-    msg,size_over_limit = send_attachment_and_embded_image(to_address, subject, html,
-                                                           sender=login_name + ' via DFPM automation tool',
-                                                            att_filenames=att_files)
 
 
 def generate_dfpm_mapping_dict(df_dfpm_mapping):

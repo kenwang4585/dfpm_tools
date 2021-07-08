@@ -392,119 +392,6 @@ def top_customers_bookings_emea():
                            threshold=top_customers_bookings_threshold,
                            subtitle=' - Top Customers and Bookings Summary')
 
-@app.route('/ranking', methods=['GET', 'POST'])
-def backlog_ranking():
-    form = BacklogRankingForm()
-
-    login_user = request.headers.get('Oidc-Claim-Sub')
-    login_name = request.headers.get('Oidc-Claim-Fullname')
-    login_title = request.headers.get('Oidc-Claim-Title')
-
-    if login_user == None:
-        login_user = 'unknown'
-        login_name = 'unknown'
-
-    if form.validate_on_submit():
-        start_time_=pd.Timestamp.now()
-        # 通过条件判断及邮件赋值，开始执行任务
-        f = form.file.data
-        org = form.org.data.strip().upper()
-        email_option = form.email_option.data
-
-        filename_3a4 = secure_filename(f.filename)
-        ext_3a4 = os.path.splitext(filename_3a4)[1]
-
-        if ext_3a4 == '.csv':
-            file_path_3a4 = os.path.join(base_dir_uploaded, org + ' 3a4 for backlog ranking - ' + login_user + '.csv')
-        elif ext_3a4 == '.xlsx':
-            file_path_3a4 = os.path.join(base_dir_uploaded, org + ' 3a4 for backlog ranking - ' + login_user + '.xlsx')
-        else:
-
-            flash('3A4 file type error: Only csv or xlsx file accepted! File you were trying to upload: {}'.format(
-                    f.filename),'warning')
-            return redirect(url_for('backlog_ranking'))
-
-        # 存储文件
-        f.save(file_path_3a4)
-
-        # 预读取文件做格式和内容判断
-        if ext_3a4 == '.csv':
-            df = pd.read_csv(file_path_3a4,encoding='iso-8859-1',nrows=3)
-        elif ext_3a4 == 'xlsx':
-            df = pd.read_excel(file_path_3a4,encoding='iso-8859-1',nrows=3)
-        else:
-            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
-                         summary='Wong file type used: {}'.format(file_path_3a4))
-
-            msg = '3a4 file format error! Only accept .csv or .xlsx!'
-            flash(msg,'warning')
-            return redirect(url_for('backlog_ranking'))
-
-        # 检查文件是否包含需要的列：
-        if not np.all(np.in1d(col_3a4_must_have_backlog_ranking, df.columns)):
-            flash('File format error! Following required \
-                                        columns not found in 3a4 data: {}'.format(
-                    str(np.setdiff1d(col_3a4_must_have_backlog_ranking, df.columns))),
-                    'warning')
-            del df
-            gc.collect()
-            return redirect(url_for('backlog_ranking'))
-
-        try:
-            df_3a4 = read_3a4_parse_dates(file_path_3a4, ['CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE'])
-
-            df_3a4=basic_data_processing_backlog_ranking(df_3a4,org)
-            if df_3a4.shape[0]==0:
-                msg = 'Returned with empty data with input - ensure you use ther right file and right org ({}/{})'.format(filename_3a4,org)
-                flash(msg,'warning')
-                return redirect(url_for('backlog_ranking'))
-
-            # read smartsheet priorities
-            ss_exceptional_priority,df_priority = read_exceptional_backlog_priority_from_db(db_name='ctb_exceptional_priority')
-
-            # Rank the orders
-            df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
-                                       order_col='SO_SS',with_dollar=False)
-            # read CTB from smartsheet and add CTB comment into the ranked 3a4
-            df_3a4,ctb_error_msg=add_cm_ctb_to_3a4(df_3a4)
-
-            # save the file and send the email
-            create_and_send_3a4_backlog_ranking(df_3a4, email_option, org, login_user, login_name)
-            msg='3A4 backlog ranking has been generated and sent to the defined emails!'
-            flash(msg,'success')
-
-            # delete the packed/cancelled orders from the db; send the status of exceptional priority orders back to PSP with CTB&pack status
-            send_exceptional_priority_status_and_removed_packed_from_db(df_priority,df_3a4,org,email_option,login_user,table_name='allocation_exception_priority')
-            msg = 'Exceptional priority order status sent to the corresponding emails. Packed or cancelled orders are removed from the database.'
-            flash(msg, 'success')
-
-            # summarize time
-            time_stamp = pd.Timestamp.now()
-            processing_time = round((time_stamp - start_time_).total_seconds() / 60, 1)
-
-            # write program log to log file
-            add_user_log_summary(user=login_user, location='Ranking', user_action='Run',
-                         summary='Success: {} - {}; processing time: {}'.format(org,email_option,str(processing_time)))
-
-            return redirect(url_for('backlog_ranking'))
-
-        except Exception as e:
-            msg = 'Error: {}'.format(str(e))
-            flash(msg, 'warning')
-
-            print(e)
-            traceback.print_exc()
-            add_user_log_summary(user=login_user, location='Ranking', user_action='Run-error',
-                         summary='Error: ' + str(e))
-            error_msg = '\n[' + login_user + '] Backlog_ranking: ' + org + '   ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S') + '\n'
-            with open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+') as file_object:
-                file_object.write(error_msg)
-            traceback.print_exc(file=open(os.path.join(base_dir_logs, 'error_log.txt'), 'a+'))
-
-            return redirect(url_for('backlog_ranking'))
-
-    return render_template('backlog_ranking.html', form=form,user=login_user,subtitle='- Backlog Ranking')
-
 @app.route('/config_rules_generic',methods=['GET','POST'])
 def config_rules_generic():
     form=ConfigRulesGeneric()
@@ -986,7 +873,7 @@ def dfpm_app():
                 ss_exceptional_priority,df_priority = read_exceptional_backlog_priority_from_db(db_name='ctb_exceptional_priority')
 
                 # Rank the orders
-                df_3a4 = ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
+                df_3a4 = ctb_ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ranking_options, lowest_priority_cat,
                                            order_col='SO_SS')
 
                 df_3a4,ctb_error_msg=add_cm_ctb_to_3a4(df_3a4)

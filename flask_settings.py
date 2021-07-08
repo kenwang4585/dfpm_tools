@@ -72,17 +72,6 @@ class SubscriptionForm(FlaskForm):
     submit_remove = SubmitField('Un-Subscribe')
 
 
-
-class BacklogRankingForm(FlaskForm):
-    file = FileField('Please upload 3A4 file (.csv):', validators=[input_required()])
-    org = StringField('Org code:',validators=[input_required()])
-    email_option = SelectField('Email option: ',
-                               choices=[('to_all', 'Send to my group'), ('to_me', 'Send to ME only')],
-                               validators=[input_required()],
-                               default='to_all')
-    submit = SubmitField('EXECUTE')
-
-
 class AdminForm(FlaskForm):
     file_name=StringField()
     submit_delete=SubmitField('Delete')

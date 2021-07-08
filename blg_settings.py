@@ -175,15 +175,6 @@ col_3a4_must_have_dfpm=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT_FAMILY','O
 
 col_3a4_must_have_config_check=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PO_NUMBER','OPTION_NUMBER','PRODUCT_ID','ORDERED_QUANTITY']
 
-col_3a4_must_have_backlog_ranking=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT_FAMILY','SO_SS','PO_NUMBER','PRODUCT_ID','MFG_HOLD', 'ORDER_HOLDS',
-                                   'PACKOUT_QUANTITY','C_UNSTAGED_QTY','REVENUE_NON_REVENUE','BUP_RANK','OTM_SHIPPING_ROUTE_CODE',
-                                   'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','SECONDARY_PRIORITY','FINAL_ACTION_SUMMARY',]
-
-# output col
-col_3a4_backlog_ranking_output_col=['ORGANIZATION_CODE', 'SO_SS','PO_NUMBER','BUSINESS_UNIT','PRODUCT_FAMILY','PRODUCT_ID','ADDRESSABLE_FLAG','priority_cat','priority_rank','ss_overall_rank','riso_ranking','MFG_HOLD', 'ORDER_HOLDS',
-                                   'PACKOUT_QUANTITY','C_UNSTAGED_QTY','REVENUE_NON_REVENUE','BUP_RANK','OTM_SHIPPING_ROUTE_CODE',
-                                   'CURRENT_FCD_NBD_DATE','ORIGINAL_FCD_NBD_DATE','CM_CTB','CTB_STATUS','CTB_COMMENT']
-
 # Condensed col for site level data (& without $ col): for site lead, and CM
 col_3a4_cm=['ORGANIZATION_CODE','SO_SS','PO_NUMBER','BUSINESS_UNIT', 'PRODUCT_FAMILY','PRODUCT_ID',
         'ADDRESSABLE_FLAG','PACKOUT_QUANTITY','BUILD_COMPLETE_DATE','MFG_HOLD','ORDER_HOLDS','priority_cat','priority_rank','ss_overall_rank','riso_ranking',
@@ -250,7 +241,7 @@ priority_po_col=['ORGANIZATION_CODE','BUSINESS_UNIT', 'PRODUCT_FAMILY', 'PO_NUMB
 priority_cat_to_report=['PR1','PR2','PR3','L4','TOP 100']
 
 # rank sequences
-ranking_options = {'ss_overall_rank': ['priority_rank_top', 'CURRENT_FCD_NBD_DATE', 'priority_rank_mid',
+ctb_ranking_options = {'ss_overall_rank': ['priority_rank_top', 'CURRENT_FCD_NBD_DATE', 'priority_rank_mid',
                                      'ORIGINAL_FCD_NBD_DATE','PROGRAM','C_UNSTAGED_QTY', 'rev_non_rev_rank',
                                      'SO_SS', 'PO_NUMBER'],
                     'riso_ranking' : ['priority_rank', 'ORIGINAL_FCD_NBD_DATE','PROGRAM','C_UNSTAGED_QTY',

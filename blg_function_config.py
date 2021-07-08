@@ -865,7 +865,7 @@ def make_error_config_df_output_and_save_tracker(df_3a4,region, login_user, wron
 
         # save new tracker file
         if save_to_tracker:
-            df_error_new.reset_index(inpace=True)
+            df_error_new.reset_index(inplace=True)
             df_error_new_to_save = df_error_new[df_error_new.OPTION_NUMBER == 0]
             add_identified_error_config_data(df_error_new_to_save)
     else:
