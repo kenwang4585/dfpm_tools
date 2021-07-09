@@ -400,7 +400,6 @@ def read_backlog_priority_from_smartsheet(df_3a4,login_user):
     return ss_exceptional_priority,df_removal
 
 
-@write_log_time_spent
 def create_exceptional_priority_top_mid_dict(db_name='ctb_exceptional_priority', sep_top_mid_priority=False):
     """
     Read backlog priorities from db; create and segregate to top priority and mid priority
