@@ -870,7 +870,8 @@ def dfpm_app():
                 df_3a4=basic_data_processin_dfpm_app(df_3a4)
 
                 # read priorities from db
-                ss_exceptional_priority,df_priority = read_exceptional_backlog_priority_from_db(db_name='ctb_exceptional_priority')
+                ss_exceptional_priority, df_priority = create_exceptional_priority_top_mid_dict(db_name='ctb_exceptional_priority',
+                                                                                                sep_top_mid_priority=True)
 
                 # Rank the orders
                 df_3a4 = ctb_ss_ranking_overall_new_jan(df_3a4, ss_exceptional_priority, ctb_ranking_options, lowest_priority_cat,
